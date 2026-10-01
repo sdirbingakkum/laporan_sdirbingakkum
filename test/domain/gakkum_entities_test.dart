@@ -117,6 +117,7 @@ sourceCellId: 'cell',
         taxonomyVersion: 'CURRENT_2026',
         value: null,
         dataStatus: DataStatus.valid,
+        sourceCellId: 'cell',
         notes: null,
       );
 
