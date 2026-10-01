@@ -29,6 +29,18 @@ async function diagnostics(page: Page) {
   return headings.filter((value) => value.trim().length > 0);
 }
 
+function filterButton(page: Page, label: string) {
+  if (label === 'POMDAM') {
+    return page.getByRole('button', {
+      name: /^POMDAM\s+.+$/,
+    }).filter({ hasText: /Semua POMDAM/ });
+  }
+
+  return page.getByRole('button', {
+    name: new RegExp('^' + label + '\\b'),
+  });
+}
+
 async function openRoute(page: Page, route: (typeof routes)[number]) {
   const response = await page.goto(route.url, {
     waitUntil: 'domcontentloaded',
@@ -80,7 +92,7 @@ test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
     await openRoute(page, routes[3]);
     await expect(page.getByRole('button', { name: /^Periode\b/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^POMDAM\b/ })).toBeVisible();
+    await expect(filterButton(page, 'POMDAM')).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
