@@ -1,31 +1,18 @@
 # Cloud Web Test
 
-The repository now has a GitHub Pages deployment path for testing the Flutter Web build.
-
-## One-time GitHub setup
-
-1. Open repository Settings -> Pages.
-2. Under Build and deployment, set Source to GitHub Actions.
-3. Open Settings -> Secrets and variables -> Actions.
-4. Add the repository secret:
-
-   SUPABASE_PUBLISHABLE_KEY
-
-This is the public/publishable Supabase key used by the client. Never use a Supabase service-role key here.
+The repository has a GitHub Pages deployment path for testing the Flutter Web build.
 
 ## Deployment
 
-Every push to main runs the web deployment workflow. It can also be started manually from the Actions tab.
+Every push to main runs:
 
-The workflow recreates the missing Flutter web runner with:
+1. Flutter CI
+2. Flutter Web deployment
+3. E2E staging against the exact deployed commit
 
-    flutter create . --platforms=web
+The deployment writes `deployment.json` with the commit SHA, and E2E waits for that exact SHA before running Playwright.
 
-and then builds:
-
-    flutter build web --release
-
-The build uses a repository base path of:
+The build uses:
 
     /laporan_sdirbingakkum/
 
@@ -33,12 +20,20 @@ GitHub Pages is a test/staging surface only. Production hosting can remain on Cl
 
 ## Expected test URL
 
-After the first successful Pages deployment, GitHub exposes the exact deployment URL in the workflow environment. For this repository it is expected to be:
-
     https://sdirbingakkum.github.io/laporan_sdirbingakkum/
 
-Flutter's default web URL strategy is hash-based, so application routes should be tested from the running app navigation rather than assuming server-side rewrites for arbitrary path URLs.
+Flutter web path URL strategy is enabled, and the deployment creates deep-link entrypoints for all application routes.
+
+## E2E coverage
+
+The smoke suite verifies:
+
+- authentication guard
+- all application deep links
+- critical filters on reporting dashboards
+- live Reports read model
+- live Data Quality read model
 
 ## Data access
 
-The application continues to use only the Supabase publishable key. If the database security workstream has not yet granted client SELECT access through RLS policies, the deployed UI can load but reporting queries will return the application's normal data-access error state.
+The application uses only the Supabase publishable key. Public anonymous Data API access is denied by RLS/grants; permanent authenticated users receive the application reporting read surface.
