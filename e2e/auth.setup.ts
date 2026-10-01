@@ -37,7 +37,7 @@ setup('authenticate staging user', async ({ page }) => {
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
   await expect(
-    page.getByRole('button', { name: /^Gakkum\\b/ }).last(),
+    page.getByRole('heading', { name: 'Dashboard', exact: true }),
   ).toBeVisible({ timeout: 60_000 });
 
   await page.context().storageState({ path: authFile });
