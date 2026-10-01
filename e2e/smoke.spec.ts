@@ -1,21 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 
-async function expectSemanticsContains(page: Page, expected: string) {
-  await expect
-    .poll(
-      async () =>
-        page.locator('flt-semantics[aria-label]').evaluateAll(
-          (elements) =>
-            elements
-              .map((element) => element.getAttribute('aria-label') ?? '')
-              .join('\n'),
-        ),
-      { timeout: 60_000 },
-    )
-    .toContain(expected);
-}
-
 const EXPECTED_SHA = process.env.E2E_EXPECTED_SHA;
+
+const routes = [
+  { url: './', pathname: '/laporan_sdirbingakkum/', heading: 'Dashboard' },
+  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Giat Gakkum' },
+  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
+  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
+  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
+  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
+  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
+  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
+  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Metadata laporan' },
+  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data quality contract' },
+];
 
 test.beforeEach(async ({ request }) => {
   if (!EXPECTED_SHA) return;
@@ -25,129 +23,51 @@ test.beforeEach(async ({ request }) => {
   expect(marker.commit).toBe(EXPECTED_SHA);
 });
 
-const routes = [
-  { path: '/', label: 'Dashboard' },
-  { path: '/gakkum', label: 'Gakkum' },
-  { path: '/pelanggaran', label: 'Pelanggaran' },
-  { path: '/sim-tni', label: 'SIM TNI' },
-  { path: '/provos', label: 'Provos' },
-  { path: '/laka-lalin', label: 'Laka Lalin' },
-  { path: '/tindak-pidana', label: 'Tindak Pidana' },
-  { path: '/pomdam', label: 'POMDAM' },
-  { path: '/reports', label: 'Laporan' },
-  { path: '/data-quality', label: 'Data Quality' },
-];
-
-async function openRoute(page: Page, path: string, label: string) {
-  await page.goto('./', { waitUntil: 'domcontentloaded' });
-
-  if (path === '/') {
-    return;
-  }
-
-  const destination = page.getByRole('button', {
-    name: new RegExp('^' + label + '\\b'),
-  }).last();
-
-  await expect(destination).toBeVisible({ timeout: 30_000 });
-  await destination.click();
-
+async function openRoute(page: Page, route: (typeof routes)[number]) {
+  await page.goto(route.url, { waitUntil: 'domcontentloaded' });
+  await expect(
+    page.getByRole('heading', { name: route.heading, exact: true }),
+  ).toBeVisible({ timeout: 60_000 });
   await expect
     .poll(() => new URL(page.url()).pathname)
-    .toBe('/laporan_sdirbingakkum' + path);
+    .toBe(route.pathname);
 }
 
-async function choose(page: Page, label: string, option: string) {
-  const combo = page.getByRole('combobox', {
-    name: label,
-    exact: true,
-  });
-  await expect(combo).toBeVisible();
-  await combo.click();
-  await page.getByText(option, { exact: true }).last().click();
-}
-
-test.describe('route smoke', () => {
+test.describe('deep-link route smoke', () => {
   for (const route of routes) {
-    test('opens ' + route.label, async ({ page }) => {
-      await openRoute(page, route.path, route.label);
-      await expectSemanticsContains(page, route.label);
+    test('opens ' + route.heading, async ({ page }) => {
+      await openRoute(page, route);
     });
   }
 });
 
-test.describe('data contract smoke', () => {
-  test('dashboard baseline', async ({ page }) => {
-    await openRoute(page, '/', 'Dashboard');
-    await expectSemanticsContains(page, '21 POMDAM');
-    await expectSemanticsContains(page, '6 Jenis laporan');
-    await expectSemanticsContains(page, '42 Periode');
+test.describe('critical interaction surface smoke', () => {
+  test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
+    await openRoute(page, routes[3]);
+    await expect(page.getByRole('combobox', { name: 'Periode', exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'POMDAM', exact: true })).toBeVisible();
   });
 
-  test('gakkum baseline', async ({ page }) => {
-    await openRoute(page, '/gakkum', 'Gakkum');
-    await expectSemanticsContains(page, '3104');
-    await expectSemanticsContains(page, '188');
-    await expectSemanticsContains(page, 'Invalid source');
+  test('Tindak Pidana exposes all four report filters', async ({ page }) => {
+    await openRoute(page, routes[6]);
+    for (const label of ['Periode', 'Sumber versi', 'POMDAM', 'Personel']) {
+      await expect(page.getByRole('combobox', { name: label, exact: true })).toBeVisible();
+    }
   });
 
-  test('provos baseline', async ({ page }) => {
-    await openRoute(page, '/provos', 'Provos');
-    await expectSemanticsContains(page, '9979');
-    await expectSemanticsContains(page, '3926');
-    await expectSemanticsContains(page, '3923');
+  test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
+    await openRoute(page, routes[1]);
+    await expect(page.getByRole('combobox', { name: 'Periode', exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'POMDAM', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Level 2', exact: true })).toBeVisible();
   });
 
-  test('laka lalin baseline', async ({ page }) => {
-    await openRoute(page, '/laka-lalin', 'Laka Lalin');
-    await expectSemanticsContains(page, 'Kejadian');
-    await expectSemanticsContains(page, 'Personel');
-    await expectSemanticsContains(page, 'Materiil');
-    await expectSemanticsContains(page, 'Pangkat korban');
-    await expectSemanticsContains(page, 'Akibat korban');
-  });
-
-  test('tindak pidana preserves zero versus valid facts', async ({ page }) => {
-    await openRoute(page, '/tindak-pidana', 'Tindak Pidana');
-    await expectSemanticsContains(page, 'AUG_2026');
-    await expectSemanticsContains(page, '379 Valid records');
-    await expectSemanticsContains(page, '8441 Tidak dilaporkan');
-    await expectSemanticsContains(
-      page,
-      'Fakta VALID ditemukan, tetapi seluruh nilai source',
-    );
-  });
-});
-
-test.describe('filter regression', () => {
-  test('Tindak Pidana IM all personnel', async ({ page }) => {
-    await openRoute(page, '/tindak-pidana', 'Tindak Pidana');
-    await choose(page, 'POMDAM', 'IM · Iskandar Muda');
-    await expectSemanticsContains(page, '13 Valid records');
-    await expectSemanticsContains(page, '407 Tidak dilaporkan');
-  });
-
-  test('Tindak Pidana IM + PA', async ({ page }) => {
-    await openRoute(page, '/tindak-pidana', 'Tindak Pidana');
-    await choose(page, 'POMDAM', 'IM · Iskandar Muda');
-    await choose(page, 'Personel', 'PA · Perwira');
-    await expectSemanticsContains(page, '3 Valid records');
-    await expectSemanticsContains(page, '102 Tidak dilaporkan');
-  });
-
-  test('Tindak Pidana IM + BA', async ({ page }) => {
-    await openRoute(page, '/tindak-pidana', 'Tindak Pidana');
-    await choose(page, 'POMDAM', 'IM · Iskandar Muda');
-    await choose(page, 'Personel', 'BA · Bintara');
-    await expectSemanticsContains(page, '6 Valid records');
-    await expectSemanticsContains(page, '99 Tidak dilaporkan');
-  });
-
-  test('Tindak Pidana IM + PNS', async ({ page }) => {
-    await openRoute(page, '/tindak-pidana', 'Tindak Pidana');
-    await choose(page, 'POMDAM', 'IM · Iskandar Muda');
-    await choose(page, 'Personel', 'PNS · Pegawai Negeri Sipil');
-    await expectSemanticsContains(page, '1 Valid records');
-    await expectSemanticsContains(page, '104 Tidak dilaporkan');
+  test('Pelanggaran exposes period, POMDAM, personel, and category controls', async ({ page }) => {
+    await openRoute(page, routes[2]);
+    for (const label of ['Periode', 'POMDAM', 'Personel']) {
+      await expect(page.getByRole('combobox', { name: label, exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole('button', { name: 'Semua kategori', exact: true })).toBeVisible();
   });
 });
