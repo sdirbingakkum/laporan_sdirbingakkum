@@ -17,16 +17,22 @@ Optional filters:
 
 ## Response shape
 
-The reporting service returns:
+The reporting service exposes:
 
 1. Report metadata
 2. Period metadata
-3. Ordered POMDAM reference list
-4. Dataset-specific dimension definitions
-5. Rows keyed by stable database IDs
-6. Value + data status
-7. Provenance summary and drill-down reference
-8. Audit diagnostics
+3. Source-report metadata and import state
+4. Dataset-specific fact summaries
+5. Status-aware values
+6. Live provenance preview
+7. Integrity diagnostics
+
+The Flutter implementation lives in:
+
+- `domain/entities/reporting_entities.dart`
+- `domain/repositories/reporting_repository.dart`
+- `data/repositories/supabase_reporting_repository.dart`
+- `application/providers/reporting_providers.dart`
 
 ## Rules
 
@@ -54,5 +60,27 @@ UI semantics:
 - ! = invalid source
 - ~ = estimated
 
-Provenance:
-Every fact row must retain a resolvable `source_cell_id`. A detail view should be able to show workbook, sheet, sheet index, cell reference, raw value and parsing/status metadata without changing the fact record.
+## Provenance
+
+Every fact row must retain a resolvable `source_cell_id`.
+
+The live database maintains a read-safe `public.report_provenance` projection backed by `private.source_cells`. It is synchronized by a database trigger and exposed only to permanent authenticated users.
+
+The report UI can therefore drill into:
+
+- workbook
+- sheet
+- sheet index
+- cell reference
+- raw value
+- parsed numeric value
+- semantic/row/column labels
+- fact data status
+
+without exposing the private source-cell table directly to the public Data API.
+
+## Data Quality
+
+`public.report_audit_summary` is a security-invoker live view over the public reporting facts and the safe provenance projection.
+
+It is consumed by both Reports and Data Quality so that the UI and audit surface read the same backend contract.
