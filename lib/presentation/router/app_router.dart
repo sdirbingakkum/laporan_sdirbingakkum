@@ -6,6 +6,7 @@ import '../pages/data_quality_page.dart';
 import '../pages/gakkum_page.dart';
 import '../pages/pomdam_page.dart';
 import '../pages/reports_page.dart';
+import '../pages/sim_tni_page.dart';
 import '../pages/violation_page.dart';
 import '../shell/app_shell.dart';
 
@@ -32,6 +33,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/pelanggaran',
             builder: (context, state) => const ViolationPage(),
+          ),
+          GoRoute(
+            path: '/sim-tni',
+            builder: (context, state) => const SimTniPage(),
           ),
           GoRoute(
             path: '/pomdam',

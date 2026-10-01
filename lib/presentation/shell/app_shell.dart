@@ -32,6 +32,12 @@ class AppShell extends StatelessWidget {
       selectedIcon: Icons.rule,
     ),
     _NavItem(
+      path: '/sim-tni',
+      label: 'SIM TNI',
+      icon: Icons.badge_outlined,
+      selectedIcon: Icons.badge,
+    ),
+    _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
