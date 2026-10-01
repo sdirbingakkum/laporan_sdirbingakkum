@@ -98,10 +98,22 @@ void main() {
       ],
     );
 
-    expect(snapshot.strengthMetrics.single.validTotal, 100);
-    expect(snapshot.strengthMetrics.single.notReportedCount, 1);
-    expect(snapshot.educationMetrics.single.validTotal, 0);
-    expect(snapshot.educationMetrics.single.invalidSourceCount, 1);
+    final dspp = snapshot.strengthMetrics.firstWhere(
+      (metric) => metric.code == 'DSPP',
+    );
+    final nyata = snapshot.strengthMetrics.firstWhere(
+      (metric) => metric.code == 'NYATA',
+    );
+    final sudah = snapshot.educationMetrics.firstWhere(
+      (metric) => metric.code == 'SUDAH',
+    );
+
+    expect(dspp.validTotal, 100);
+    expect(dspp.notReportedCount, 0);
+    expect(nyata.notReportedCount, 1);
+    expect(nyata.validTotal, 0);
+    expect(sudah.validTotal, 0);
+    expect(sudah.invalidSourceCount, 1);
   });
 
   test('does not turn a missing valid value into zero silently', () {
