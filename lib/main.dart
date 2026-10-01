@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,4 +24,8 @@ Future<void> main() async {
       child: LaporanSdirbinGakkumApp(),
     ),
   );
+
+  if (kIsWeb) {
+    SemanticsBinding.instance.ensureSemantics();
+  }
 }
