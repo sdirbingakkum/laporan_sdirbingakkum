@@ -14,6 +14,7 @@ export default defineConfig({
     ? [['html', { open: 'never' }], ['line']]
     : [['list']],
   use: {
+    channel: 'chrome',
     baseURL:
       process.env.PLAYWRIGHT_TEST_BASE_URL ??
       'https://sdirbingakkum.github.io/laporan_sdirbingakkum/',
