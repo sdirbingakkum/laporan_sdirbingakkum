@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../pages/dashboard_page.dart';
 import '../pages/data_quality_page.dart';
+import '../pages/gakkum_page.dart';
 import '../pages/pomdam_page.dart';
 import '../pages/reports_page.dart';
 import '../shell/app_shell.dart';
@@ -22,6 +23,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/',
             builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: '/gakkum',
+            builder: (context, state) => const GakkumPage(),
           ),
           GoRoute(
             path: '/pomdam',
