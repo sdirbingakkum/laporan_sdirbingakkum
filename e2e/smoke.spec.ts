@@ -91,21 +91,21 @@ test.describe('deep-link route smoke', () => {
 test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
     await openRoute(page, routes[3]);
-    await expect(page.getByRole('button', { name: /^Periode\b/ })).toBeVisible();
+    await expect(filterButton(page, 'Periode')).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
     await openRoute(page, routes[6]);
     for (const label of ['Periode', 'Sumber versi', 'POMDAM', 'Personel']) {
-      await expect(page.getByRole('button', { name: new RegExp('^' + label + '\b') })).toBeVisible();
+      await expect(filterButton(page, label)).toBeVisible();
     }
   });
 
   test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
     await openRoute(page, routes[1]);
-    await expect(page.getByRole('button', { name: /^Periode\b/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^POMDAM\b/ })).toBeVisible();
+    await expect(filterButton(page, 'Periode')).toBeVisible();
+    await expect(filterButton(page, 'POMDAM')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 2', exact: true })).toBeVisible();
   });
@@ -113,7 +113,7 @@ test.describe('critical interaction surface smoke', () => {
   test('Pelanggaran exposes period, POMDAM, personel, and category controls', async ({ page }) => {
     await openRoute(page, routes[2]);
     for (const label of ['Periode', 'POMDAM', 'Personel']) {
-      await expect(page.getByRole('button', { name: new RegExp('^' + label + '\b') })).toBeVisible();
+      await expect(filterButton(page, label)).toBeVisible();
     }
     await expect(page.getByRole('button', { name: 'Semua kategori', exact: true })).toBeVisible();
   });
