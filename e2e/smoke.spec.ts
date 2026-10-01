@@ -123,6 +123,7 @@ test.describe('critical interaction surface smoke', () => {
     await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
     await expect(page.getByText('Fact rows', { exact: true })).toBeVisible();
     await expect(page.getByText('Source & provenance', { exact: true })).toBeVisible();
+    await expect(page.getByText('1. STATISTIK GIAT GAKKUM(1).xlsx', { exact: true })).toBeVisible();
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
