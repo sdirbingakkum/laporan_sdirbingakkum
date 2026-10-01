@@ -58,6 +58,8 @@ Dashboard fact queries are period-scoped to avoid accidental cross-history reads
 
 Client builds use only the Supabase publishable key. Never put a service-role or secret key in the application.
 
+The application now requires a permanent authenticated Supabase user before reporting routes are shown. Unauthenticated `anon` reads remain denied, and the read policies exclude anonymous Auth users.
+
 Build-time configuration:
 
 ```bash
@@ -89,4 +91,4 @@ CI currently validates with Flutter 3.47.3.
 
 ## Data access note
 
-At repository bootstrap time, the database's public reporting tables had RLS enabled but no anon/authenticated SELECT policies were available to the client. The Flutter client intentionally does not bypass RLS. Database access policies must be completed in the database/security workstream before live client queries can return reporting data.
+The Flutter client does not bypass RLS. The current application-read tables grant SELECT only to permanent authenticated users and explicitly deny unauthenticated `anon` reads. See `docs/AUTH.md` for the access model and staging setup.
