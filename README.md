@@ -43,6 +43,17 @@ Supabase
 
 UI code must not issue Supabase queries directly.
 
+## Current vertical slices
+
+The application currently includes:
+
+1. Read-only reference-data access for POMDAM, report types, and report periods.
+2. Gakkum dashboard read model with explicit period, POMDAM, and taxonomy-level filtering.
+3. Fidelity-aware aggregation that keeps VALID, NOT_REPORTED, INVALID_SOURCE, and ESTIMATED distinct.
+4. Responsive navigation for desktop/tablet/mobile layouts.
+
+Dashboard fact queries are period-scoped to avoid accidental cross-history reads and to respect Supabase Data API row limits.
+
 ## Security
 
 Client builds use only the Supabase publishable key. Never put a service-role or secret key in the application.
@@ -50,20 +61,22 @@ Client builds use only the Supabase publishable key. Never put a service-role or
 Build-time configuration:
 
 ```bash
-flutter run   --dart-define=SUPABASE_URL=https://ybepaqmrrgsaeqnqrsrf.supabase.co   --dart-define=SUPABASE_PUBLISHABLE_KEY=...
+flutter run \
+  --dart-define=SUPABASE_URL=https://ybepaqmrrgsaeqnqrsrf.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=...
 ```
 
 For production, provide credentials through the deployment/build environment. Do not commit secrets.
 
 ## Database contract
 
-The application models the live database schema rather than assumptions from the Excel workbooks. In particular, POMDAM identity is resolved by database IDs/canonical codes; Flutter does not parse Roman numerals or source variants.
+The application models the live database schema rather than assumptions from the Excel workbooks. POMDAM identity is resolved by database IDs/canonical codes; Flutter does not parse Roman numerals or source variants.
 
 See `docs/DATABASE_CONTRACT.md`.
 
 ## Local bootstrap
 
-This repository currently contains the application source baseline. Generate Flutter platform runner files with the installed stable Flutter SDK:
+Generate platform runner files with the installed stable Flutter SDK:
 
 ```bash
 flutter create . --platforms=android,web,windows
@@ -72,8 +85,8 @@ flutter analyze
 flutter test
 ```
 
-Target baseline: Flutter stable 3.47.x. The current package pins are recorded in `pubspec.yaml`.
+CI currently validates with Flutter 3.47.3.
 
 ## Data access note
 
-At repository bootstrap time, the database's public tables have RLS enabled but no anon/authenticated SELECT policies were available for the application to use. The Flutter client intentionally does not bypass RLS. Database access policy work must be completed in the database/security workstream before live dashboard data can be consumed by the client.
+At repository bootstrap time, the database's public reporting tables had RLS enabled but no anon/authenticated SELECT policies were available to the client. The Flutter client intentionally does not bypass RLS. Database access policies must be completed in the database/security workstream before live client queries can return reporting data.
