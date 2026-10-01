@@ -96,8 +96,28 @@ class AppShell extends StatelessWidget {
           PopupMenuButton<String>(
             tooltip: 'Akun',
             onSelected: (value) async {
-              if (value == 'sign_out') {
-                await Supabase.instance.client.auth.signOut();
+              if (value != 'sign_out') return;
+
+              final client = Supabase.instance.client;
+              try {
+                await client.auth.signOut(scope: SignOutScope.local);
+              } catch (error) {
+                // Supabase can report session_not_found when the local session
+                // has already been invalidated server-side. Treat that state
+                // as an idempotent sign-out; surface only real failures.
+                if (client.auth.currentSession != null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error is AuthException
+                            ? error.message
+                            : 'Gagal keluar. Periksa koneksi lalu coba lagi.',
+                      ),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
               }
             },
             itemBuilder: (context) => [
