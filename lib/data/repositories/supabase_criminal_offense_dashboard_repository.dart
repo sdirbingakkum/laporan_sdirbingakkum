@@ -203,7 +203,7 @@ final class SupabaseCriminalOffenseDashboardRepository
 
         if (version == null) {
           throw DataAccessException(
-            'Criminal offense version ${versionId} tidak ditemukan.',
+            'Criminal offense version $versionId tidak ditemukan.',
           );
         }
 
@@ -216,7 +216,7 @@ final class SupabaseCriminalOffenseDashboardRepository
 
         if (offense == null) {
           throw DataAccessException(
-            'Criminal offense ${offenseId} tidak ditemukan.',
+            'Criminal offense $offenseId tidak ditemukan.',
           );
         }
 
