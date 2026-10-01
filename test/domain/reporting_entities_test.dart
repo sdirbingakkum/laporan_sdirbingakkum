@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../lib/domain/entities/reference_entities.dart';
-import '../../lib/domain/entities/reporting_entities.dart';
+import 'package:laporan_sdirbingakkum/domain/entities/reference_entities.dart';
+import 'package:laporan_sdirbingakkum/domain/entities/reporting_entities.dart';
 
 void main() {
   test('report summary exposes integrity and status semantics', () {
