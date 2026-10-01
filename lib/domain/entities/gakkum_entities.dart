@@ -47,6 +47,7 @@ final class GakkumActivityMetric {
     required this.notReportedCount,
     required this.invalidSourceCount,
     required this.estimatedCount,
+    required this.missingValueCount,
   });
 
   final String activityVersionId;
@@ -62,6 +63,7 @@ final class GakkumActivityMetric {
   final int notReportedCount;
   final int invalidSourceCount;
   final int estimatedCount;
+  final int missingValueCount;
 
   int get recordCount =>
       validCount + notReportedCount + invalidSourceCount + estimatedCount;
@@ -80,6 +82,7 @@ final class GakkumDashboardSnapshot {
     required this.notReportedCount,
     required this.invalidSourceCount,
     required this.estimatedCount,
+    required this.missingValueCount,
     required this.activities,
   });
 
@@ -94,6 +97,7 @@ final class GakkumDashboardSnapshot {
   final int notReportedCount;
   final int invalidSourceCount;
   final int estimatedCount;
+  final int missingValueCount;
   final List<GakkumActivityMetric> activities;
 
   int get nonConfirmedCount =>
@@ -130,7 +134,8 @@ final class GakkumDashboardSnapshot {
         .toList(growable: false)
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
 
-    final taxonomyVersions = selected.map((point) => point.taxonomyVersion).toSet();
+    final taxonomyVersions =
+        selected.map((point) => point.taxonomyVersion).toSet();
 
     var validTotal = 0;
     var estimatedTotal = 0;
@@ -138,6 +143,7 @@ final class GakkumDashboardSnapshot {
     var notReportedCount = 0;
     var invalidSourceCount = 0;
     var estimatedCount = 0;
+    var missingValueCount = 0;
 
     for (final metric in metrics) {
       validTotal += metric.validTotal;
@@ -146,6 +152,7 @@ final class GakkumDashboardSnapshot {
       notReportedCount += metric.notReportedCount;
       invalidSourceCount += metric.invalidSourceCount;
       estimatedCount += metric.estimatedCount;
+      missingValueCount += metric.missingValueCount;
     }
 
     return GakkumDashboardSnapshot(
@@ -161,6 +168,7 @@ final class GakkumDashboardSnapshot {
       notReportedCount: notReportedCount,
       invalidSourceCount: invalidSourceCount,
       estimatedCount: estimatedCount,
+      missingValueCount: missingValueCount,
       activities: metrics,
     );
   }
@@ -191,19 +199,28 @@ final class _MetricAccumulator {
   int notReportedCount = 0;
   int invalidSourceCount = 0;
   int estimatedCount = 0;
+  int missingValueCount = 0;
 
   void add(GakkumDataPoint point) {
     switch (point.dataStatus) {
       case DataStatus.valid:
         validCount++;
-        validTotal += point.value ?? 0;
+        if (point.value == null) {
+          missingValueCount++;
+        } else {
+          validTotal += point.value!;
+        }
       case DataStatus.notReported:
         notReportedCount++;
       case DataStatus.invalidSource:
         invalidSourceCount++;
       case DataStatus.estimated:
         estimatedCount++;
-        estimatedTotal += point.value ?? 0;
+        if (point.value == null) {
+          missingValueCount++;
+        } else {
+          estimatedTotal += point.value!;
+        }
     }
   }
 
@@ -222,6 +239,7 @@ final class _MetricAccumulator {
       notReportedCount: notReportedCount,
       invalidSourceCount: invalidSourceCount,
       estimatedCount: estimatedCount,
+      missingValueCount: missingValueCount,
     );
   }
 }
