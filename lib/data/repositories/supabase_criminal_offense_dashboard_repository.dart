@@ -11,46 +11,20 @@ final class SupabaseCriminalOffenseDashboardRepository
 
   final SupabaseClient _client;
 
-  static const _pageSize = 500;
-
   @override
   Future<List<ReportPeriod>> getAvailablePeriods() async {
     try {
-      final periodIds = <String>{};
-      var offset = 0;
-
-      while (true) {
-        final page = await _client
-            .from('criminal_offense_records')
-            .select('period_id')
-            .order('period_id')
-            .range(offset, offset + _pageSize - 1);
-
-        periodIds.addAll(
-          page.map((row) => row['period_id'] as String),
-        );
-
-        if (page.length < _pageSize) {
-          break;
-        }
-        offset += _pageSize;
-      }
-
-      if (periodIds.isEmpty) {
-        return const [];
-      }
-
-      final periodRows = await _client
+      final response = await _client
           .from('report_periods')
           .select(
-            'id,period_type,period_start,period_end,period_label,report_year,fiscal_year,source_label,created_at',
+            'id,period_type,period_start,period_end,period_label,report_year,fiscal_year,source_label,created_at,criminal_offense_records!inner(id)',
           )
-          .order('period_start', ascending: false);
+          .order('period_start', ascending: false)
+          .limit(1, referencedTable: 'criminal_offense_records');
 
       return [
-        for (final row in periodRows)
-          if (periodIds.contains(row['id']))
-            ReportPeriod.fromMap(Map<String, dynamic>.from(row)),
+        for (final row in response)
+          ReportPeriod.fromMap(Map<String, dynamic>.from(row)),
       ];
     } on PostgrestException catch (error) {
       throw DataAccessException(
@@ -96,135 +70,69 @@ final class SupabaseCriminalOffenseDashboardRepository
   }
 
   @override
-  Future<List<CriminalOffenseDataPoint>> getDataPoints({
+  Future<CriminalOffenseDashboardSnapshot> getDashboard({
     required String periodId,
     required String sourcePeriod,
     String? pomdamId,
     String? personnelCategoryId,
   }) async {
     try {
-      final recordRows = <Map<String, dynamic>>[];
-      var offset = 0;
+      final rows = await _client.rpc(
+        'get_criminal_offense_dashboard',
+        params: {
+          'p_period_id': periodId,
+          'p_source_period': sourcePeriod,
+          'p_pomdam_id': pomdamId,
+          'p_personnel_category_id': personnelCategoryId,
+        },
+      );
 
-      while (true) {
-        var query = _client.from('criminal_offense_records').select(
-              'id,period_id,pomdam_id,criminal_offense_version_id,personnel_category_id,value,data_status,source_cell_id,notes',
-            );
+      final metrics = <CriminalOffenseMetric>[
+        for (final raw in rows)
+          _toMetric(Map<String, dynamic>.from(raw)),
+      ];
 
-        query = query.eq('period_id', periodId);
+      metrics.sort((a, b) {
+        final order = a.displayOrder.compareTo(b.displayOrder);
+        if (order != 0) return order;
+        return a.sourceNumber.compareTo(b.sourceNumber);
+      });
 
-        if (pomdamId != null) {
-          query = query.eq('pomdam_id', pomdamId);
-        }
+      var recordCount = 0;
+      var validTotal = 0;
+      var validCount = 0;
+      var notReportedCount = 0;
+      var invalidSourceCount = 0;
+      var estimatedTotal = 0;
+      var estimatedCount = 0;
+      var missingValueCount = 0;
 
-        if (personnelCategoryId != null) {
-          query = query.eq('personnel_category_id', personnelCategoryId);
-        }
-
-        final page = await query
-            .order('criminal_offense_version_id')
-            .order('pomdam_id')
-            .order('personnel_category_id')
-            .order('id')
-            .range(offset, offset + _pageSize - 1);
-
-        recordRows.addAll(
-          page.map((row) => Map<String, dynamic>.from(row)),
-        );
-
-        if (page.length < _pageSize) {
-          break;
-        }
-        offset += _pageSize;
+      for (final metric in metrics) {
+        recordCount += metric.recordCount;
+        validTotal += metric.validTotal;
+        validCount += metric.validCount;
+        notReportedCount += metric.notReportedCount;
+        invalidSourceCount += metric.invalidSourceCount;
+        estimatedTotal += metric.estimatedTotal;
+        estimatedCount += metric.estimatedCount;
+        missingValueCount += metric.missingValueCount;
       }
 
-      if (recordRows.isEmpty) {
-        return const [];
-      }
-
-      final versionIds = recordRows
-          .map((row) => row['criminal_offense_version_id'] as String)
-          .toSet()
-          .toList(growable: false);
-
-      final versionRows = await _client
-          .from('criminal_offense_versions')
-          .select(
-            'id,offense_id,source_number,source_label,source_period,display_order',
-          )
-          .inFilter('id', versionIds);
-
-      final versions = <String, Map<String, dynamic>>{
-        for (final row in versionRows)
-          row['id'] as String: Map<String, dynamic>.from(row),
-      };
-
-      final offenseIds = versions.values
-          .map((version) => version['offense_id'] as String)
-          .toSet()
-          .toList(growable: false);
-
-      final offenseRows = await _client
-          .from('criminal_offenses')
-          .select('id,canonical_key,canonical_name,active')
-          .inFilter('id', offenseIds);
-
-      final offenses = <String, Map<String, dynamic>>{
-        for (final row in offenseRows)
-          row['id'] as String: Map<String, dynamic>.from(row),
-      };
-
-      final points = <CriminalOffenseDataPoint>[];
-
-      for (final record in recordRows) {
-        final versionId = record['criminal_offense_version_id'] as String;
-        final version = versions[versionId];
-
-        if (version == null) {
-          throw DataAccessException(
-            'Criminal offense version $versionId tidak ditemukan.',
-          );
-        }
-
-        if (version['source_period'] != sourcePeriod) {
-          continue;
-        }
-
-        final offenseId = version['offense_id'] as String;
-        final offense = offenses[offenseId];
-
-        if (offense == null) {
-          throw DataAccessException(
-            'Criminal offense $offenseId tidak ditemukan.',
-          );
-        }
-
-        points.add(
-          CriminalOffenseDataPoint(
-            recordId: record['id'] as String,
-            periodId: record['period_id'] as String,
-            pomdamId: record['pomdam_id'] as String,
-            offenseVersionId: versionId,
-            personnelCategoryId:
-                record['personnel_category_id'] as String,
-            offenseId: offenseId,
-            canonicalKey: offense['canonical_key'] as String,
-            canonicalName: offense['canonical_name'] as String,
-            sourceNumber: (version['source_number'] as num).toInt(),
-            sourceLabel: version['source_label'] as String,
-            sourcePeriod: version['source_period'] as String?,
-            displayOrder: (version['display_order'] as num).toInt(),
-            value: (record['value'] as num?)?.toInt(),
-            dataStatus: DataStatus.fromDatabase(
-              record['data_status'] as String,
-            ),
-            sourceCellId: record['source_cell_id'] as String?,
-            notes: record['notes'] as String?,
-          ),
-        );
-      }
-
-      return points;
+      return CriminalOffenseDashboardSnapshot(
+        periodId: periodId,
+        pomdamId: pomdamId,
+        personnelCategoryId: personnelCategoryId,
+        sourcePeriod: sourcePeriod,
+        recordCount: recordCount,
+        validTotal: validTotal,
+        validCount: validCount,
+        notReportedCount: notReportedCount,
+        invalidSourceCount: invalidSourceCount,
+        estimatedTotal: estimatedTotal,
+        estimatedCount: estimatedCount,
+        missingValueCount: missingValueCount,
+        metrics: metrics,
+      );
     } on PostgrestException catch (error) {
       throw DataAccessException(
         'Gagal membaca data Tindak Pidana: ${error.message}',
@@ -234,5 +142,25 @@ final class SupabaseCriminalOffenseDashboardRepository
         'Gagal membaca data Tindak Pidana dari Supabase. Periksa akses Data API/RLS untuk client.',
       );
     }
+  }
+
+  CriminalOffenseMetric _toMetric(Map<String, dynamic> row) {
+    return CriminalOffenseMetric(
+      offenseVersionId: row['offense_version_id'] as String,
+      offenseId: row['offense_id'] as String,
+      canonicalKey: row['canonical_key'] as String,
+      canonicalName: row['canonical_name'] as String,
+      sourceNumber: (row['source_number'] as num).toInt(),
+      sourceLabel: row['source_label'] as String,
+      sourcePeriod: row['source_period'] as String?,
+      displayOrder: (row['display_order'] as num).toInt(),
+      validTotal: (row['valid_total'] as num).toInt(),
+      validCount: (row['valid_count'] as num).toInt(),
+      notReportedCount: (row['not_reported_count'] as num).toInt(),
+      invalidSourceCount: (row['invalid_source_count'] as num).toInt(),
+      estimatedTotal: (row['estimated_total'] as num).toInt(),
+      estimatedCount: (row['estimated_count'] as num).toInt(),
+      missingValueCount: (row['missing_value_count'] as num).toInt(),
+    );
   }
 }
