@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../application/providers/reference_data_providers.dart';
-import '../presentation/pages/login_page.dart';
 import '../presentation/router/app_router.dart';
 
 class LaporanSdirbinGakkumApp extends ConsumerWidget {
@@ -37,27 +35,11 @@ class LaporanSdirbinGakkumApp extends ConsumerWidget {
       );
     }
 
-    final supabase = Supabase.instance.client;
-
-    return StreamBuilder<AuthState>(
-      stream: supabase.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        if (supabase.auth.currentSession == null) {
-          return MaterialApp(
-            title: 'Laporan Sdirbin Gakkum',
-            debugShowCheckedModeBanner: false,
-            theme: theme,
-            home: const LoginPage(),
-          );
-        }
-
-        return MaterialApp.router(
-          title: 'Laporan Sdirbin Gakkum',
-          debugShowCheckedModeBanner: false,
-          theme: theme,
-          routerConfig: ref.watch(appRouterProvider),
-        );
-      },
+    return MaterialApp.router(
+      title: 'Laporan Sdirbin Gakkum',
+      debugShowCheckedModeBanner: false,
+      theme: theme,
+      routerConfig: ref.watch(appRouterProvider),
     );
   }
 }

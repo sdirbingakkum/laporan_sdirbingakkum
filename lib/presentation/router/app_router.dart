@@ -1,15 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../pages/criminal_offense_page.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/data_quality_page.dart';
 import '../pages/gakkum_page.dart';
-import '../pages/pomdam_page.dart';
-import '../pages/reports_page.dart';
-import '../pages/provos_page.dart';
 import '../pages/laka_page.dart';
-import '../pages/criminal_offense_page.dart';
+import '../pages/login_page.dart';
+import '../pages/pomdam_page.dart';
+import '../pages/provos_page.dart';
+import '../pages/reports_page.dart';
 import '../pages/sim_tni_page.dart';
 import '../pages/violation_page.dart';
 import '../shell/app_shell.dart';
@@ -31,6 +35,7 @@ String _initialWebLocation() {
 
   const knownRoutes = {
     '/',
+    '/login',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -45,10 +50,64 @@ String _initialWebLocation() {
   return knownRoutes.contains(path) ? path : '/';
 }
 
+String _loginLocationFor(String path) {
+  return Uri(
+    path: '/login',
+    queryParameters: {'returnTo': path},
+  ).toString();
+}
+
+String? _safeReturnPath(String? value) {
+  if (value == null || value.isEmpty || !value.startsWith('/') || value.startsWith('//')) {
+    return null;
+  }
+
+  const allowedRoutes = {
+    '/',
+    '/gakkum',
+    '/pelanggaran',
+    '/sim-tni',
+    '/provos',
+    '/laka-lalin',
+    '/tindak-pidana',
+    '/pomdam',
+    '/reports',
+    '/data-quality',
+  };
+
+  return allowedRoutes.contains(value) ? value : null;
+}
+
+String? _authRedirect(GoRouterState state) {
+  final authenticated = Supabase.instance.client.auth.currentSession != null;
+  final location = state.uri.path;
+
+  if (!authenticated && location != '/login') {
+    return _loginLocationFor(location);
+  }
+
+  if (authenticated && location == '/login') {
+    return _safeReturnPath(state.uri.queryParameters['returnTo']) ?? '/';
+  }
+
+  return null;
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authRefresh = _AuthRefreshNotifier(
+    Supabase.instance.client.auth.onAuthStateChange,
+  );
+  ref.onDispose(authRefresh.dispose);
+
   return GoRouter(
     initialLocation: _initialWebLocation(),
+    refreshListenable: authRefresh,
+    redirect: (context, state) => _authRedirect(state),
     routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return AppShell(
@@ -102,3 +161,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+final class _AuthRefreshNotifier extends ChangeNotifier {
+  _AuthRefreshNotifier(Stream<AuthState> authStateStream) {
+    _subscription = authStateStream.listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
