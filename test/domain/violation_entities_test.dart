@@ -22,6 +22,7 @@ void main() {
           displayOrder: 1,
           value: 4,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
         ViolationDataPoint(
@@ -40,6 +41,7 @@ void main() {
           displayOrder: 1,
           value: 9,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
       ];
@@ -75,6 +77,7 @@ void main() {
           displayOrder: 11,
           value: 3,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
         ViolationDataPoint(
@@ -93,6 +96,7 @@ void main() {
           displayOrder: 11,
           value: 5,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
       ];
@@ -131,6 +135,7 @@ void main() {
           displayOrder: 1,
           value: null,
           dataStatus: DataStatus.notReported,
+sourceCellId: 'cell',
           notes: null,
         ),
         ViolationDataPoint(
@@ -149,6 +154,7 @@ void main() {
           displayOrder: 2,
           value: 0,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
       ];
