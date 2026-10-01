@@ -17,6 +17,7 @@ final class ViolationDataPoint {
     required this.displayOrder,
     required this.value,
     required this.dataStatus,
+    required this.sourceCellId,
     required this.notes,
   });
 
@@ -35,6 +36,7 @@ final class ViolationDataPoint {
   final int? displayOrder;
   final int? value;
   final DataStatus dataStatus;
+  final String? sourceCellId;
   final String? notes;
 }
 
