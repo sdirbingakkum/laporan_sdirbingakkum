@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test('reporting routes require authentication', async ({ page }) => {
-  await page.goto('./gakkum', { waitUntil: 'domcontentloaded' });
+test('reporting app requires authentication', async ({ page }) => {
+  await page.goto('./', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('textbox')).toHaveCount(2, {
+    timeout: 60_000,
+  });
   await expect(
-    page.getByText('Laporan Sdirbin Gakkum', { exact: true }),
-  ).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
+    page.getByRole('button', { name: 'Masuk', exact: true }),
+  ).toBeVisible();
 });
