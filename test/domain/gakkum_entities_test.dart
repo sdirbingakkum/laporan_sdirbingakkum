@@ -47,7 +47,10 @@ void main() {
 
       expect(levelOne.recordCount, 1);
       expect(levelOne.validTotal, 60);
-      expect(levelOne.activities.single.activityCode, 'PATROLI_BERKENDARAAN');
+      expect(
+        levelOne.activities.single.activityCode,
+        'PATROLI_BERKENDARAAN',
+      );
     });
 
     test('keeps not reported separate from zero', () {
@@ -94,6 +97,35 @@ void main() {
       expect(snapshot.validTotal, 0);
       expect(snapshot.validCount, 1);
       expect(snapshot.notReportedCount, 1);
+    });
+
+    test('does not turn a missing valid value into zero', () {
+      final point = GakkumDataPoint(
+        recordId: '1',
+        periodId: 'period',
+        pomdamId: 'pomdam',
+        activityVersionId: 'activity',
+        activityCode: 'A',
+        activityName: 'A',
+        sourceLabel: 'A',
+        level: 1,
+        displayOrder: 1,
+        taxonomyVersion: 'CURRENT_2026',
+        value: null,
+        dataStatus: DataStatus.valid,
+        notes: null,
+      );
+
+      final snapshot = GakkumDashboardSnapshot.fromDataPoints(
+        periodId: 'period',
+        pomdamId: 'pomdam',
+        level: 1,
+        dataPoints: [point],
+      );
+
+      expect(snapshot.validCount, 1);
+      expect(snapshot.validTotal, 0);
+      expect(snapshot.missingValueCount, 1);
     });
   });
 }
