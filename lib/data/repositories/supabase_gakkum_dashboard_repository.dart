@@ -11,25 +11,43 @@ final class SupabaseGakkumDashboardRepository
 
   final SupabaseClient _client;
 
+  static const _pageSize = 500;
+
   @override
   Future<List<GakkumDataPoint>> getDataPoints({
     required String periodId,
     String? pomdamId,
   }) async {
     try {
-      var recordsQuery = _client.from('gakkum_records').select(
-            'id,period_id,pomdam_id,activity_version_id,value,data_status,notes',
-          );
+      final recordRows = <Map<String, dynamic>>[];
+      var offset = 0;
 
-      recordsQuery = recordsQuery.eq('period_id', periodId);
+      while (true) {
+        var recordsQuery = _client.from('gakkum_records').select(
+              'id,period_id,pomdam_id,activity_version_id,value,data_status,notes',
+            );
 
-      if (pomdamId != null) {
-        recordsQuery = recordsQuery.eq('pomdam_id', pomdamId);
+        recordsQuery = recordsQuery.eq('period_id', periodId);
+
+        if (pomdamId != null) {
+          recordsQuery = recordsQuery.eq('pomdam_id', pomdamId);
+        }
+
+        final page = await recordsQuery
+            .order('activity_version_id')
+            .order('pomdam_id')
+            .range(offset, offset + _pageSize - 1);
+
+        recordRows.addAll(
+          page.map((row) => Map<String, dynamic>.from(row)),
+        );
+
+        if (page.length < _pageSize) {
+          break;
+        }
+
+        offset += _pageSize;
       }
-
-      final recordResponse = await recordsQuery
-          .order('activity_version_id')
-          .order('pomdam_id');
 
       final versionResponse = await _client
           .from('gakkum_activity_versions')
@@ -53,12 +71,7 @@ final class SupabaseGakkumDashboardRepository
       };
 
       return [
-        for (final raw in recordResponse)
-          _toDataPoint(
-            Map<String, dynamic>.from(raw),
-            versions,
-            activities,
-          ),
+        for (final raw in recordRows) _toDataPoint(raw, versions, activities),
       ];
     } on PostgrestException catch (error) {
       throw DataAccessException(
