@@ -1,0 +1,29 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# Configuration / secrets
+config/*.json
+!config/supabase.example.json
+*.env
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
