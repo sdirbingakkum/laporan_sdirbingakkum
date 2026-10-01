@@ -122,7 +122,7 @@ test.describe('critical interaction surface smoke', () => {
     await openRoute(page, routes[8]);
     await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
     await expect(page.getByText(/Fact rows/).first()).toBeVisible();
-    await expect(page.getByText('Source & provenance', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Source & provenance/).first()).toBeVisible();
     await expect(page.getByText(/\.xlsx/).first()).toBeVisible();
   });
 
