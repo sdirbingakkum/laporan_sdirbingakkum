@@ -50,6 +50,20 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Wait for GitHub Pages to become available
+        env:
+          BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
+        run: |
+          for attempt in $(seq 1 30); do
+            status="$(curl -L -s -o /dev/null -w '%{http_code}' "$BASE_URL")"
+            echo "attempt=$attempt http_status=$status"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::GitHub Pages did not return HTTP 200 within 150 seconds"
+          exit 1
 
       - name: Run Playwright E2E
         env:
