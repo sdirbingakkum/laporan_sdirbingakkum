@@ -5,15 +5,15 @@ const SMOKE_ASSERTION_TIMEOUT = 15_000;
 
 const routes = [
   { url: './', pathname: '/laporan_sdirbingakkum/', heading: 'Dashboard' },
-  { url: './gakkum/', pathname: '/laporan_sdirbingakkum/gakkum/', heading: 'Giat Gakkum' },
-  { url: './pelanggaran/', pathname: '/laporan_sdirbingakkum/pelanggaran/', heading: 'Pelanggaran' },
-  { url: './sim-tni/', pathname: '/laporan_sdirbingakkum/sim-tni/', heading: 'SIM TNI' },
-  { url: './provos/', pathname: '/laporan_sdirbingakkum/provos/', heading: 'Provos' },
-  { url: './laka-lalin/', pathname: '/laporan_sdirbingakkum/laka-lalin/', heading: 'Laka Lalin' },
-  { url: './tindak-pidana/', pathname: '/laporan_sdirbingakkum/tindak-pidana/', heading: 'Tindak Pidana' },
-  { url: './pomdam/', pathname: '/laporan_sdirbingakkum/pomdam/', heading: 'POMDAM' },
-  { url: './reports/', pathname: '/laporan_sdirbingakkum/reports/', heading: 'Metadata laporan' },
-  { url: './data-quality/', pathname: '/laporan_sdirbingakkum/data-quality/', heading: 'Data quality contract' },
+  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Gakkum' },
+  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
+  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
+  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
+  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
+  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
+  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
+  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Laporan' },
+  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data Quality' },
 ];
 
 test.beforeEach(async ({ request }) => {
@@ -79,21 +79,21 @@ test.describe('deep-link route smoke', () => {
 test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
     await openRoute(page, routes[3]);
-    await expect(page.getByRole('combobox', { name: 'Periode', exact: true })).toBeVisible();
-    await expect(page.getByRole('combobox', { name: 'POMDAM', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Periode\\b/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^POMDAM\\b/ })).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
     await openRoute(page, routes[6]);
     for (const label of ['Periode', 'Sumber versi', 'POMDAM', 'Personel']) {
-      await expect(page.getByRole('combobox', { name: label, exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: new RegExp('^' + label + '\\b') })).toBeVisible();
     }
   });
 
   test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
     await openRoute(page, routes[1]);
-    await expect(page.getByRole('combobox', { name: 'Periode', exact: true })).toBeVisible();
-    await expect(page.getByRole('combobox', { name: 'POMDAM', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Periode\\b/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^POMDAM\\b/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 2', exact: true })).toBeVisible();
   });
@@ -101,7 +101,7 @@ test.describe('critical interaction surface smoke', () => {
   test('Pelanggaran exposes period, POMDAM, personel, and category controls', async ({ page }) => {
     await openRoute(page, routes[2]);
     for (const label of ['Periode', 'POMDAM', 'Personel']) {
-      await expect(page.getByRole('combobox', { name: label, exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: new RegExp('^' + label + '\\b') })).toBeVisible();
     }
     await expect(page.getByRole('button', { name: 'Semua kategori', exact: true })).toBeVisible();
   });
