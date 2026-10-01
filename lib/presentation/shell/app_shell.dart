@@ -19,6 +19,12 @@ class AppShell extends StatelessWidget {
       selectedIcon: Icons.dashboard,
     ),
     _NavItem(
+      path: '/gakkum',
+      label: 'Gakkum',
+      icon: Icons.gavel_outlined,
+      selectedIcon: Icons.gavel,
+    ),
+    _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
@@ -68,7 +74,7 @@ class AppShell extends StatelessWidget {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final desktop = constraints.maxWidth >= 900;
+          final desktop = constraints.maxWidth >= 1000;
 
           if (desktop) {
             return Row(
@@ -99,7 +105,7 @@ class AppShell extends StatelessWidget {
       ),
       bottomNavigationBar: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth >= 900) {
+          if (constraints.maxWidth >= 1000) {
             return const SizedBox.shrink();
           }
 
@@ -113,7 +119,7 @@ class AppShell extends StatelessWidget {
                 NavigationDestination(
                   icon: Icon(item.icon),
                   selectedIcon: Icon(item.selectedIcon),
-                  label: item.label,
+                  label: Text(item.label),
                 ),
             ],
           );
