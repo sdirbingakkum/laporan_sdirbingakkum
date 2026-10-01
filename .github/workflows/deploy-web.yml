@@ -81,3 +81,11 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  e2e:
+    name: E2E Staging
+    needs: deploy
+    uses: ./.github/workflows/e2e-staging.yml
+    secrets:
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}

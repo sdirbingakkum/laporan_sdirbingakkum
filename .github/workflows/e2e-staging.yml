@@ -1,33 +1,26 @@
 name: E2E Staging
 
 on:
-  workflow_run:
-    workflows:
-      - Deploy Flutter Web
-    types:
-      - completed
+  workflow_call:
+    secrets:
+      E2E_EMAIL:
+        required: true
+      E2E_PASSWORD:
+        required: true
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: e2e-staging
-  cancel-in-progress: false
 
 jobs:
   e2e:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout deployed commit
+      - name: Checkout tested commit
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -53,7 +46,7 @@ jobs:
       - name: Wait for deployed commit to become available
         env:
           BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          EXPECTED_SHA: ${{ github.sha }}
         run: |
           for attempt in $(seq 1 30); do
             status="$(curl -L -s -o /tmp/deployment.json -w '%{http_code}' "$BASE_URL/deployment.json")"
@@ -75,7 +68,7 @@ jobs:
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           PLAYWRIGHT_TEST_BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
-          E2E_EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          E2E_EXPECTED_SHA: ${{ github.sha }}
         run: npm run e2e
 
       - name: Upload Playwright report
