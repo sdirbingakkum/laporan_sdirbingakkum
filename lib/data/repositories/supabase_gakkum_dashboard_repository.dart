@@ -75,7 +75,7 @@ final class SupabaseGakkumDashboardRepository
       ];
     } on PostgrestException catch (error) {
       throw DataAccessException(
-        'Gagal membaca data Gakkum: ' + error.message,
+        'Gagal membaca data Gakkum: ${error.message}',
       );
     } on Object {
       throw const DataAccessException(
@@ -103,7 +103,7 @@ final class SupabaseGakkumDashboardRepository
 
     if (activity == null) {
       throw DataAccessException(
-        'Activity ' + activityId + ' tidak ditemukan.',
+        'Activity ${activityId} tidak ditemukan.',
       );
     }
 
