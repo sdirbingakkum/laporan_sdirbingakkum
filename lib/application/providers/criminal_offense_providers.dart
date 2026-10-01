@@ -43,19 +43,11 @@ final criminalOffenseDashboardProvider = FutureProvider.autoDispose.family<
     CriminalOffenseDashboardSnapshot,
     CriminalOffenseDashboardQuery>((ref, query) async {
   final repository = ref.watch(criminalOffenseDashboardRepositoryProvider);
-  final dataPoints = await repository.getDataPoints(
+  return repository.getDashboard(
     periodId: query.periodId,
     sourcePeriod: query.sourcePeriod,
     pomdamId: query.pomdamId,
     personnelCategoryId: query.personnelCategoryId,
-  );
-
-  return CriminalOffenseDashboardSnapshot.fromDataPoints(
-    periodId: query.periodId,
-    pomdamId: query.pomdamId,
-    personnelCategoryId: query.personnelCategoryId,
-    sourcePeriod: query.sourcePeriod,
-    dataPoints: dataPoints,
   );
 });
 
