@@ -68,43 +68,22 @@ final class SupabaseCriminalOffenseDashboardRepository
     required String periodId,
   }) async {
     try {
-      final versionIds = <String>{};
-      var offset = 0;
-
-      while (true) {
-        final page = await _client
-            .from('criminal_offense_records')
-            .select('criminal_offense_version_id')
-            .eq('period_id', periodId)
-            .order('criminal_offense_version_id')
-            .range(offset, offset + _pageSize - 1);
-
-        versionIds.addAll(
-          page.map((row) => row['criminal_offense_version_id'] as String),
-        );
-
-        if (page.length < _pageSize) {
-          break;
-        }
-        offset += _pageSize;
-      }
-
-      if (versionIds.isEmpty) {
-        return const [];
-      }
-
-      final versions = await _client
+      final rows = await _client
           .from('criminal_offense_versions')
-          .select('id,source_period')
-          .inFilter('id', versionIds.toList());
+          .select(
+            'id,source_period,criminal_offense_records!inner(id)',
+          )
+          .eq('criminal_offense_records.period_id', periodId)
+          .not('source_period', 'is', null)
+          .order('source_period')
+          .limit(1, referencedTable: 'criminal_offense_records');
 
-      final sourcePeriods = {
-        for (final row in versions)
-          if (row['source_period'] != null) row['source_period'] as String,
-      }.toList()
+      return rows
+          .map((row) => row['source_period'] as String?)
+          .whereType<String>()
+          .toSet()
+          .toList(growable: false)
         ..sort();
-
-      return sourcePeriods;
     } on PostgrestException catch (error) {
       throw DataAccessException(
         'Gagal membaca sumber versi Tindak Pidana: ${error.message}',
