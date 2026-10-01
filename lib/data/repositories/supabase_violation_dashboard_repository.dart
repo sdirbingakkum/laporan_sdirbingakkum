@@ -30,7 +30,7 @@ final class SupabaseViolationDashboardRepository
       ];
     } on PostgrestException catch (error) {
       throw DataAccessException(
-        'Gagal membaca periode Pelanggaran: ' + error.message,
+        'Gagal membaca periode Pelanggaran: ${error.message}',
       );
     } on Object {
       throw const DataAccessException(
@@ -53,7 +53,7 @@ final class SupabaseViolationDashboardRepository
           .toList(growable: false);
     } on PostgrestException catch (error) {
       throw DataAccessException(
-        'Gagal membaca kategori Pelanggaran: ' + error.message,
+        'Gagal membaca kategori Pelanggaran: ${error.message}',
       );
     } on Object {
       throw const DataAccessException(
@@ -134,7 +134,7 @@ final class SupabaseViolationDashboardRepository
       ];
     } on PostgrestException catch (error) {
       throw DataAccessException(
-        'Gagal membaca data Pelanggaran: ' + error.message,
+        'Gagal membaca data Pelanggaran: ${error.message}',
       );
     } on Object {
       throw const DataAccessException(
@@ -162,7 +162,7 @@ final class SupabaseViolationDashboardRepository
 
     if (violation == null) {
       throw DataAccessException(
-        'Violation ' + violationId + ' tidak ditemukan.',
+        'Violation ${violationId} tidak ditemukan.',
       );
     }
 
