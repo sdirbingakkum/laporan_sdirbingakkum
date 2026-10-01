@@ -8,7 +8,7 @@ abstract interface class CriminalOffenseDashboardRepository {
     required String periodId,
   });
 
-  Future<List<CriminalOffenseDataPoint>> getDataPoints({
+  Future<CriminalOffenseDashboardSnapshot> getDashboard({
     required String periodId,
     required String sourcePeriod,
     String? pomdamId,
