@@ -148,8 +148,12 @@ final class SupabaseLakaDashboardRepository
       final damageId = raw['material_damage_type_id'] as String;
       final vehicle = vehicles[vehicleId];
       final damage = damages[damageId];
-      if (vehicle == null) throw DataAccessException('Vehicle category $vehicleId tidak ditemukan.');
-      if (damage == null) throw DataAccessException('Material damage type $damageId tidak ditemukan.');
+      if (vehicle == null) {
+        throw DataAccessException('Vehicle category $vehicleId tidak ditemukan.');
+      }
+      if (damage == null) {
+        throw DataAccessException('Material damage type $damageId tidak ditemukan.');
+      }
       points.add(_point(
         row: raw,
         section: LakaSection.material,
