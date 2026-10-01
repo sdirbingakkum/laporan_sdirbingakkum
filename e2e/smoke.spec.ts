@@ -32,8 +32,8 @@ async function diagnostics(page: Page) {
 function filterButton(page: Page, label: string) {
   if (label === 'POMDAM') {
     return page.getByRole('button', {
-      name: /^POMDAM\s+.+$/,
-    }).filter({ hasText: /Semua POMDAM/ });
+      name: /^POMDAM\s+Semua POMDAM$/,
+    });
   }
 
   return page.getByRole('button', {
