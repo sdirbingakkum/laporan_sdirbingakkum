@@ -157,7 +157,7 @@ class _PomdamFilter extends StatelessWidget {
       ),
       error: (error, stackTrace) => SizedBox(
         width: 280,
-        child: Text('POMDAM tidak tersedia: ' + error.toString()),
+        child: Text('POMDAM tidak tersedia: ${error.toString()}'),
       ),
       data: (pomdams) => SizedBox(
         width: 280,
@@ -175,7 +175,7 @@ class _PomdamFilter extends StatelessWidget {
             for (final pomdam in pomdams)
               DropdownMenuItem<String?>(
                 value: pomdam.id,
-                child: Text(pomdam.code + ' · ' + pomdam.shortName),
+                child: Text('${pomdam.code} · ${pomdam.shortName}'),
               ),
           ],
           onChanged: onChanged,
@@ -206,7 +206,7 @@ class _PersonnelFilter extends StatelessWidget {
       error: (error, stackTrace) => SizedBox(
         width: 260,
         child: Text(
-          'Kategori personel tidak tersedia: ' + error.toString(),
+          'Kategori personel tidak tersedia: ${error.toString()}',
         ),
       ),
       data: (categories) => SizedBox(
@@ -251,7 +251,7 @@ class _CategoryFilter extends StatelessWidget {
     return state.when(
       loading: () => const LinearProgressIndicator(),
       error: (error, stackTrace) =>
-          Text('Kategori Pelanggaran tidak tersedia: ' + error.toString()),
+          Text('Kategori Pelanggaran tidak tersedia: ${error.toString()}'),
       data: (categories) => Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -397,7 +397,7 @@ class _ViolationRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 Text(
-                  'Sumber versi: ' + (metric.sourcePeriod ?? '—'),
+                  'Sumber versi: ${metric.sourcePeriod ?? '—'}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
