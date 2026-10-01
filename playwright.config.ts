@@ -20,7 +20,7 @@ export default defineConfig({
       'https://sdirbingakkum.github.io/laporan_sdirbingakkum/',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.CI ? 'off' : 'retain-on-failure',
     navigationTimeout: 30_000,
     actionTimeout: 15_000,
   },
