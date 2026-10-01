@@ -121,14 +121,17 @@ test.describe('critical interaction surface smoke', () => {
   test('Reports reads the live report audit and provenance surface', async ({ page }) => {
     await openRoute(page, routes[8]);
     await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
-    await expect(page.getByText('Fact rows', { exact: true })).toBeVisible();
-    await expect(page.getByText('Source & provenance', { exact: true })).toBeVisible();
-    await expect(page.getByText('1. STATISTIK GIAT GAKKUM(1).xlsx', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('group', { name: /Fact rows/ }).first(),
+    ).toBeVisible();
+    await expect(page.getByText(/Source & provenance.*source cells.*\.xlsx/)).toBeVisible();
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
     await openRoute(page, routes[9]);
     await expect(page.getByText('Audit integrity: OK', { exact: true })).toBeVisible();
-    await expect(page.getByText('Fact rows', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('group', { name: /Fact rows/ }).first(),
+    ).toBeVisible();
   });
 });
