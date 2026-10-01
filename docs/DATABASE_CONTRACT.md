@@ -1,6 +1,6 @@
 # Database Contract Snapshot
 
-Verified against Supabase project ybepaqmrrgsaeqnqrsrf on 2026-10-01.
+Verified against Supabase project ybepaqmrrgsaeqnqrsrf on 2026-10-02.
 
 ## pomdams
 
@@ -60,6 +60,20 @@ Supported data_status values:
 
 The application never collapses those statuses into zero.
 
+## Application provenance contract
+
+All six reporting domains now preserve `sourceCellId` through the data/domain boundary.
+
+The public reporting read model also exposes a restricted `report_provenance` projection for workbook/sheet/cell drill-down without exposing `private.source_cells`.
+
 ## Security snapshot
 
-At bootstrap time, the inspected public reporting tables had RLS enabled but no anon/authenticated SELECT policies available to the client. The Flutter client does not bypass RLS.
+Verified live:
+
+- all public tables have RLS enabled
+- no `anon` SELECT grants on public tables
+- authenticated reporting SELECT is explicit
+- anonymous Auth users are excluded by policy
+- provenance projection is authenticated-only
+
+Supabase Auth leaked-password protection remains a separate Auth configuration gate.
