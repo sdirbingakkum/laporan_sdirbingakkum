@@ -88,7 +88,8 @@ final class SupabaseReportingRepository implements ReportingRepository {
           )
           .eq('report_type_id', reportTypeId)
           .eq('period_id', selection.periodId)
-          .order('import_status')
+          .eq('import_status', 'IMPORTED')
+          .order('source_sheet_index')
           .order('source_sheet_index');
 
       if (sourceReports.isEmpty) {
