@@ -93,7 +93,7 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
                   error: (error, stackTrace) => SizedBox(
                     width: 280,
                     child: Text(
-                      'POMDAM tidak tersedia: ' + error.toString(),
+                      'POMDAM tidak tersedia: ${error.toString()}',
                     ),
                   ),
                   data: (pomdams) => SizedBox(
@@ -113,7 +113,7 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
                           DropdownMenuItem<String?>(
                             value: pomdam.id,
                             child: Text(
-                              pomdam.code + ' · ' + pomdam.shortName,
+                              '${pomdam.code} · ${pomdam.shortName}',
                             ),
                           ),
                       ],
