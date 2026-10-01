@@ -16,16 +16,16 @@ setup('authenticate staging user', async ({ page }) => {
   fs.mkdirSync('playwright/.auth', { recursive: true });
 
   await page.goto('./', { waitUntil: 'domcontentloaded' });
-  await expect(
-    page.getByText('Laporan Sdirbin Gakkum', { exact: true }),
-  ).toBeVisible();
 
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(password);
+  const textboxes = page.getByRole('textbox');
+  await expect(textboxes).toHaveCount(2, { timeout: 30_000 });
+
+  await textboxes.nth(0).fill(email);
+  await textboxes.nth(1).fill(password);
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
   await expect(
-    page.getByText('Ringkasan sistem laporan', { exact: true }),
+    page.getByRole('button', { name: 'Gakkum', exact: true }),
   ).toBeVisible({ timeout: 60_000 });
 
   await page.context().storageState({ path: authFile });
