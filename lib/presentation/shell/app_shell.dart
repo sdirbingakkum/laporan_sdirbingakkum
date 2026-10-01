@@ -38,6 +38,12 @@ class AppShell extends StatelessWidget {
       selectedIcon: Icons.badge,
     ),
     _NavItem(
+      path: '/provos',
+      label: 'Provos',
+      icon: Icons.shield_outlined,
+      selectedIcon: Icons.shield,
+    ),
+    _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
