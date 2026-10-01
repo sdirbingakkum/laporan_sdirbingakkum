@@ -14,6 +14,32 @@ final class SupabaseGakkumDashboardRepository
   static const _pageSize = 500;
 
   @override
+  Future<List<ReportPeriod>> getAvailablePeriods() async {
+    try {
+      final response = await _client
+          .from('report_periods')
+          .select(
+            'id,period_type,period_start,period_end,period_label,report_year,fiscal_year,source_label,created_at,gakkum_records!inner(id)',
+          )
+          .order('period_start', ascending: false)
+          .limit(1, referencedTable: 'gakkum_records');
+
+      return [
+        for (final row in response)
+          ReportPeriod.fromMap(Map<String, dynamic>.from(row)),
+      ];
+    } on PostgrestException catch (error) {
+      throw DataAccessException(
+        'Gagal membaca periode Gakkum: ${error.message}',
+      );
+    } on Object {
+      throw const DataAccessException(
+        'Gagal membaca periode Gakkum dari Supabase. Periksa akses Data API/RLS untuk client.',
+      );
+    }
+  }
+
+  @override
   Future<List<GakkumDataPoint>> getDataPoints({
     required String periodId,
     String? pomdamId,
