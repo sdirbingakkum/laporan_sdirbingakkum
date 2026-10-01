@@ -126,6 +126,31 @@ test.describe('critical interaction surface smoke', () => {
     await expect(page.getByText(/\.xlsx/).first()).toBeVisible();
   });
 
+
+  test('preserves a deep link after re-authentication', async ({ page }) => {
+    await openRoute(page, routes[1]);
+
+    await page.getByRole('button', { name: 'Akun', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Keluar', exact: true }).click();
+
+    await expect(page.getByRole('button', { name: 'Masuk', exact: true })).toBeVisible();
+
+    const email = process.env.E2E_EMAIL;
+    const password = process.env.E2E_PASSWORD;
+    if (!email || !password) {
+      throw new Error('E2E credentials are required for re-authentication coverage.');
+    }
+
+    await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
+    await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
+    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+
+    await expect(
+      page.getByRole('heading', { name: 'Gakkum', exact: true }),
+    ).toBeVisible({ timeout: 30_000 });
+    expect(new URL(page.url()).pathname).toBe(routes[1].pathname);
+  });
+
   test('Data Quality reads the live audit summary', async ({ page }) => {
     await openRoute(page, routes[9]);
     await expect(page.getByText('Audit integrity: OK', { exact: true })).toBeVisible();
