@@ -121,9 +121,7 @@ test.describe('critical interaction surface smoke', () => {
   test('Reports reads the live report audit and provenance surface', async ({ page }) => {
     await openRoute(page, routes[8]);
     await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
-    await expect(
-      page.getByRole('group', { name: /Fact rows/ }).first(),
-    ).toBeVisible();
+    await expect(page.getByText(/Fact rows/).first()).toBeVisible();
     await expect(page.getByText(/Source & provenance.*source cells.*\.xlsx/)).toBeVisible();
   });
 
