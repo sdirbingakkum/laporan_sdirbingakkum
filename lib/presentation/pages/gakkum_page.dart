@@ -20,7 +20,7 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
 
   @override
   Widget build(BuildContext context) {
-    final periodsState = ref.watch(reportPeriodsProvider);
+    final periodsState = ref.watch(gakkumPeriodsProvider);
     final pomdamsState = ref.watch(pomdamsProvider);
 
     return periodsState.when(
