@@ -35,3 +35,8 @@ final reportTypesProvider = FutureProvider<List<ReportType>>((ref) async {
 final reportPeriodsProvider = FutureProvider<List<ReportPeriod>>((ref) async {
   return ref.watch(referenceDataRepositoryProvider).getReportPeriods();
 });
+
+final personnelCategoriesProvider =
+    FutureProvider<List<PersonnelCategory>>((ref) async {
+  return ref.watch(referenceDataRepositoryProvider).getPersonnelCategories();
+});

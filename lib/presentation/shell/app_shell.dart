@@ -25,6 +25,12 @@ class AppShell extends StatelessWidget {
       selectedIcon: Icons.gavel,
     ),
     _NavItem(
+      path: '/pelanggaran',
+      label: 'Pelanggaran',
+      icon: Icons.rule_outlined,
+      selectedIcon: Icons.rule,
+    ),
+    _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
@@ -119,7 +125,7 @@ class AppShell extends StatelessWidget {
                 NavigationDestination(
                   icon: Icon(item.icon),
                   selectedIcon: Icon(item.selectedIcon),
-                  label: Text(item.label),
+                  label: item.label,
                 ),
             ],
           );
