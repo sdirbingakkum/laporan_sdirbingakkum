@@ -1,6 +1,9 @@
 -- 2026 Reconstruction Audit
 -- READ ONLY. Execute in Supabase SQL editor / controlled audit tooling.
 -- Do not convert non-reported states to numeric zero.
+--
+-- A source report in DISCOVERED state is a candidate registry row, not an
+-- active imported source. The audit reports active/imported state separately.
 
 WITH expected_sources AS (
   SELECT * FROM (VALUES
@@ -26,8 +29,13 @@ resolved_sources AS (
 ),
 source_gate AS (
   SELECT e.report_type,e.period_label,
-         count(rs.source_report_id) source_reports,
-         count(*) FILTER (WHERE rs.import_status IS DISTINCT FROM 'IMPORTED') bad_import_status
+         count(rs.source_report_id) total_source_reports,
+         count(*) FILTER (WHERE rs.import_status='IMPORTED') active_imported_sources,
+         count(*) FILTER (WHERE rs.import_status='DISCOVERED') discovered_sources,
+         count(*) FILTER (
+           WHERE rs.import_status NOT IN ('IMPORTED','DISCOVERED')
+              OR rs.import_status IS NULL
+         ) other_source_states
   FROM expected_sources e
   LEFT JOIN resolved_sources rs
     ON rs.report_type=e.report_type AND rs.period_label=e.period_label
@@ -70,8 +78,10 @@ fact_audit AS (
 SELECT
   e.report_type,
   e.period_label,
-  coalesce(s.source_reports,0) source_reports,
-  coalesce(s.bad_import_status,0) bad_import_status,
+  coalesce(s.total_source_reports,0) total_source_reports,
+  coalesce(s.active_imported_sources,0) active_imported_sources,
+  coalesce(s.discovered_sources,0) discovered_sources,
+  coalesce(s.other_source_states,0) other_source_states,
   coalesce(a.fact_rows,0) fact_rows,
   coalesce(a.pomdams,0) pomdams,
   coalesce(a.no_source_cell,0) no_source_cell,
