@@ -141,8 +141,26 @@ test.describe('critical interaction surface smoke', () => {
       throw new Error('E2E credentials are required for re-authentication coverage.');
     }
 
-    await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
+    const emailField = page.getByRole('textbox', {
+      name: 'Email',
+      exact: true,
+    });
+    const passwordField = page.getByRole('textbox', {
+      name: 'Password',
+      exact: true,
+    });
+
+    await emailField.fill(email);
+    await passwordField.click();
+    await passwordField.pressSequentially(password);
+
+    const passwordLength = await passwordField.evaluate((element) => {
+      return (element as HTMLInputElement).value.length;
+    });
+    if (passwordLength === 0) {
+      throw new Error('E2E password input remained empty after keyboard entry.');
+    }
+
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
     await expect(

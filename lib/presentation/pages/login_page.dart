@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
@@ -16,6 +17,24 @@ class _LoginPageState extends State<LoginPage> {
 
   SupabaseClient get _supabase => Supabase.instance.client;
 
+  String _returnPath() {
+    final value = GoRouterState.of(context).uri.queryParameters['returnTo'];
+    const allowedRoutes = {
+      '/',
+      '/gakkum',
+      '/pelanggaran',
+      '/sim-tni',
+      '/provos',
+      '/laka-lalin',
+      '/tindak-pidana',
+      '/pomdam',
+      '/reports',
+      '/data-quality',
+    };
+
+    return value != null && allowedRoutes.contains(value) ? value : '/';
+  }
+
   Future<void> _signIn() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -32,6 +51,10 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
+
+      if (mounted) {
+        context.go(_returnPath());
+      }
     } on AuthException catch (error) {
       if (mounted) {
         _showMessage(error.message, isError: true);
