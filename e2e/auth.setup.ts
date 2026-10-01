@@ -36,9 +36,42 @@ setup('authenticate staging user', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
-  await expect(
-    page.getByRole('heading', { name: 'Dashboard', exact: true }),
-  ).toBeVisible({ timeout: 60_000 });
+  const dashboard = page.getByRole('heading', {
+    name: 'Dashboard',
+    exact: true,
+  });
+
+  try {
+    await expect(dashboard).toBeVisible({ timeout: 30_000 });
+  } catch (firstError) {
+    // Supabase auth state can arrive successfully while the Flutter
+    // StreamBuilder has not rebuilt the current document yet. A reload
+    // checks the persisted session before issuing another sign-in request.
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
+
+    try {
+      await expect(dashboard).toBeVisible({ timeout: 15_000 });
+    } catch (secondError) {
+      const loginButton = page.getByRole('button', {
+        name: 'Masuk',
+        exact: true,
+      });
+      const stillLoggedOut = await loginButton.isVisible().catch(() => false);
+
+      if (!stillLoggedOut) {
+        throw firstError;
+      }
+
+      await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
+      const passwordInput = page.getByRole('textbox', {
+        name: 'Password',
+        exact: true,
+      });
+      await passwordInput.fill(password);
+      await loginButton.click();
+      await expect(dashboard).toBeVisible({ timeout: 30_000 });
+    }
+  }
 
   await page.context().storageState({ path: authFile });
 });
