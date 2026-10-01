@@ -50,6 +50,12 @@ class AppShell extends StatelessWidget {
       selectedIcon: Icons.car_crash,
     ),
     _NavItem(
+      path: '/tindak-pidana',
+      label: 'Tindak Pidana',
+      icon: Icons.policy_outlined,
+      selectedIcon: Icons.policy,
+    ),
+    _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
