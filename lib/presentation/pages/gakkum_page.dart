@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
+import '../../core/errors/app_exception.dart';
 import '../../domain/entities/gakkum_entities.dart';
-import '../../domain/entities/reference_entities.dart';
 
 class GakkumPage extends ConsumerStatefulWidget {
   const GakkumPage({super.key});
@@ -25,7 +25,8 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
 
     return periodsState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => _MessageState(message: error.toString()),
+      error: (error, stackTrace) =>
+          _MessageState(message: _errorMessage(error)),
       data: (periods) {
         if (periods.isEmpty) {
           return const _MessageState(message: 'Belum ada periode laporan.');
@@ -185,6 +186,11 @@ class _DashboardContent extends StatelessWidget {
               title: 'Invalid source',
               value: snapshot.invalidSourceCount.toString(),
             ),
+            if (snapshot.missingValueCount > 0)
+              _MetricCard(
+                title: 'Nilai kosong',
+                value: snapshot.missingValueCount.toString(),
+              ),
           ],
         ),
         const SizedBox(height: 24),
@@ -198,9 +204,10 @@ class _DashboardContent extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Rincian aktivitas',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
                     ),
                     Text(
@@ -230,7 +237,8 @@ class _ActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final issueCount = activity.notReportedCount +
         activity.invalidSourceCount +
-        activity.estimatedCount;
+        activity.estimatedCount +
+        activity.missingValueCount;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
