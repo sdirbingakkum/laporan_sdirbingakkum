@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
@@ -67,8 +68,31 @@ class AppShell extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        actions: const [
-          Padding(
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'Akun',
+            onSelected: (value) async {
+              if (value == 'sign_out') {
+                await Supabase.instance.client.auth.signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text(
+                  Supabase.instance.client.auth.currentUser?.email ??
+                      'Akun terautentikasi',
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'sign_out',
+                child: Text('Keluar'),
+              ),
+            ],
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 16),
             child: Chip(
               avatar: Icon(Icons.cloud_done_outlined, size: 18),
