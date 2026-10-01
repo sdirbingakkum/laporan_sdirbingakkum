@@ -24,7 +24,7 @@ final class SupabaseGakkumDashboardRepository
 
       while (true) {
         var recordsQuery = _client.from('gakkum_records').select(
-              'id,period_id,pomdam_id,activity_version_id,value,data_status,notes',
+              'id,period_id,pomdam_id,activity_version_id,value,data_status,source_cell_id,notes',
             );
 
         recordsQuery = recordsQuery.eq('period_id', periodId);
@@ -120,6 +120,7 @@ final class SupabaseGakkumDashboardRepository
       taxonomyVersion: version['taxonomy_version'] as String,
       value: (record['value'] as num?)?.toInt(),
       dataStatus: DataStatus.fromDatabase(record['data_status'] as String),
+      sourceCellId: record['source_cell_id'] as String?,
       notes: record['notes'] as String?,
     );
   }
