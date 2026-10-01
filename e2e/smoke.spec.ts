@@ -1,18 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const EXPECTED_SHA = process.env.E2E_EXPECTED_SHA;
+const SMOKE_ASSERTION_TIMEOUT = 15_000;
 
 const routes = [
   { url: './', pathname: '/laporan_sdirbingakkum/', heading: 'Dashboard' },
-  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Giat Gakkum' },
-  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
-  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
-  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
-  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
-  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
-  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
-  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Metadata laporan' },
-  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data quality contract' },
+  { url: './gakkum/', pathname: '/laporan_sdirbingakkum/gakkum/', heading: 'Giat Gakkum' },
+  { url: './pelanggaran/', pathname: '/laporan_sdirbingakkum/pelanggaran/', heading: 'Pelanggaran' },
+  { url: './sim-tni/', pathname: '/laporan_sdirbingakkum/sim-tni/', heading: 'SIM TNI' },
+  { url: './provos/', pathname: '/laporan_sdirbingakkum/provos/', heading: 'Provos' },
+  { url: './laka-lalin/', pathname: '/laporan_sdirbingakkum/laka-lalin/', heading: 'Laka Lalin' },
+  { url: './tindak-pidana/', pathname: '/laporan_sdirbingakkum/tindak-pidana/', heading: 'Tindak Pidana' },
+  { url: './pomdam/', pathname: '/laporan_sdirbingakkum/pomdam/', heading: 'POMDAM' },
+  { url: './reports/', pathname: '/laporan_sdirbingakkum/reports/', heading: 'Metadata laporan' },
+  { url: './data-quality/', pathname: '/laporan_sdirbingakkum/data-quality/', heading: 'Data quality contract' },
 ];
 
 test.beforeEach(async ({ request }) => {
@@ -23,14 +24,48 @@ test.beforeEach(async ({ request }) => {
   expect(marker.commit).toBe(EXPECTED_SHA);
 });
 
+async function diagnostics(page: Page) {
+  const headings = await page.getByRole('heading').allTextContents().catch(() => []);
+  return headings.filter((value) => value.trim().length > 0);
+}
+
 async function openRoute(page: Page, route: (typeof routes)[number]) {
-  await page.goto(route.url, { waitUntil: 'domcontentloaded' });
-  await expect(
-    page.getByRole('heading', { name: route.heading, exact: true }),
-  ).toBeVisible({ timeout: 60_000 });
-  await expect
-    .poll(() => new URL(page.url()).pathname)
-    .toBe(route.pathname);
+  const response = await page.goto(route.url, {
+    waitUntil: 'domcontentloaded',
+    timeout: 30_000,
+  });
+
+  const status = response?.status();
+  if (status === undefined || status >= 400) {
+    const headings = await diagnostics(page);
+    throw new Error(
+      'Deep-link navigation failed: ' +
+      'status=' + (status ?? 'no-response') +
+      ', finalUrl=' + page.url() +
+      ', expectedPath=' + route.pathname +
+      ', visibleHeadings=' + JSON.stringify(headings),
+    );
+  }
+
+  try {
+    await expect(
+      page.getByRole('heading', { name: route.heading, exact: true }),
+    ).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
+  } catch (error) {
+    const headings = await diagnostics(page);
+    throw new Error(
+      'Route rendered unexpected content: ' +
+      'status=' + status +
+      ', finalUrl=' + page.url() +
+      ', expectedPath=' + route.pathname +
+      ', expectedHeading=' + route.heading +
+      ', visibleHeadings=' + JSON.stringify(headings) +
+      '\n' +
+      String(error),
+    );
+  }
+
+  expect(new URL(page.url()).pathname).toBe(route.pathname);
 }
 
 test.describe('deep-link route smoke', () => {

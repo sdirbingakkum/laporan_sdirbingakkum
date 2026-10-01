@@ -68,12 +68,29 @@ jobs:
 
           rm -f /tmp/supabase_defines.json
 
+      - name: Prepare GitHub Pages deep-link entrypoints
+        run: |
+          cp build/web/index.html build/web/404.html
+          for route in \
+            gakkum \
+            pelanggaran \
+            sim-tni \
+            provos \
+            laka-lalin \
+            tindak-pidana \
+            pomdam \
+            reports \
+            data-quality
+          do
+            mkdir -p "build/web/$route"
+            cp build/web/index.html "build/web/$route/index.html"
+          done
+
       - name: Write deployment marker
         env:
           COMMIT_SHA: ${{ github.sha }}
         run: |
           printf '{"commit":"%s"}\n' "$COMMIT_SHA" > build/web/deployment.json
-          cp build/web/index.html build/web/404.html
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

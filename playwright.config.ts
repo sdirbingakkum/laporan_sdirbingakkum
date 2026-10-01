@@ -5,8 +5,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: process.env.CI ? 1 : undefined,
   timeout: 60_000,
-  expect: { timeout: 10_000 },
-  globalTimeout: 20 * 60 * 1000,
+  expect: { timeout: 15_000 },
+  maxFailures: process.env.CI ? 1 : undefined,
+  globalTimeout: 10 * 60 * 1000,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
@@ -19,7 +20,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    navigationTimeout: 60_000,
+    navigationTimeout: 30_000,
     actionTimeout: 15_000,
   },
   projects: [
