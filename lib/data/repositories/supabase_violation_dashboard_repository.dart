@@ -74,7 +74,7 @@ final class SupabaseViolationDashboardRepository
 
       while (true) {
         var recordsQuery = _client.from('violation_records').select(
-              'id,period_id,pomdam_id,violation_version_id,personnel_category_id,value,data_status,notes',
+              'id,period_id,pomdam_id,violation_version_id,personnel_category_id,value,data_status,source_cell_id,notes',
             );
 
         recordsQuery = recordsQuery.eq('period_id', periodId);
@@ -182,6 +182,7 @@ final class SupabaseViolationDashboardRepository
       displayOrder: (version['display_order'] as num?)?.toInt(),
       value: (record['value'] as num?)?.toInt(),
       dataStatus: DataStatus.fromDatabase(record['data_status'] as String),
+      sourceCellId: record['source_cell_id'] as String?,
       notes: record['notes'] as String?,
     );
   }
