@@ -105,7 +105,7 @@ final class ProvosDashboardSnapshot {
     final grouped = <String, _ProvosMetricAccumulator>{};
 
     for (final point in dataPoints) {
-      final key = point.section.name + ':' + point.dimensionId;
+      final key = '${point.section.name}:${point.dimensionId}';
       final accumulator = grouped.putIfAbsent(
         key,
         () => _ProvosMetricAccumulator(

@@ -160,7 +160,7 @@ class _PomdamFilter extends StatelessWidget {
               DropdownMenuItem<String?>(
                 value: pomdam.id,
                 child: Text(
-                  pomdam.code + ' · ' + pomdam.shortName,
+                  '${pomdam.code} · ${pomdam.shortName}',
                 ),
               ),
           ],
