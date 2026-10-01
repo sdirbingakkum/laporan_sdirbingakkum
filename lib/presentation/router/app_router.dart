@@ -164,7 +164,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 final class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(Stream<AuthState> authStateStream) {
-    _subscription = authStateStream.listen((_) => notifyListeners());
+    _subscription = authStateStream.listen(
+      (_) => notifyListeners(),
+      onError: (Object error, StackTrace stackTrace) {
+        debugPrint('Supabase auth state error: $error');
+      },
+    );
   }
 
   late final StreamSubscription<AuthState> _subscription;
