@@ -103,7 +103,7 @@ final class SupabaseGakkumDashboardRepository
 
     if (activity == null) {
       throw DataAccessException(
-        'Activity ${activityId} tidak ditemukan.',
+        'Activity $activityId tidak ditemukan.',
       );
     }
 
