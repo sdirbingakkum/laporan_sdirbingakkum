@@ -50,23 +50,13 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Resolve deployed URL
-        id: url
-        env:
-          DEPLOYMENT_URL: ${{ github.event.deployment_status.target_url }}
-        run: |
-          URL="$DEPLOYMENT_URL"
-          if [ -z "$URL" ]; then
-            URL="https://sdirbingakkum.github.io/laporan_sdirbingakkum/"
-          fi
-          echo "base_url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Run Playwright E2E
         env:
           CI: true
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.url.outputs.base_url }}
+          PLAYWRIGHT_TEST_BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
         run: npm run e2e
 
       - name: Upload Playwright report
