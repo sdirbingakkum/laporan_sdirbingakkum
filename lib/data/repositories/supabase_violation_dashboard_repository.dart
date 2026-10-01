@@ -153,7 +153,7 @@ final class SupabaseViolationDashboardRepository
 
     if (version == null) {
       throw DataAccessException(
-        'Violation version ${versionId} tidak ditemukan.',
+        'Violation version $versionId tidak ditemukan.',
       );
     }
 
@@ -162,7 +162,7 @@ final class SupabaseViolationDashboardRepository
 
     if (violation == null) {
       throw DataAccessException(
-        'Violation ${violationId} tidak ditemukan.',
+        'Violation $violationId tidak ditemukan.',
       );
     }
 
