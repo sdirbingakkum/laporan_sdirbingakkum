@@ -50,27 +50,32 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Wait for GitHub Pages to become available
+      - name: Wait for deployed commit to become available
         env:
           BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           for attempt in $(seq 1 30); do
-            status="$(curl -L -s -o /dev/null -w '%{http_code}' "$BASE_URL")"
-            echo "attempt=$attempt http_status=$status"
+            status="$(curl -L -s -o /tmp/deployment.json -w '%{http_code}' "$BASE_URL/deployment.json")"
+            actual=""
             if [ "$status" = "200" ]; then
+              actual="$(jq -r '.commit // empty' /tmp/deployment.json 2>/dev/null || true)"
+            fi
+            echo "attempt=$attempt http_status=$status deployed_sha=$actual"
+            if [ "$status" = "200" ] && [ "$actual" = "$EXPECTED_SHA" ]; then
               exit 0
             fi
             sleep 5
           done
-          echo "::error::GitHub Pages did not return HTTP 200 within 150 seconds"
+          echo "::error::GitHub Pages did not serve expected commit $EXPECTED_SHA within 150 seconds"
           exit 1
-
       - name: Run Playwright E2E
         env:
           CI: true
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           PLAYWRIGHT_TEST_BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
+          E2E_EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: npm run e2e
 
       - name: Upload Playwright report

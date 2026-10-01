@@ -17,12 +17,13 @@ setup('authenticate staging user', async ({ page }) => {
 
   await page.goto('./', { waitUntil: 'domcontentloaded' });
 
-  const textboxes = page.getByRole('textbox');
-  await expect(textboxes).toHaveCount(2, { timeout: 30_000 });
+  const emailField = page.getByRole('textbox', { name: 'Email', exact: true });
+  const passwordField = page.getByRole('textbox', { name: 'Password', exact: true });
 
-  await textboxes.nth(0).fill(email);
+  await expect(emailField).toBeVisible({ timeout: 30_000 });
+  await expect(passwordField).toBeVisible({ timeout: 30_000 });
 
-  const passwordField = textboxes.nth(1);
+  await emailField.fill(email);
   await passwordField.click();
   await passwordField.pressSequentially(password);
   const passwordLength = await passwordField.evaluate((element) => {
@@ -36,7 +37,7 @@ setup('authenticate staging user', async ({ page }) => {
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
   await expect(
-    page.getByRole('button', { name: 'Gakkum', exact: true }),
+    page.getByText('Gakkum', { exact: true }).last(),
   ).toBeVisible({ timeout: 60_000 });
 
   await page.context().storageState({ path: authFile });

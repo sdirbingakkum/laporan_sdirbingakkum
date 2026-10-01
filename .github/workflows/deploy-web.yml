@@ -68,6 +68,11 @@ jobs:
 
           rm -f /tmp/supabase_defines.json
 
+      - name: Write deployment marker
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          printf '{"commit":"%s"}\n' "$COMMIT_SHA" > build/web/deployment.json
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:

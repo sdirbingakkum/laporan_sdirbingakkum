@@ -1,5 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 
+const EXPECTED_SHA = process.env.E2E_EXPECTED_SHA;
+
+test.beforeEach(async ({ request }) => {
+  if (!EXPECTED_SHA) return;
+  const response = await request.get('./deployment.json', { cache: 'no-store' });
+  expect(response.ok()).toBeTruthy();
+  const marker = (await response.json()) as { commit?: string };
+  expect(marker.commit).toBe(EXPECTED_SHA);
+});
+
 const routes = [
   { path: '/', label: 'Dashboard' },
   { path: '/gakkum', label: 'Gakkum' },
@@ -20,10 +30,7 @@ async function openRoute(page: Page, path: string, label: string) {
     return;
   }
 
-  const destination = page.getByRole('button', {
-    name: label,
-    exact: true,
-  });
+  const destination = page.getByText(label, { exact: true }).last();
 
   await expect(destination).toBeVisible({ timeout: 30_000 });
   await destination.click();
