@@ -1,7 +1,11 @@
 name: E2E Staging
 
 on:
-  deployment_status:
+  workflow_run:
+    workflows:
+      - Deploy Flutter Web
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -9,20 +13,21 @@ permissions:
 
 concurrency:
   group: e2e-staging
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   e2e:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'deployment_status' &&
-       github.event.deployment_status.state == 'success' &&
-       github.event.deployment_status.environment == 'github-pages')
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Checkout deployed commit
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
