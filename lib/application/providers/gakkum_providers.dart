@@ -20,6 +20,10 @@ final gakkumDashboardRepositoryProvider =
   return SupabaseGakkumDashboardRepository(Supabase.instance.client);
 });
 
+final gakkumPeriodsProvider = FutureProvider<List<ReportPeriod>>((ref) async {
+  return ref.watch(gakkumDashboardRepositoryProvider).getAvailablePeriods();
+});
+
 final gakkumDashboardProvider = FutureProvider.autoDispose.family<
     GakkumDashboardSnapshot, GakkumDashboardQuery>((ref, query) async {
   final repository = ref.watch(gakkumDashboardRepositoryProvider);
