@@ -189,6 +189,7 @@ sourceCellId: 'cell',
         displayOrder: 1,
         value: null,
         dataStatus: DataStatus.valid,
+        sourceCellId: 'cell',
         notes: null,
       );
 
