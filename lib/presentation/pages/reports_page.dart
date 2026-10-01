@@ -117,15 +117,12 @@ class _PeriodsCard extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   title: Text(row.periodLabel),
                   subtitle: Text(
-                    row.periodType +
-                        (row.reportYear == null
-                            ? ''
-                            : ' · ' + row.reportYear.toString()),
+                    '${row.periodType}${row.reportYear == null ? '' : ' · ${row.reportYear}'}',
                   ),
                 ),
               if (rows.length > 12)
                 Text(
-                  '+ ' + (rows.length - 12).toString() + ' periode lainnya',
+                  '+ ${rows.length - 12} periode lainnya',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],
