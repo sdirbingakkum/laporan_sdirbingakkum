@@ -37,7 +37,7 @@ function filterButton(page: Page, label: string) {
   }
 
   return page.getByRole('button', {
-    name: new RegExp('^' + label + '\\b'),
+    name: new RegExp('^' + label),
   });
 }
 
