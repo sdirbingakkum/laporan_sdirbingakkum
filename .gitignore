@@ -27,3 +27,8 @@ config/*.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright E2E
+playwright/.auth/
+playwright-report/
+test-results/
