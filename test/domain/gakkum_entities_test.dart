@@ -19,6 +19,7 @@ void main() {
           taxonomyVersion: 'CURRENT_2026',
           value: 100,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
         GakkumDataPoint(
@@ -34,6 +35,7 @@ void main() {
           taxonomyVersion: 'CURRENT_2026',
           value: 60,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
       ];
@@ -68,6 +70,7 @@ void main() {
           taxonomyVersion: 'CURRENT_2026',
           value: null,
           dataStatus: DataStatus.notReported,
+sourceCellId: 'cell',
           notes: null,
         ),
         GakkumDataPoint(
@@ -83,6 +86,7 @@ void main() {
           taxonomyVersion: 'CURRENT_2026',
           value: 0,
           dataStatus: DataStatus.valid,
+sourceCellId: 'cell',
           notes: null,
         ),
       ];
