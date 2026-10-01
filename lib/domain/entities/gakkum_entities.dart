@@ -14,6 +14,7 @@ final class GakkumDataPoint {
     required this.taxonomyVersion,
     required this.value,
     required this.dataStatus,
+    required this.sourceCellId,
     required this.notes,
   });
 
@@ -29,6 +30,7 @@ final class GakkumDataPoint {
   final String taxonomyVersion;
   final int? value;
   final DataStatus dataStatus;
+  final String? sourceCellId;
   final String? notes;
 }
 
