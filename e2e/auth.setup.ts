@@ -21,7 +21,18 @@ setup('authenticate staging user', async ({ page }) => {
   await expect(textboxes).toHaveCount(2, { timeout: 30_000 });
 
   await textboxes.nth(0).fill(email);
-  await textboxes.nth(1).fill(password);
+
+  const passwordField = textboxes.nth(1);
+  await passwordField.click();
+  await passwordField.pressSequentially(password);
+  const passwordLength = await passwordField.evaluate((element) => {
+    return (element as HTMLInputElement).value.length;
+  });
+
+  if (passwordLength === 0) {
+    throw new Error('E2E password input remained empty after keyboard entry.');
+  }
+
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
   await expect(
