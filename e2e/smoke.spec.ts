@@ -30,7 +30,9 @@ async function openRoute(page: Page, path: string, label: string) {
     return;
   }
 
-  const destination = page.getByText(label, { exact: true }).last();
+  const destination = page.getByRole('button', {
+    name: new RegExp('^' + label + '\\b'),
+  }).last();
 
   await expect(destination).toBeVisible({ timeout: 30_000 });
   await destination.click();
