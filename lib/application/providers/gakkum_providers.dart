@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/errors/app_exception.dart';
 import '../../data/repositories/supabase_gakkum_dashboard_repository.dart';
 import '../../domain/entities/gakkum_entities.dart';
+import '../../domain/entities/reference_entities.dart';
 import '../../domain/repositories/gakkum_dashboard_repository.dart';
 import 'reference_data_providers.dart';
 
