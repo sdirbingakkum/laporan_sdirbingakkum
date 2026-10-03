@@ -175,11 +175,15 @@ test.describe('critical interaction surface smoke', () => {
       timeout: 30_000,
     });
 
-    await expect(page.getByText(/FACT RECORDS/).first()).toBeVisible({
-      timeout: SMOKE_ASSERTION_TIMEOUT,
+    await expect(
+      page.getByText('DIMENSIONS', { exact: true }),
+    ).toBeVisible({
+      timeout: 30_000,
     });
 
-    const dimension = page.getByText('Patroli Berkendaraan', { exact: true }).first();
+    const dimension = page
+      .getByText('Patroli Berkendaraan', { exact: true })
+      .first();
     await expect(dimension).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
     await dimension.click();
 
