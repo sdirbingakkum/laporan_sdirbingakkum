@@ -480,13 +480,21 @@ class _ProvenanceSection extends ConsumerWidget {
   }
 }
 
-class _TraceView extends StatelessWidget {
+class _TraceView extends ConsumerStatefulWidget {
   const _TraceView({required this.trace});
 
   final CommanderFactProvenance trace;
 
   @override
+  ConsumerState<_TraceView> createState() => _TraceViewState();
+}
+
+class _TraceViewState extends ConsumerState<_TraceView> {
+  bool _showSheetContext = false;
+
+  @override
   Widget build(BuildContext context) {
+    final trace = widget.trace;
     final source = trace.source;
 
     return Column(
@@ -551,12 +559,362 @@ class _TraceView extends StatelessWidget {
                 label: 'FORMULA',
                 value: source.cell!.formulaText!,
               ),
+            const SizedBox(height: 6),
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() => _showSheetContext = !_showSheetContext);
+              },
+              icon: Icon(
+                _showSheetContext
+                    ? Icons.visibility_off_outlined
+                    : Icons.table_view_outlined,
+              ),
+              label: Text(
+                _showSheetContext
+                    ? 'Tutup source sheet'
+                    : 'Buka source sheet',
+              ),
+            ),
+            if (_showSheetContext) ...[
+              const SizedBox(height: 12),
+              _SourceSheetContextSection(
+                domainCode: trace.domain,
+                recordId: trace.recordId,
+              ),
+            ],
           ],
         ],
       ],
     );
   }
 }
+
+class _SourceSheetContextSection extends ConsumerWidget {
+  const _SourceSheetContextSection({
+    required this.domainCode,
+    required this.recordId,
+  });
+
+  final String domainCode;
+  final String recordId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(
+      commanderSourceSheetContextProvider(
+        CommanderSourceSheetContextQuery(
+          domainCode: domainCode,
+          recordId: recordId,
+        ),
+      ),
+    );
+
+    return state.when(
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: LinearProgressIndicator(),
+        ),
+      ),
+      error: (error, stackTrace) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            error is AppException
+                ? error.message
+                : 'Source sheet context belum dapat dibaca.',
+          ),
+        ),
+      ),
+      data: (contextData) => _SourceSheetContextCard(
+        contextData: contextData,
+      ),
+    );
+  }
+}
+
+class _SourceSheetContextCard extends StatelessWidget {
+  const _SourceSheetContextCard({
+    required this.contextData,
+  });
+
+  final CommanderSourceSheetContext contextData;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!contextData.found) {
+      return const _EmptyCard(
+        message: 'Tidak ada source cell yang dapat ditampilkan.',
+      );
+    }
+
+    final workbook = contextData.workbook;
+    final columns = <String>{
+      for (final cell in contextData.cells) cell.columnLetter,
+    }.toList()
+      ..sort(_compareColumnLetters);
+
+    final rows = <int>{
+      for (final cell in contextData.cells)
+        if (cell.rowNumber != null) cell.rowNumber!,
+    }.toList()
+      ..sort();
+
+    final cellByPosition = <String, CommanderSourceSheetCell>{
+      for (final cell in contextData.cells)
+        if (cell.rowNumber != null)
+          _positionKey(cell.rowNumber!, cell.columnLetter): cell,
+    };
+
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SOURCE SHEET INSPECTOR',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              workbook == null
+                  ? 'Workbook metadata tidak tersedia.'
+                  : workbook.name +
+                      ' · ' +
+                      workbook.sheet +
+                      (workbook.sheetIndex == null
+                          ? ''
+                          : ' · index ' + workbook.sheetIndex.toString()),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                _StatusBadge(
+                  label: contextData.isAllPomdamContext
+                      ? 'ALL-POMDAM CONTEXT'
+                      : 'POMDAM CELL CONTEXT',
+                ),
+                if (contextData.target != null)
+                  _StatusBadge(
+                    label: 'TARGET ' + contextData.target!.ref,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            Text(
+              contextData.isAllPomdamContext
+                  ? 'Menampilkan konteks sel di sekitar target untuk seluruh kolom yang berhasil diimpor.'
+                  : 'Menampilkan hanya kolom POMDAM pemilik fact agar konteks lintas-scope tidak ikut terbuka.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Yang ditampilkan adalah snapshot sel terimpor di database, bukan renderer file XLSX asli.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            if (rows.isEmpty || columns.isEmpty)
+              const _EmptyCard(
+                message: 'Tidak ada sel terimpor pada window ini.',
+              )
+            else
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columnSpacing: 18,
+                      headingRowHeight: 42,
+                      dataRowMinHeight: 44,
+                      dataRowMaxHeight: 66,
+                      columns: [
+                        const DataColumn(label: Text('ROW')),
+                        for (final column in columns)
+                          DataColumn(
+                            label: Text(
+                              _columnHeader(column, contextData.cells),
+                            ),
+                          ),
+                      ],
+                      rows: [
+                        for (final rowNumber in rows)
+                          DataRow(
+                            cells: [
+                              DataCell(
+                                Text(
+                                  rowNumber.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              for (final column in columns)
+                                DataCell(
+                                  _SourceSheetCellView(
+                                    cell: cellByPosition[
+                                      _positionKey(rowNumber, column)
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap/click sel untuk melihat raw value, formula, status, dan semantic role.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _columnHeader(
+    String column,
+    List<CommanderSourceSheetCell> cells,
+  ) {
+    for (final cell in cells) {
+      if (cell.columnLetter == column) {
+        return cell.columnLabel ?? column;
+      }
+    }
+    return column;
+  }
+}
+
+class _SourceSheetCellView extends StatelessWidget {
+  const _SourceSheetCellView({required this.cell});
+
+  final CommanderSourceSheetCell? cell;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cell == null) return const SizedBox(width: 84);
+
+    final text = cell!.rawValue ??
+        (cell!.parsedNumeric?.toString() ?? '—');
+
+    return InkWell(
+      onTap: () => _showCellDetails(context, cell!),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        width: 110,
+        constraints: const BoxConstraints(minHeight: 34),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: cell!.isTarget
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent,
+            width: cell!.isTarget ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Text(
+          text,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCellDetails(
+    BuildContext context,
+    CommanderSourceSheetCell cell,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                cell.ref,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: 5),
+              Text(cell.columnLabel ?? cell.columnLetter),
+              const SizedBox(height: 14),
+              _TraceField(
+                label: 'RAW VALUE',
+                value: cell.rawValue ?? '—',
+              ),
+              _TraceField(
+                label: 'PARSED',
+                value: cell.parsedNumeric?.toString() ?? '—',
+              ),
+              _TraceField(
+                label: 'STATUS',
+                value: cell.dataStatus,
+              ),
+              _TraceField(
+                label: 'ROLE',
+                value: cell.semanticRole ?? '—',
+              ),
+              if (cell.rowLabel != null)
+                _TraceField(
+                  label: 'ROW LABEL',
+                  value: cell.rowLabel!,
+                ),
+              if (cell.formulaText != null)
+                _TraceField(
+                  label: 'FORMULA',
+                  value: cell.formulaText!,
+                ),
+              if (cell.isTarget)
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: _StatusBadge(label: 'TARGET FACT CELL'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+int _compareColumnLetters(String a, String b) {
+  int value(String letter) {
+    var total = 0;
+    for (final codeUnit in letter.codeUnits) {
+      total = total * 26 + codeUnit - 64;
+    }
+    return total;
+  }
+
+  return value(a).compareTo(value(b));
+}
+
+String _positionKey(int row, String column) => row.toString() + ':' + column;
 
 class _TraceField extends StatelessWidget {
   const _TraceField({

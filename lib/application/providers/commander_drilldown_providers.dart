@@ -44,6 +44,38 @@ final commanderFactProvenanceProvider = FutureProvider.autoDispose
   },
 );
 
+final commanderSourceSheetContextProvider = FutureProvider.autoDispose
+    .family<CommanderSourceSheetContext, CommanderSourceSheetContextQuery>(
+  (ref, query) async {
+    return ref
+        .watch(commanderDrilldownRepositoryProvider)
+        .getSourceSheetContext(
+          domainCode: query.domainCode,
+          recordId: query.recordId,
+        );
+  },
+);
+
+final class CommanderSourceSheetContextQuery {
+  const CommanderSourceSheetContextQuery({
+    required this.domainCode,
+    required this.recordId,
+  });
+
+  final String domainCode;
+  final String recordId;
+
+  @override
+  bool operator ==(Object other) {
+    return other is CommanderSourceSheetContextQuery &&
+        other.domainCode == domainCode &&
+        other.recordId == recordId;
+  }
+
+  @override
+  int get hashCode => Object.hash(domainCode, recordId);
+}
+
 final class CommanderDrilldownQuery {
   const CommanderDrilldownQuery({
     required this.domainCode,
