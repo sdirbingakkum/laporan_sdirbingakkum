@@ -86,6 +86,37 @@ String? _safeReturnPath(String? value) {
   return allowedRoutes.contains(value) ? value : null;
 }
 
+String? _requiredCapabilityFor(String location) {
+  if (location == '/') {
+    return CommanderCapabilities.viewCommanderCop;
+  }
+
+  if (location == '/reports') {
+    return CommanderCapabilities.viewReports;
+  }
+
+  if (location == '/data-quality') {
+    return CommanderCapabilities.viewDataQuality;
+  }
+
+  if (location == '/pomdam') {
+    return CommanderCapabilities.viewPomdamDirectory;
+  }
+
+  if ({
+    '/gakkum',
+    '/pelanggaran',
+    '/sim-tni',
+    '/provos',
+    '/laka-lalin',
+    '/tindak-pidana',
+  }.contains(location)) {
+    return CommanderCapabilities.viewDomainData;
+  }
+
+  return null;
+}
+
 Future<CommanderAccessContext> _readAccessContext(Ref ref) {
   return ref.read(commanderAccessContextProvider.future);
 }
@@ -116,15 +147,18 @@ FutureOr<String?> _authRedirect(
     if (location == '/login') {
       final returnPath =
           _safeReturnPath(state.uri.queryParameters['returnTo']);
+      final requestedPath = returnPath ?? access.defaultLocation;
+      final required = _requiredCapabilityFor(requestedPath);
 
-      if (returnPath == '/' && !access.canUseCommanderDashboard) {
+      if (required != null && !access.hasCapability(required)) {
         return access.defaultLocation;
       }
 
-      return returnPath ?? access.defaultLocation;
+      return requestedPath;
     }
 
-    if (location == '/' && !access.canUseCommanderDashboard) {
+    final required = _requiredCapabilityFor(location);
+    if (required != null && !access.hasCapability(required)) {
       return access.defaultLocation;
     }
 
