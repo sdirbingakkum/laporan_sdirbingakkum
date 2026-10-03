@@ -214,7 +214,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                   domainCode: _domainCode,
                   domains: _domains,
                   periods: monthlyPeriods,
-                  selectedPeriodId: selectedPeriod?.id,
+                  selectedPeriod: selectedPeriod,
                   selectedMonth: _selectedMonth,
                   pomdams: availablePomdams,
                   pomdamId: effectivePomdamId,
@@ -843,136 +843,149 @@ class _SubmissionMetaCard extends StatelessWidget {
   const _SubmissionMetaCard({
     required this.domainCode,
     required this.domains,
-    required this.periodLabelController,
-    required this.periodStart,
-    required this.periodEnd,
+    required this.periods,
+    required this.selectedPeriod,
+    required this.selectedMonth,
     required this.pomdams,
     required this.pomdamId,
     required this.onDomainChanged,
     required this.onPomdamChanged,
-    required this.onStartChanged,
-    required this.onEndChanged,
+    required this.onPeriodChanged,
+    required this.onPickMonth,
   });
 
   final String domainCode;
   final Map<String, String> domains;
-  final TextEditingController periodLabelController;
-  final DateTime periodStart;
-  final DateTime periodEnd;
+  final List<ReportPeriod> periods;
+  final ReportPeriod? selectedPeriod;
+  final DateTime selectedMonth;
   final List<Pomdam> pomdams;
   final String? pomdamId;
   final ValueChanged<String?> onDomainChanged;
   final ValueChanged<String?> onPomdamChanged;
-  final ValueChanged<DateTime?> onStartChanged;
-  final ValueChanged<DateTime?> onEndChanged;
+  final ValueChanged<String?> onPeriodChanged;
+  final VoidCallback onPickMonth;
+
+  String _monthLabel(DateTime month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return '${months[month.month - 1]} ${month.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 330,
-              child: DropdownButtonFormField<String>(
-                initialValue: domainCode,
-                decoration: const InputDecoration(
-                  labelText: 'Jenis laporan',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final entry in domains.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: 330,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: domainCode,
+                    decoration: const InputDecoration(
+                      labelText: 'Jenis laporan',
+                      border: OutlineInputBorder(),
                     ),
-                ],
-                onChanged: onDomainChanged,
-              ),
-            ),
-            SizedBox(
-              width: 300,
-              child: DropdownButtonFormField<String>(
-                initialValue: pomdamId,
-                decoration: const InputDecoration(
-                  labelText: 'POMDAM',
-                  border: OutlineInputBorder(),
+                    items: [
+                      for (final entry in domains.entries)
+                        DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                    ],
+                    onChanged: onDomainChanged,
+                  ),
                 ),
-                items: [
-                  for (final pomdam in pomdams)
-                    DropdownMenuItem(
-                      value: pomdam.id,
-                      child: Text(pomdam.shortName),
+                SizedBox(
+                  width: 300,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: pomdamId,
+                    decoration: const InputDecoration(
+                      labelText: 'POMDAM',
+                      border: OutlineInputBorder(),
                     ),
-                ],
-                onChanged: onPomdamChanged,
-              ),
-            ),
-            SizedBox(
-              width: 260,
-              child: TextField(
-                controller: periodLabelController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama periode',
-                  border: OutlineInputBorder(),
+                    items: [
+                      for (final pomdam in pomdams)
+                        DropdownMenuItem(
+                          value: pomdam.id,
+                          child: Text('${pomdam.code} · ${pomdam.shortName}'),
+                        ),
+                    ],
+                    onChanged: onPomdamChanged,
+                  ),
                 ),
-              ),
+                SizedBox(
+                  width: 330,
+                  child: DropdownButtonFormField<String?>(
+                    initialValue: selectedPeriod?.id,
+                    decoration: const InputDecoration(
+                      labelText: 'Periode yang sudah tersedia',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Gunakan bulan pilihan'),
+                      ),
+                      for (final period in periods)
+                        DropdownMenuItem<String?>(
+                          value: period.id,
+                          child: Text(period.periodLabel),
+                        ),
+                    ],
+                    onChanged: onPeriodChanged,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onPickMonth,
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  label: Text('Bulan · ${_monthLabel(selectedMonth)}'),
+                ),
+              ],
             ),
-            _DateButton(
-              label: 'Mulai',
-              value: periodStart,
-              onTap: () async {
-                final value = await showDatePicker(
-                  context: context,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                  initialDate: periodStart,
-                );
-                onStartChanged(value);
-              },
-            ),
-            _DateButton(
-              label: 'Selesai',
-              value: periodEnd,
-              onTap: () async {
-                final value = await showDatePicker(
-                  context: context,
-                  firstDate: periodStart,
-                  lastDate: DateTime(2100),
-                  initialDate: periodEnd,
-                );
-                onEndChanged(value);
-              },
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  selectedPeriod == null
+                      ? Icons.add_circle_outline
+                      : Icons.check_circle_outline,
+                  size: 19,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selectedPeriod == null
+                        ? 'Periode ${_monthLabel(selectedMonth)} belum ada. '
+                          'Periode resmi akan dibuat otomatis saat laporan disimpan.'
+                        : 'Periode ${selectedPeriod!.periodLabel} sudah ada di database. '
+                          'Bila POMDAM ini berasal dari impor Excel, overwrite akan ditolak.',
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DateButton extends StatelessWidget {
-  const _DateButton({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final DateTime value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final date = '${value.day.toString().padLeft(2, '0')}/'
-        '${value.month.toString().padLeft(2, '0')}/${value.year}';
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.calendar_month_outlined),
-      label: Text('$label · $date'),
     );
   }
 }
