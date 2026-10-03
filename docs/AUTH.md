@@ -1,6 +1,6 @@
 # Authentication & Client Access
 
-The application is read-only and requires an authenticated Supabase user before any application route is shown.
+The application requires an authenticated Supabase user before protected routes are shown. Read/reporting routes are capability-gated, while direct report input is write-enabled only for users with `MANAGE_REPORT_DATA`.
 
 ## Access model
 
@@ -8,7 +8,7 @@ The application is read-only and requires an authenticated Supabase user before 
 - Authenticated reads are allowed only for the tables and read models consumed by the Flutter application.
 - Anonymous Supabase Auth users are explicitly excluded from those read policies.
 - The application does not use a service-role or secret key.
-- New application users are not created from the client UI. An administrator provisions users in Supabase Auth.
+- New application users are not created from the client UI. An administrator provisions users in Supabase Auth and assigns an appropriate application role.
 
 The current policy is intentionally an internal single-access-domain model: every provisioned permanent authenticated user can read the application's reporting dataset. A future multi-organization or row-level ownership model must replace the broad authenticated-read predicate before exposing the application to unrelated users.
 
@@ -49,3 +49,13 @@ The application will display the login screen until a valid Supabase session exi
 Application reporting tables use the `authenticated_reporting_read` policy and explicitly exclude anonymous Auth users.
 
 The deployed client is expected to use only the Supabase publishable key.
+
+
+## Direct report input
+
+- `ReportInputPage` writes through the authenticated `submit_report()` RPC.
+- Only `PUSPOMAD_OPERATOR` and `POMDAM_OPERATOR` roles currently carry `MANAGE_REPORT_DATA`.
+- The operator submits one POMDAM and one monthly period at a time.
+- Imported Excel-backed rows remain locked from direct overwrite.
+- Direct application rows use `source_cell_id = NULL` and are shown as `Input Aplikasi` provenance.
+- At the current production state, there are no active operator-role assignments, so the input screen will remain access-denied until an administrator provisions an operator account/role.
