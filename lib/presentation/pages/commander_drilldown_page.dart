@@ -737,7 +737,11 @@ class _OriginalSourceFileSectionState
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ] else if (!fileContext.found) ...[
-          const _StatusBadge(label: 'FILE NOT AVAILABLE'),
+          Semantics(
+            container: true,
+            explicitChildNodes: true,
+            child: const _StatusBadge(label: 'FILE NOT AVAILABLE'),
+          ),
           const SizedBox(height: 8),
           Text(
             fileContext.status == 'NO_SOURCE_CELL'
