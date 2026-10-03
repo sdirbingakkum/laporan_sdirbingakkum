@@ -578,12 +578,12 @@ class _TraceViewState extends ConsumerState<_TraceView> {
             ),
             if (_showSheetContext) ...[
               const SizedBox(height: 12),
-              _SourceSheetContextSection(
+              _OriginalSourceFileSection(
                 domainCode: trace.domain,
                 recordId: trace.recordId,
               ),
               const SizedBox(height: 12),
-              _OriginalSourceFileSection(
+              _SourceSheetContextSection(
                 domainCode: trace.domain,
                 recordId: trace.recordId,
               ),
