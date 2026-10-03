@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:laporan_sdirbingakkum/domain/entities/commander_access_context_entities.dart';
 
 void main() {
-  test('parses Puspomad commander as ALL_POMDAM commander', () {
+  test('Puspomad commander gets Commander COP capability', () {
     final context = CommanderAccessContext.fromMap({
-      'schema_version': 1,
+      'schema_version': 2,
       'authenticated': true,
       'configured': true,
       'role': {
@@ -16,19 +16,30 @@ void main() {
         'type': 'ALL_POMDAM',
         'pomdam_ids': [],
       },
+      'capabilities': [
+        CommanderCapabilities.viewCommanderCop,
+        CommanderCapabilities.viewDomainData,
+        CommanderCapabilities.viewReports,
+        CommanderCapabilities.viewDataQuality,
+        CommanderCapabilities.viewPomdamDirectory,
+      ],
     });
 
     expect(context.isAuthorized, isTrue);
     expect(context.isAllPomdam, isTrue);
     expect(context.isPuspomad, isTrue);
     expect(context.canUseCommanderDashboard, isTrue);
+    expect(
+      context.hasCapability(CommanderCapabilities.viewReports),
+      isTrue,
+    );
     expect(context.defaultLocation, '/');
     expect(context.canReadPomdam('any-id'), isTrue);
   });
 
-  test('parses Pomdam operator as single-POMDAM operator', () {
+  test('Pomdam operator gets read capabilities but not Commander COP', () {
     final context = CommanderAccessContext.fromMap({
-      'schema_version': 1,
+      'schema_version': 2,
       'authenticated': true,
       'configured': true,
       'role': {
@@ -39,12 +50,26 @@ void main() {
         'type': 'POMDAM',
         'pomdam_ids': ['pomdam-a'],
       },
+      'capabilities': [
+        CommanderCapabilities.viewDomainData,
+        CommanderCapabilities.viewReports,
+        CommanderCapabilities.viewDataQuality,
+        CommanderCapabilities.viewPomdamDirectory,
+      ],
     });
 
     expect(context.isAuthorized, isTrue);
     expect(context.isPomdamScoped, isTrue);
     expect(context.isOperator, isTrue);
     expect(context.canUseCommanderDashboard, isFalse);
+    expect(
+      context.hasCapability(CommanderCapabilities.viewCommanderCop),
+      isFalse,
+    );
+    expect(
+      context.hasCapability(CommanderCapabilities.manageReportData),
+      isFalse,
+    );
     expect(context.defaultLocation, '/reports');
     expect(context.canReadPomdam('pomdam-a'), isTrue);
     expect(context.canReadPomdam('pomdam-b'), isFalse);
@@ -52,7 +77,7 @@ void main() {
 
   test('unknown or unconfigured context fails closed', () {
     final context = CommanderAccessContext.fromMap({
-      'schema_version': 1,
+      'schema_version': 2,
       'authenticated': true,
       'configured': false,
       'role': null,
@@ -60,6 +85,7 @@ void main() {
         'type': null,
         'pomdam_ids': [],
       },
+      'capabilities': [],
     });
 
     expect(context.isAuthorized, isFalse);
