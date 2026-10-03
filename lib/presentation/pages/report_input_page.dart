@@ -100,24 +100,6 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     return null;
   }
 
-  String _monthLabel(DateTime month) {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return '${months[month.month - 1]} ${month.year}';
-  }
-
   TextEditingController _controller(String key) {
     return _valueControllers.putIfAbsent(key, TextEditingController.new);
   }
@@ -1132,7 +1114,7 @@ class _NumberRow extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
-              inputFormatters: const [
+              inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
               ],
               textAlign: TextAlign.end,
@@ -1184,9 +1166,9 @@ class _MatrixCard extends StatelessWidget {
                     child: TextField(
                       controller: controllers[column.id],
                       keyboardType: TextInputType.number,
-                      inputFormatters: const [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
                       textAlign: TextAlign.end,
                       decoration: InputDecoration(
                         labelText: column.code,
