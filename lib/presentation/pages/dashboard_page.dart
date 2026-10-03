@@ -475,15 +475,6 @@ class _DomainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trust = domain.dataTrust;
-    final route = switch (domain.code) {
-      'GAKKUM' => '/gakkum',
-      'PELANGGARAN' => '/pelanggaran',
-      'SIM_TNI' => '/sim-tni',
-      'PROVOS' => '/provos',
-      'LAKA_LALIN' => '/laka-lalin',
-      'TINDAK_PIDANA' => '/tindak-pidana',
-      _ => '/',
-    };
 
     final pidanaCoverage =
         domain.code == 'TINDAK_PIDANA' && trust.notReportedPct != null;
