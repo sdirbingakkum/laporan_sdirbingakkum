@@ -947,19 +947,16 @@ class _SubmissionMetaCard extends StatelessWidget {
                 ),
                 SizedBox(
                   width: 330,
-                  child: DropdownButtonFormField<String?>(
+                  child: DropdownButtonFormField<String>(
                     initialValue: selectedPeriod?.id,
                     decoration: const InputDecoration(
                       labelText: 'Periode yang sudah tersedia',
+                      hintText: 'Pilih periode resmi atau gunakan bulan di samping',
                       border: OutlineInputBorder(),
                     ),
                     items: [
-                      const DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text('Gunakan bulan pilihan'),
-                      ),
                       for (final period in periods)
-                        DropdownMenuItem<String?>(
+                        DropdownMenuItem<String>(
                           value: period.id,
                           child: Text(period.periodLabel),
                         ),
