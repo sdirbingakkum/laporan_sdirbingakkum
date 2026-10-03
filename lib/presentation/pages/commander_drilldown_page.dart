@@ -497,14 +497,11 @@ class _TraceViewState extends ConsumerState<_TraceView> {
     final trace = widget.trace;
     final source = trace.source;
 
-    return Semantics(
-      container: true,
-      label: 'SOURCE / LINEAGE',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'SOURCE / LINEAGE',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SOURCE / LINEAGE',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
               ),
@@ -587,9 +584,8 @@ class _TraceViewState extends ConsumerState<_TraceView> {
             ],
           ],
         ],
-          ],
-        ),
-      );
+      ],
+    );
   }
 }
 
@@ -670,12 +666,9 @@ class _SourceSheetContextCard extends StatelessWidget {
           _positionKey(cell.rowNumber!, cell.columnLetter): cell,
     };
 
-    return Semantics(
-      container: true,
-      label: 'SOURCE SHEET INSPECTOR',
-      child: Card(
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
-        child: Padding(
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,12 +703,8 @@ class _SourceSheetContextCard extends StatelessWidget {
                       : 'POMDAM CELL CONTEXT',
                 ),
                 if (contextData.target != null)
-                  Semantics(
-                    container: true,
+                  _StatusBadge(
                     label: 'TARGET ' + contextData.target!.ref,
-                    child: _StatusBadge(
-                      label: 'TARGET ' + contextData.target!.ref,
-                    ),
                   ),
               ],
             ),
@@ -795,7 +784,6 @@ class _SourceSheetContextCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-        ),
         ),
       ),
     );
