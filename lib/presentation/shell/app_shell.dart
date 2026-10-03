@@ -81,6 +81,13 @@ class AppShell extends ConsumerWidget {
       capability: CommanderCapabilities.viewReports,
     ),
     _NavItem(
+      path: '/input-laporan',
+      label: 'Input Laporan',
+      icon: Icons.edit_note_outlined,
+      selectedIcon: Icons.edit_note,
+      capability: CommanderCapabilities.manageReportData,
+    ),
+    _NavItem(
       path: '/data-quality',
       label: 'Data Quality',
       icon: Icons.verified_outlined,
