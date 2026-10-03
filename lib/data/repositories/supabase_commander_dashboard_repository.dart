@@ -23,13 +23,27 @@ final class SupabaseCommanderDashboardRepository
         },
       );
 
-      final payload = Map<String, dynamic>.from(response as Map);
+      if (response is! Map) {
+        throw const DataAccessException(
+          'Commander snapshot memiliki format respons yang tidak valid.',
+        );
+      }
 
-      return CommanderDashboardSnapshot.fromMap(payload);
-    } on PostgrestException catch (error) {
-      throw DataAccessException(
-        'Gagal membaca Commander Dashboard: ${error.message}',
+      return CommanderDashboardSnapshot.fromMap(
+        Map<String, dynamic>.from(response),
       );
+    } on PostgrestException catch (error) {
+      if (error.code == '42501') {
+        throw const AuthorizationException(
+          'Akses Commander tidak diizinkan untuk scope yang diminta.',
+        );
+      }
+
+      throw DataAccessException(
+        'Gagal membaca Commander Dashboard: ' + error.message,
+      );
+    } on AppException {
+      rethrow;
     } on Object {
       throw const DataAccessException(
         'Gagal membaca Commander Dashboard dari Supabase. '
