@@ -165,20 +165,14 @@ test.describe('critical interaction surface smoke', () => {
     await expect(sourceButton).toBeVisible();
     await sourceButton.click();
 
-    try {
-      await expect(
-        page.getByText('SOURCE SHEET INSPECTOR', { exact: true }),
-      ).toBeVisible({ timeout: 30_000 });
-    } catch (error) {
-      console.log('SOURCE_INSPECTION_BODY=' + (await page.locator('body').innerText()));
-      console.log(
-        'SOURCE_INSPECTION_BUTTONS=' +
-            JSON.stringify(await page.getByRole('button').allTextContents()),
-      );
-      throw error;
-    }
+    const inspector = page.getByRole('group', {
+      name: /SOURCE SHEET INSPECTOR/,
+    });
+    await expect(inspector).toBeVisible({ timeout: 30_000 });
 
-    await expect(page.getByText(/TARGET /).first()).toBeVisible();
+    await expect(
+      page.getByRole('group', { name: /TARGET C9/ }),
+    ).toBeVisible();
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
