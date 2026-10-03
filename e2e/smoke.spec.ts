@@ -203,6 +203,12 @@ test.describe('critical interaction surface smoke', () => {
     }).first();
     await expect(inspector).toBeVisible({ timeout: 30_000 });
 
+    const originalSourceButton = page.getByRole('button', {
+      name: 'Periksa file XLSX asli',
+      exact: true,
+    });
+    await expect(originalSourceButton).toBeVisible({ timeout: 30_000 });
+
     const sourceFileCheckResponse = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
@@ -210,10 +216,7 @@ test.describe('critical interaction surface smoke', () => {
         response.status() === 200,
     );
 
-    await page.getByRole('button', {
-      name: 'Periksa file XLSX asli',
-      exact: true,
-    }).click();
+    await originalSourceButton.click();
 
     const sourceFileResponse = await sourceFileCheckResponse;
     const sourceFilePayload = (await sourceFileResponse.json()) as {
