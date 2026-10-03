@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/commander_access_context_providers.dart';
+import '../../application/providers/commander_providers.dart';
 import '../../application/providers/dashboard_providers.dart';
 import '../../application/providers/report_input_providers.dart';
 import '../../application/providers/reporting_providers.dart';
 import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/violation_providers.dart';
 import '../../application/providers/criminal_offense_providers.dart';
+import '../../application/providers/laka_providers.dart';
+import '../../application/providers/provos_providers.dart';
+import '../../application/providers/sim_providers.dart';
+import '../../core/errors/app_exception.dart';
 import '../../domain/entities/commander_access_context_entities.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../../domain/entities/report_input_entities.dart';
@@ -29,21 +35,15 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     'TINDAK_PIDANA': 'Rekap Tindak Pidana',
   };
 
-  final _periodLabelController = TextEditingController();
   final _notesController = TextEditingController();
   final Map<String, TextEditingController> _valueControllers = {};
 
   String _domainCode = 'GAKKUM';
   String? _pomdamId;
-  DateTime _periodStart = DateTime(
+  String? _selectedPeriodId;
+  DateTime _selectedMonth = DateTime(
     DateTime.now().year,
     DateTime.now().month,
-    1,
-  );
-  DateTime _periodEnd = DateTime(
-    DateTime.now().year,
-    DateTime.now().month + 1,
-    0,
   );
   bool _saving = false;
   String _tindakSearch = '';
@@ -51,12 +51,10 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   @override
   void initState() {
     super.initState();
-    _periodLabelController.text = _defaultPeriodLabel();
   }
 
   @override
   void dispose() {
-    _periodLabelController.dispose();
     _notesController.dispose();
     for (final controller in _valueControllers.values) {
       controller.dispose();
@@ -64,22 +62,42 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     super.dispose();
   }
 
-  String _defaultPeriodLabel() {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
+  List<ReportPeriod> _monthlyPeriods(ReportInputCatalog catalog) {
+    final periods = [
+      for (final period in catalog.periods)
+        if (period.periodType == 'MONTH' &&
+            period.periodStart != null &&
+            period.periodEnd != null)
+          period,
     ];
-    return '${months[DateTime.now().month - 1]} ${DateTime.now().year}';
+    periods.sort((a, b) => b.periodStart!.compareTo(a.periodStart!));
+    return periods;
+  }
+
+  ReportPeriod? _findPeriodById(
+    List<ReportPeriod> periods,
+    String? id,
+  ) {
+    if (id == null) return null;
+    for (final period in periods) {
+      if (period.id == id) return period;
+    }
+    return null;
+  }
+
+  ReportPeriod? _findPeriodForMonth(
+    List<ReportPeriod> periods,
+    DateTime month,
+  ) {
+    for (final period in periods) {
+      final start = period.periodStart;
+      if (start != null &&
+          start.year == month.year &&
+          start.month == month.month) {
+        return period;
+      }
+    }
+    return null;
   }
 
   TextEditingController _controller(String key) {
@@ -124,6 +142,25 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
         ),
       ),
       data: (catalog) {
+        final monthlyPeriods = _monthlyPeriods(catalog);
+        final selectedPeriod =
+            _findPeriodById(monthlyPeriods, _selectedPeriodId) ??
+            _findPeriodForMonth(monthlyPeriods, _selectedMonth);
+
+        if (_selectedPeriodId != selectedPeriod?.id) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectedPeriodId != selectedPeriod?.id) {
+              setState(() {
+                _selectedPeriodId = selectedPeriod?.id;
+                if (selectedPeriod?.periodStart != null) {
+                  final start = selectedPeriod!.periodStart!;
+                  _selectedMonth = DateTime(start.year, start.month);
+                }
+              });
+            }
+          });
+        }
+
         final availablePomdams = [
           for (final pomdam in catalog.pomdams)
             if (access.canReadPomdam(pomdam.id)) pomdam,
@@ -158,9 +195,9 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                 _SubmissionMetaCard(
                   domainCode: _domainCode,
                   domains: _domains,
-                  periodLabelController: _periodLabelController,
-                  periodStart: _periodStart,
-                  periodEnd: _periodEnd,
+                  periods: monthlyPeriods,
+                  selectedPeriod: selectedPeriod,
+                  selectedMonth: _selectedMonth,
                   pomdams: availablePomdams,
                   pomdamId: effectivePomdamId,
                   onDomainChanged: (value) {
@@ -173,18 +210,32 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                   onPomdamChanged: (value) {
                     setState(() => _pomdamId = value);
                   },
-                  onStartChanged: (value) {
-                    if (value == null) return;
+                  onPeriodChanged: (value) {
+                    final period = _findPeriodById(monthlyPeriods, value);
                     setState(() {
-                      _periodStart = value;
-                      if (_periodEnd.isBefore(value)) {
-                        _periodEnd = DateTime(value.year, value.month + 1, 0);
+                      _selectedPeriodId = period?.id;
+                      if (period?.periodStart != null) {
+                        final start = period!.periodStart!;
+                        _selectedMonth = DateTime(start.year, start.month);
                       }
                     });
                   },
-                  onEndChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _periodEnd = value);
+                  onPickMonth: () async {
+                    final value = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2000, 1, 1),
+                      lastDate: DateTime(2100, 12, 31),
+                      initialDate: _selectedMonth,
+                      helpText: 'Pilih bulan laporan',
+                    );
+                    if (value == null || !mounted) return;
+                    final month = DateTime(value.year, value.month);
+                    final existing =
+                        _findPeriodForMonth(monthlyPeriods, month);
+                    setState(() {
+                      _selectedMonth = month;
+                      _selectedPeriodId = existing?.id;
+                    });
                   },
                 ),
                 const SizedBox(height: 14),
@@ -207,7 +258,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                   child: FilledButton.icon(
                     onPressed: _saving
                         ? null
-                        : () => _submit(catalog, effectivePomdamId),
+                        : () => _submit(catalog, effectivePomdamId, selectedPeriod),
                     icon: _saving
                         ? const SizedBox(
                             width: 18,
@@ -260,7 +311,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   Widget _buildViolations(ReportInputCatalog catalog) {
     return _SectionCard(
       title: 'PELANGGARAN',
-      subtitle: 'Isi angka per jenis pelanggaran dan golongan personel.',
+      subtitle: '17 jenis pelanggaran aktif CURRENT_2026 × 4 golongan personel.',
       child: Column(
         children: [
           for (final option in catalog.violations)
@@ -436,28 +487,30 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   Future<void> _submit(
     ReportInputCatalog catalog,
     String? pomdamId,
+    ReportPeriod? selectedPeriod,
   ) async {
     if (pomdamId == null || pomdamId.isEmpty) {
       _showMessage('Pilih POMDAM terlebih dahulu.');
       return;
     }
 
-    final label = _periodLabelController.text.trim();
-    if (label.isEmpty) {
-      _showMessage('Nama periode wajib diisi.');
+    Map<String, dynamic> payload;
+    try {
+      payload = _buildPayload(catalog);
+    } on FormatException catch (error) {
+      _showMessage(error.message);
       return;
     }
 
     setState(() => _saving = true);
     try {
       final repository = ref.read(reportInputRepositoryProvider);
-      final period = await repository.createPeriod(
-        periodStart: _periodStart,
-        periodEnd: _periodEnd,
-        periodLabel: label,
-      );
+      final period = selectedPeriod ??
+          await repository.getOrCreateMonthlyPeriod(
+            year: _selectedMonth.year,
+            month: _selectedMonth.month,
+          );
 
-      final payload = _buildPayload(catalog);
       await repository.submitReport(
         reportType: _domainCode,
         periodId: period.id,
@@ -465,19 +518,33 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
         payload: payload,
       );
 
+      setState(_clearInputFields);
       ref.invalidate(reportInputCatalogProvider);
       ref.invalidate(reportAuditSummaryProvider);
       ref.invalidate(reportProvenanceProvider);
       ref.invalidate(dashboardSummaryProvider);
+      ref.invalidate(commanderDashboardProvider);
       ref.invalidate(gakkumDashboardProvider);
+      ref.invalidate(gakkumPeriodsProvider);
       ref.invalidate(violationDashboardProvider);
+      ref.invalidate(violationPeriodsProvider);
+      ref.invalidate(simDashboardProvider);
+      ref.invalidate(simPeriodsProvider);
+      ref.invalidate(provosDashboardProvider);
+      ref.invalidate(provosPeriodsProvider);
+      ref.invalidate(lakaDashboardProvider);
+      ref.invalidate(lakaPeriodsProvider);
       ref.invalidate(criminalOffenseDashboardProvider);
+      ref.invalidate(criminalOffensePeriodsProvider);
 
       if (!mounted) return;
-      _showMessage('Laporan berhasil disimpan ke database.');
+      _showMessage(
+        'Laporan ${_domains[_domainCode] ?? _domainCode} berhasil disimpan untuk '
+        '${period.periodLabel}.',
+      );
     } catch (error) {
       if (!mounted) return;
-      _showMessage(error.toString());
+      _showMessage(_friendlyError(error));
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -485,6 +552,73 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     }
   }
 
+  void _clearInputFields() {
+    for (final controller in _valueControllers.values) {
+      controller.clear();
+    }
+    _notesController.clear();
+    _tindakSearch = '';
+  }
+
+  String _friendlyError(Object error) {
+    final message = error is AppException ? error.message : error.toString();
+    const known = <String, String>{
+      'AUTHENTICATION_REQUIRED':
+          'Sesi login tidak valid. Silakan login kembali.',
+      'REPORT_WRITE_FORBIDDEN':
+          'Akun ini tidak memiliki hak untuk menyimpan laporan.',
+      'POMDAM_SCOPE_FORBIDDEN':
+          'Akun ini tidak memiliki akses ke POMDAM yang dipilih.',
+      'UNKNOWN_PERIOD':
+          'Periode laporan tidak ditemukan. Muat ulang form lalu coba lagi.',
+      'INVALID_PERIOD_YEAR':
+          'Tahun periode tidak valid.',
+      'INVALID_PERIOD_MONTH':
+          'Bulan periode tidak valid.',
+      'UNKNOWN_REPORT_TYPE':
+          'Jenis laporan tidak valid atau sudah tidak aktif.',
+      'PERIOD_LOCKED_IMPORTED':
+          'Periode/POMDAM ini berasal dari impor Excel dan dikunci. '
+          'Pilih bulan yang belum diimpor untuk input aplikasi.',
+      'INCOMPLETE_GAKKUM_PAYLOAD':
+          'Struktur GAKKUM berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PELANGGARAN_PAYLOAD':
+          'Struktur Pelanggaran berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_SIM_PAYLOAD':
+          'Struktur SIM TNI berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_STRENGTH_PAYLOAD':
+          'Struktur Kekuatan Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_EDUCATION_PAYLOAD':
+          'Struktur Pendidikan Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_PERSONNEL_PAYLOAD':
+          'Struktur Personel Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_ACCIDENT_PAYLOAD':
+          'Struktur Kejadian Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_VICTIM_OUTCOME_PAYLOAD':
+          'Struktur Korban Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_VICTIM_RANK_PAYLOAD':
+          'Struktur Pangkat Korban Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_PERSONNEL_PAYLOAD':
+          'Struktur Personel Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_MATERIAL_PAYLOAD':
+          'Struktur Material Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_TINDAK_PIDANA_PAYLOAD':
+          'Struktur Tindak Pidana berubah. Muat ulang form sebelum mengirim.',
+      'VALID_VALUE_REQUIRED':
+          'Setiap nilai yang diisi harus berupa bilangan bulat non-negatif.',
+      'INVALID_NON_NEGATIVE_INTEGER':
+          'Nilai harus berupa bilangan bulat non-negatif.',
+      'INTEGER_OUT_OF_RANGE':
+          'Nilai terlalu besar untuk disimpan di database.',
+      'INVALID_INPUT_STATUS':
+          'Status input tidak valid.',
+    };
+
+    for (final entry in known.entries) {
+      if (message.contains(entry.key)) return entry.value;
+    }
+    return message;
+  }
   Map<String, dynamic> _buildPayload(ReportInputCatalog catalog) {
     final notes = _notesController.text.trim();
     switch (_domainCode) {
@@ -624,17 +758,30 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     return <String, dynamic>{};
   }
 
+  int? _parseInputValue(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return null;
+
+    final value = int.tryParse(trimmed);
+    if (value == null || value < 0) {
+      throw const FormatException(
+        'Nilai harus berupa bilangan bulat non-negatif.',
+      );
+    }
+    return value;
+  }
+
   Map<String, dynamic> _entry(
     String idField,
     String id,
     String text,
     String notes,
   ) {
-    final trimmed = text.trim();
+    final value = _parseInputValue(text);
     return {
       idField: id,
-      'value': int.tryParse(trimmed),
-      'data_status': trimmed.isEmpty ? 'NOT_REPORTED' : 'VALID',
+      'value': value,
+      'data_status': value == null ? 'NOT_REPORTED' : 'VALID',
       'notes': notes.isEmpty ? null : notes,
     };
   }
@@ -644,11 +791,11 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     String text,
     String notes,
   ) {
-    final trimmed = text.trim();
+    final value = _parseInputValue(text);
     return {
       ...ids,
-      'value': int.tryParse(trimmed),
-      'data_status': trimmed.isEmpty ? 'NOT_REPORTED' : 'VALID',
+      'value': value,
+      'data_status': value == null ? 'NOT_REPORTED' : 'VALID',
       'notes': notes.isEmpty ? null : notes,
     };
   }
@@ -705,136 +852,146 @@ class _SubmissionMetaCard extends StatelessWidget {
   const _SubmissionMetaCard({
     required this.domainCode,
     required this.domains,
-    required this.periodLabelController,
-    required this.periodStart,
-    required this.periodEnd,
+    required this.periods,
+    required this.selectedPeriod,
+    required this.selectedMonth,
     required this.pomdams,
     required this.pomdamId,
     required this.onDomainChanged,
     required this.onPomdamChanged,
-    required this.onStartChanged,
-    required this.onEndChanged,
+    required this.onPeriodChanged,
+    required this.onPickMonth,
   });
 
   final String domainCode;
   final Map<String, String> domains;
-  final TextEditingController periodLabelController;
-  final DateTime periodStart;
-  final DateTime periodEnd;
+  final List<ReportPeriod> periods;
+  final ReportPeriod? selectedPeriod;
+  final DateTime selectedMonth;
   final List<Pomdam> pomdams;
   final String? pomdamId;
   final ValueChanged<String?> onDomainChanged;
   final ValueChanged<String?> onPomdamChanged;
-  final ValueChanged<DateTime?> onStartChanged;
-  final ValueChanged<DateTime?> onEndChanged;
+  final ValueChanged<String?> onPeriodChanged;
+  final VoidCallback onPickMonth;
+
+  String _monthLabel(DateTime month) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return '${months[month.month - 1]} ${month.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 330,
-              child: DropdownButtonFormField<String>(
-                initialValue: domainCode,
-                decoration: const InputDecoration(
-                  labelText: 'Jenis laporan',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final entry in domains.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: 330,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: domainCode,
+                    decoration: const InputDecoration(
+                      labelText: 'Jenis laporan',
+                      border: OutlineInputBorder(),
                     ),
-                ],
-                onChanged: onDomainChanged,
-              ),
-            ),
-            SizedBox(
-              width: 300,
-              child: DropdownButtonFormField<String>(
-                initialValue: pomdamId,
-                decoration: const InputDecoration(
-                  labelText: 'POMDAM',
-                  border: OutlineInputBorder(),
+                    items: [
+                      for (final entry in domains.entries)
+                        DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                    ],
+                    onChanged: onDomainChanged,
+                  ),
                 ),
-                items: [
-                  for (final pomdam in pomdams)
-                    DropdownMenuItem(
-                      value: pomdam.id,
-                      child: Text(pomdam.shortName),
+                SizedBox(
+                  width: 300,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: pomdamId,
+                    decoration: const InputDecoration(
+                      labelText: 'POMDAM',
+                      border: OutlineInputBorder(),
                     ),
-                ],
-                onChanged: onPomdamChanged,
-              ),
-            ),
-            SizedBox(
-              width: 260,
-              child: TextField(
-                controller: periodLabelController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama periode',
-                  border: OutlineInputBorder(),
+                    items: [
+                      for (final pomdam in pomdams)
+                        DropdownMenuItem(
+                          value: pomdam.id,
+                          child: Text('${pomdam.code} · ${pomdam.shortName}'),
+                        ),
+                    ],
+                    onChanged: onPomdamChanged,
+                  ),
                 ),
-              ),
+                SizedBox(
+                  width: 330,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: selectedPeriod?.id,
+                    decoration: const InputDecoration(
+                      labelText: 'Periode yang sudah tersedia',
+                      hintText: 'Pilih periode resmi atau gunakan bulan di samping',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      for (final period in periods)
+                        DropdownMenuItem<String>(
+                          value: period.id,
+                          child: Text(period.periodLabel),
+                        ),
+                    ],
+                    onChanged: onPeriodChanged,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: onPickMonth,
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  label: Text('Bulan · ${_monthLabel(selectedMonth)}'),
+                ),
+              ],
             ),
-            _DateButton(
-              label: 'Mulai',
-              value: periodStart,
-              onTap: () async {
-                final value = await showDatePicker(
-                  context: context,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                  initialDate: periodStart,
-                );
-                onStartChanged(value);
-              },
-            ),
-            _DateButton(
-              label: 'Selesai',
-              value: periodEnd,
-              onTap: () async {
-                final value = await showDatePicker(
-                  context: context,
-                  firstDate: periodStart,
-                  lastDate: DateTime(2100),
-                  initialDate: periodEnd,
-                );
-                onEndChanged(value);
-              },
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  selectedPeriod == null
+                      ? Icons.add_circle_outline
+                      : Icons.check_circle_outline,
+                  size: 19,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selectedPeriod == null
+                        ? 'Periode ${_monthLabel(selectedMonth)} belum ada. '
+                          'Periode resmi akan dibuat otomatis saat laporan disimpan.'
+                        : 'Periode ${selectedPeriod!.periodLabel} sudah ada di database. '
+                          'Bila POMDAM ini berasal dari impor Excel, overwrite akan ditolak.',
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _DateButton extends StatelessWidget {
-  const _DateButton({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final DateTime value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final date = '${value.day.toString().padLeft(2, '0')}/'
-        '${value.month.toString().padLeft(2, '0')}/${value.year}';
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.calendar_month_outlined),
-      label: Text('$label · $date'),
     );
   }
 }
@@ -857,8 +1014,9 @@ class _InputRuleCard extends StatelessWidget {
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
-                'Aturan penting: kosong = NOT_REPORTED; isi 0 = VALID bernilai nol. '
-                'Operator tidak dapat memasukkan source_cell, INVALID_SOURCE, atau ESTIMATED.',
+                'Aturan input: kosong = NOT_REPORTED; isi 0 = VALID bernilai nol; '
+                'hanya bilangan bulat non-negatif yang diterima. Operator tidak dapat '
+                'memasukkan source_cell, INVALID_SOURCE, atau ESTIMATED.',
               ),
             ),
           ],
@@ -956,6 +1114,10 @@ class _NumberRow extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              textAlign: TextAlign.end,
               decoration: const InputDecoration(
                 labelText: 'Nilai',
                 border: OutlineInputBorder(),
@@ -1004,6 +1166,10 @@ class _MatrixCard extends StatelessWidget {
                     child: TextField(
                       controller: controllers[column.id],
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+                      textAlign: TextAlign.end,
                       decoration: InputDecoration(
                         labelText: column.code,
                         border: const OutlineInputBorder(),

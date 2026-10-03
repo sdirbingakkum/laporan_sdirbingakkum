@@ -62,7 +62,9 @@ UI semantics:
 
 ## Provenance
 
-Every fact row must retain a resolvable `source_cell_id`.
+Imported fact rows retain a resolvable `source_cell_id`.
+
+Direct application fact rows intentionally have `source_cell_id = NULL` and are identified by the corresponding `report_submissions` record. The UI must render these as `Input Aplikasi` rather than attempting workbook-cell drill-down.
 
 The live database maintains a read-safe `public.report_provenance` projection backed by `private.source_cells`. It is synchronized by a database trigger and exposed only to permanent authenticated users.
 

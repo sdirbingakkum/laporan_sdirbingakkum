@@ -51,9 +51,10 @@ final class SupabaseReportInputRepository implements ReportInputRepository {
       final violationRows = await _client
           .from('violation_versions')
           .select(
-            'id,violation_id,display_order,violations!inner(canonical_code,canonical_name,category,active)',
+            'id,violation_id,display_order,source_period,violations!inner(canonical_code,canonical_name,category,active)',
           )
           .eq('violations.active', true)
+          .eq('source_period', 'CURRENT_2026')
           .order('display_order');
 
       final violationById = <String, ViolationInputOption>{};
@@ -127,6 +128,34 @@ final class SupabaseReportInputRepository implements ReportInputRepository {
     } on Object {
       throw const DataAccessException(
         'Gagal memuat struktur input laporan dari Supabase.',
+      );
+    }
+  }
+
+  @override
+  Future<ReportPeriod> getOrCreateMonthlyPeriod({
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final row = await _client.rpc(
+        'get_or_create_monthly_report_period',
+        params: {
+          'p_year': year,
+          'p_month': month,
+        },
+      );
+
+      return ReportPeriod.fromMap(
+        Map<String, dynamic>.from(row as Map),
+      );
+    } on PostgrestException catch (error) {
+      throw DataAccessException(
+        'Gagal menyiapkan periode laporan: ${error.message}',
+      );
+    } on Object {
+      throw const DataAccessException(
+        'Gagal menyiapkan periode laporan.',
       );
     }
   }
