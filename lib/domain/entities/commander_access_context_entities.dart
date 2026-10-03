@@ -1,5 +1,15 @@
 import 'package:flutter/foundation.dart';
 
+abstract final class CommanderCapabilities {
+  static const viewCommanderCop = 'VIEW_COMMANDER_COP';
+  static const viewDomainData = 'VIEW_DOMAIN_DATA';
+  static const viewReports = 'VIEW_REPORTS';
+  static const viewDataQuality = 'VIEW_DATA_QUALITY';
+  static const viewPomdamDirectory = 'VIEW_POMDAM_DIRECTORY';
+  static const manageReportData = 'MANAGE_REPORT_DATA';
+  static const verifyReportData = 'VERIFY_REPORT_DATA';
+}
+
 enum CommanderAccessScopeType {
   allPomdam,
   pomdam,
@@ -50,15 +60,6 @@ enum CommanderAccessRole {
         _ => false,
       };
 
-  bool get canUseCommanderDashboard => switch (this) {
-        CommanderAccessRole.puspomadCommander ||
-        CommanderAccessRole.puspomadDeputyCommander ||
-        CommanderAccessRole.puspomadDirbingakkum ||
-        CommanderAccessRole.pomdamCommander =>
-          true,
-        _ => false,
-      };
-
   bool get isOperator => switch (this) {
         CommanderAccessRole.puspomadOperator ||
         CommanderAccessRole.pomdamOperator =>
@@ -96,6 +97,7 @@ final class CommanderAccessContext {
     required this.role,
     required this.scopeType,
     required this.pomdamIds,
+    required this.capabilities,
   });
 
   final int schemaVersion;
@@ -104,6 +106,7 @@ final class CommanderAccessContext {
   final CommanderAccessRoleInfo? role;
   final CommanderAccessScopeType scopeType;
   final List<String> pomdamIds;
+  final Set<String> capabilities;
 
   bool get isAuthorized =>
       authenticated &&
@@ -121,14 +124,24 @@ final class CommanderAccessContext {
 
   bool get isPomdam => isAuthorized && role!.role.isPomdam;
 
+  bool hasCapability(String capability) =>
+      isAuthorized && capabilities.contains(capability);
+
   bool get canUseCommanderDashboard =>
-      isAuthorized && role!.role.canUseCommanderDashboard;
+      hasCapability(CommanderCapabilities.viewCommanderCop);
 
   bool get isOperator => isAuthorized && role!.role.isOperator;
 
   String get defaultLocation {
     if (canUseCommanderDashboard) return '/';
-    if (isOperator) return '/reports';
+    if (hasCapability(CommanderCapabilities.viewReports)) return '/reports';
+    if (hasCapability(CommanderCapabilities.viewDomainData)) return '/gakkum';
+    if (hasCapability(CommanderCapabilities.viewDataQuality)) {
+      return '/data-quality';
+    }
+    if (hasCapability(CommanderCapabilities.viewPomdamDirectory)) {
+      return '/pomdam';
+    }
     return '/access-denied';
   }
 
@@ -141,13 +154,20 @@ final class CommanderAccessContext {
   factory CommanderAccessContext.fromMap(Map<String, dynamic> map) {
     final roleMap = map['role'];
     final scopeMap = map['scope'];
-
     final rawPomdamIds = scopeMap is Map ? scopeMap['pomdam_ids'] : null;
+    final rawCapabilities = map['capabilities'];
+
     final pomdamIds = <String>[
       if (rawPomdamIds is List)
         for (final item in rawPomdamIds)
           if (item is String && item.isNotEmpty) item,
     ];
+
+    final capabilities = <String>{
+      if (rawCapabilities is List)
+        for (final item in rawCapabilities)
+          if (item is String && item.isNotEmpty) item,
+    };
 
     return CommanderAccessContext(
       schemaVersion: _toInt(map['schema_version'], fallback: 1),
@@ -159,11 +179,10 @@ final class CommanderAccessContext {
             )
           : null,
       scopeType: CommanderAccessScopeType.fromCode(
-        scopeMap is Map
-            ? (scopeMap['type'] as String?)
-            : null,
+        scopeMap is Map ? scopeMap['type'] as String? : null,
       ),
       pomdamIds: List.unmodifiable(pomdamIds),
+      capabilities: Set.unmodifiable(capabilities),
     );
   }
 }
