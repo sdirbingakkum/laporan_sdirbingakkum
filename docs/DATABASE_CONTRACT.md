@@ -1,6 +1,6 @@
 # Database Contract Snapshot
 
-Verified against Supabase project ybepaqmrrgsaeqnqrsrf on 2026-10-02.
+Verified against Supabase project ybepaqmrrgsaeqnqrsrf on 2026-10-04.
 
 ## pomdams
 
@@ -62,9 +62,9 @@ The application never collapses those statuses into zero.
 
 ## Application provenance contract
 
-All six reporting domains now preserve `sourceCellId` through the data/domain boundary.
+Imported rows preserve `source_cell_id` for workbook/sheet/cell drill-down. Direct application submissions intentionally use `source_cell_id = NULL`; their audit identity is the `report_submissions` row (report type + period + POMDAM + revision + submitter/time).
 
-The public reporting read model also exposes a restricted `report_provenance` projection for workbook/sheet/cell drill-down without exposing `private.source_cells`.
+The public reporting read model exposes a restricted `report_provenance` projection for imported workbook/sheet/cell drill-down without exposing `private.source_cells`. App-native rows must render as `Input Aplikasi`, not as an Excel cell.
 
 ## Security snapshot
 
@@ -77,3 +77,12 @@ Verified live:
 - provenance projection is authenticated-only
 
 Supabase Auth leaked-password protection remains a separate Auth configuration gate.
+
+
+## Direct input contract
+
+- The operator submits exactly one POMDAM at a time.
+- A monthly period is canonicalized by year/month and cannot be duplicated by label variants.
+- Every active catalog dimension required by the selected report type must be present in the submission payload.
+- Blank input is `NOT_REPORTED`; zero is `VALID` zero; only non-negative integers are accepted.
+- Direct input cannot set `source_cell_id`, `INVALID_SOURCE`, or `ESTIMATED`.
