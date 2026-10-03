@@ -127,6 +127,17 @@ test.describe('critical interaction surface smoke', () => {
   });
 
 
+  test('Commander cannot open the report input surface without manage capability', async ({ page }) => {
+    await page.goto('./input-laporan', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30_000,
+    });
+    await expect(
+      page.getByRole('heading', { name: 'Dashboard', exact: true }),
+    ).toBeVisible({ timeout: 30_000 });
+    expect(new URL(page.url()).pathname).toBe('/laporan_sdirbingakkum/');
+  });
+
   test('Commander drill-down can open source sheet inspection', async ({ page }) => {
     await page.goto('./commander/drilldown?domain=GAKKUM', {
       waitUntil: 'domcontentloaded',
