@@ -201,7 +201,10 @@ class _CommanderView extends StatelessWidget {
             for (final domain in snapshot.domains)
               SizedBox(
                 width: cardWidth,
-                child: _DomainCard(domain: domain),
+                child: _DomainCard(
+                  domain: domain,
+                  pomdamId: selectedPomdamId,
+                ),
               ),
           ],
         ),
@@ -461,9 +464,13 @@ class _AttentionPanel extends StatelessWidget {
 }
 
 class _DomainCard extends StatelessWidget {
-  const _DomainCard({required this.domain});
+  const _DomainCard({
+    required this.domain,
+    required this.pomdamId,
+  });
 
   final CommanderDomainSnapshot domain;
+  final String? pomdamId;
 
   @override
   Widget build(BuildContext context) {
@@ -484,7 +491,15 @@ class _DomainCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go(route),
+        onTap: () {
+          final query = <String, String>{
+            'domain': domain.code,
+            if (pomdamId != null) 'pomdamId': pomdamId!,
+          };
+          context.push(
+            Uri(path: '/commander/drilldown', queryParameters: query).toString(),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 13),
           child: Column(
