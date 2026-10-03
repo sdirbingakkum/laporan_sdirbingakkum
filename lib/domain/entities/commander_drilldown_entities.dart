@@ -538,7 +538,7 @@ final class CommanderSourceFile {
     required this.availabilityStatus,
     required this.accessScope,
     required this.createdAt,
-    required this._objectPath,
+    required this.objectPath,
   });
 
   final String id;
@@ -550,9 +550,7 @@ final class CommanderSourceFile {
   final String availabilityStatus;
   final String accessScope;
   final DateTime? createdAt;
-  final String _objectPath;
-
-  String get objectPath => _objectPath;
+  final String objectPath;
 
   factory CommanderSourceFile.fromMap(Map<String, dynamic> map) {
     return CommanderSourceFile(
@@ -566,7 +564,7 @@ final class CommanderSourceFile {
           map['availability_status'] as String? ?? 'MISSING',
       accessScope: map['access_scope'] as String? ?? '',
       createdAt: _parseDate(map['created_at']),
-      _objectPath: map['object_path'] as String? ?? '',
+      objectPath: map['object_path'] as String? ?? '',
     );
   }
 }
