@@ -1148,9 +1148,12 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = error is AppException
-        ? (error as AppException).message
-        : 'Commander snapshot belum dapat dibaca dari Supabase.';
+    final message = switch (error) {
+      AuthorizationException() =>
+        'Akses Commander tidak diizinkan untuk scope yang diminta.',
+      AppException() => error.message,
+      _ => 'Commander snapshot belum dapat dibaca dari Supabase.',
+    };
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
