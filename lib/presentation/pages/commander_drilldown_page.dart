@@ -40,7 +40,7 @@ class _CommanderDrilldownPageState
 
   @override
   Widget build(BuildContext context) {
-    final access = ref.watch(commanderAccessContextProvider).valueOrNull;
+    final access = ref.watch(commanderAccessContextProvider).value;
 
     if (access == null) {
       return const _LoadingView();

@@ -1274,7 +1274,7 @@ class _ErrorView extends StatelessWidget {
     final message = switch (error) {
       AuthorizationException() =>
         'Akses Commander tidak diizinkan untuk scope yang diminta.',
-      AppException() => error.message,
+      AppException(:final message) => message,
       _ => 'Commander snapshot belum dapat dibaca dari Supabase.',
     };
 

@@ -99,7 +99,7 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final access = ref.watch(commanderAccessContextProvider).valueOrNull;
+    final access = ref.watch(commanderAccessContextProvider).value;
     final items = _visibleItems(access);
 
     if (items.isEmpty) {
@@ -229,7 +229,7 @@ class AppShell extends ConsumerWidget {
                 NavigationDestination(
                   icon: Icon(item.icon),
                   selectedIcon: Icon(item.selectedIcon),
-                  label: Text(item.label),
+                  label: item.label,
                 ),
             ],
           );
