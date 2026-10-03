@@ -477,6 +477,100 @@ final class CommanderSourceSheetCell {
   }
 }
 
+@immutable
+final class CommanderSourceFileContext {
+  const CommanderSourceFileContext({
+    required this.schemaVersion,
+    required this.status,
+    required this.recordId,
+    required this.domain,
+    required this.sourceReportId,
+    required this.workbook,
+    required this.file,
+  });
+
+  final int schemaVersion;
+  final String status;
+  final String recordId;
+  final String domain;
+  final String? sourceReportId;
+  final CommanderSourceWorkbook? workbook;
+  final CommanderSourceFile? file;
+
+  bool get found => status == 'FOUND';
+
+  bool get scopeRestricted => status == 'SOURCE_FILE_SCOPE_RESTRICTED';
+
+  bool get unavailable =>
+      status == 'NO_SOURCE_FILE' || status == 'NO_SOURCE_CELL';
+
+  factory CommanderSourceFileContext.fromMap(Map<String, dynamic> map) {
+    final workbookMap = map['workbook'];
+    final fileMap = map['file'];
+
+    return CommanderSourceFileContext(
+      schemaVersion: _toInt(map['schema_version']),
+      status: map['status'] as String? ?? 'NO_SOURCE_FILE',
+      recordId: map['record_id'] as String? ?? '',
+      domain: map['domain'] as String? ?? '',
+      sourceReportId: map['source_report_id'] as String?,
+      workbook: workbookMap is Map
+          ? CommanderSourceWorkbook.fromMap(
+              Map<String, dynamic>.from(workbookMap),
+            )
+          : null,
+      file: fileMap is Map
+          ? CommanderSourceFile.fromMap(Map<String, dynamic>.from(fileMap))
+          : null,
+    );
+  }
+}
+
+@immutable
+final class CommanderSourceFile {
+  const CommanderSourceFile({
+    required this.id,
+    required this.bucketId,
+    required this.originalFilename,
+    required this.contentType,
+    required this.byteSize,
+    required this.fileSha256,
+    required this.availabilityStatus,
+    required this.accessScope,
+    required this.createdAt,
+    required this._objectPath,
+  });
+
+  final String id;
+  final String bucketId;
+  final String originalFilename;
+  final String contentType;
+  final int? byteSize;
+  final String? fileSha256;
+  final String availabilityStatus;
+  final String accessScope;
+  final DateTime? createdAt;
+  final String _objectPath;
+
+  String get objectPath => _objectPath;
+
+  factory CommanderSourceFile.fromMap(Map<String, dynamic> map) {
+    return CommanderSourceFile(
+      id: map['id'] as String? ?? '',
+      bucketId: map['bucket_id'] as String? ?? '',
+      originalFilename: map['original_filename'] as String? ?? '',
+      contentType: map['content_type'] as String? ?? '',
+      byteSize: (map['byte_size'] as num?)?.toInt(),
+      fileSha256: map['file_sha256'] as String?,
+      availabilityStatus:
+          map['availability_status'] as String? ?? 'MISSING',
+      accessScope: map['access_scope'] as String? ?? '',
+      createdAt: _parseDate(map['created_at']),
+      _objectPath: map['object_path'] as String? ?? '',
+    );
+  }
+}
+
 List<Map<String, dynamic>> _mapList(dynamic value) {
   if (value is! List) return const [];
 
