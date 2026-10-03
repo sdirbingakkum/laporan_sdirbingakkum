@@ -14,3 +14,7 @@ final class AppConfigurationException extends AppException {
 final class DataAccessException extends AppException {
   const DataAccessException(super.message);
 }
+
+final class AuthorizationException extends AppException {
+  const AuthorizationException(super.message);
+}
