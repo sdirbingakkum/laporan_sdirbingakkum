@@ -182,14 +182,20 @@ test.describe('critical interaction surface smoke', () => {
     });
 
     const dimension = page
-      .getByText('Patroli Berkendaraan', { exact: true })
+      .getByRole('button', {
+        name: /^Patroli Berkendaraan\s+ACTIVITY/,
+      })
       .first();
     await expect(dimension).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
     await dimension.click();
 
-    const records = page.getByText('Patroli Berkendaraan', { exact: true });
-    await expect(records.last()).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
-    await records.last().click();
+    const record = page
+      .getByRole('button', {
+        name: /^Patroli Berkendaraan.*Iskandar Muda/,
+      })
+      .first();
+    await expect(record).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
+    await record.click();
 
     await expect(
       page.getByText('SOURCE / LINEAGE', { exact: true }),
