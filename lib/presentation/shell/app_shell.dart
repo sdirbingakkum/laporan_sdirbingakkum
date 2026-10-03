@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AppShell extends StatelessWidget {
+import '../../application/providers/commander_access_context_providers.dart';
+import '../../domain/entities/commander_access_context_entities.dart';
+
+class AppShell extends ConsumerWidget {
   const AppShell({
     required this.location,
     required this.child,
@@ -18,81 +22,108 @@ class AppShell extends StatelessWidget {
       label: 'Dashboard',
       icon: Icons.dashboard_outlined,
       selectedIcon: Icons.dashboard,
+      capability: CommanderCapabilities.viewCommanderCop,
     ),
     _NavItem(
       path: '/gakkum',
       label: 'Gakkum',
       icon: Icons.gavel_outlined,
       selectedIcon: Icons.gavel,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/pelanggaran',
       label: 'Pelanggaran',
       icon: Icons.rule_outlined,
       selectedIcon: Icons.rule,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/sim-tni',
       label: 'SIM TNI',
       icon: Icons.badge_outlined,
       selectedIcon: Icons.badge,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/provos',
       label: 'Provos',
       icon: Icons.shield_outlined,
       selectedIcon: Icons.shield,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/laka-lalin',
       label: 'Laka Lalin',
       icon: Icons.car_crash_outlined,
       selectedIcon: Icons.car_crash,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/tindak-pidana',
       label: 'Tindak Pidana',
       icon: Icons.policy_outlined,
       selectedIcon: Icons.policy,
+      capability: CommanderCapabilities.viewDomainData,
     ),
     _NavItem(
       path: '/pomdam',
       label: 'POMDAM',
       icon: Icons.account_balance_outlined,
       selectedIcon: Icons.account_balance,
+      capability: CommanderCapabilities.viewPomdamDirectory,
     ),
     _NavItem(
       path: '/reports',
       label: 'Laporan',
       icon: Icons.description_outlined,
       selectedIcon: Icons.description,
+      capability: CommanderCapabilities.viewReports,
     ),
     _NavItem(
       path: '/data-quality',
       label: 'Data Quality',
       icon: Icons.verified_outlined,
       selectedIcon: Icons.verified,
+      capability: CommanderCapabilities.viewDataQuality,
     ),
   ];
 
-  int get selectedIndex {
-    if (location == '/') return 0;
-    final index = _items.indexWhere(
-      (item) => item.path != '/' && location.startsWith(item.path),
-    );
-    return index >= 0 ? index : 0;
+  List<_NavItem> _visibleItems(CommanderAccessContext? access) {
+    if (access == null || !access.isAuthorized) return const [];
+    return [
+      for (final item in _items)
+        if (access.hasCapability(item.capability)) item,
+    ];
   }
 
-  String get title => _items[selectedIndex].label;
-
   @override
-  Widget build(BuildContext context) {
-    final index = selectedIndex;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final access = ref.watch(commanderAccessContextProvider).valueOrNull;
+    final items = _visibleItems(access);
+
+    if (items.isEmpty) {
+      return Scaffold(body: child);
+    }
+
+    final index = _selectedIndex(items);
+    final title = items[index].label;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: [
+          if (access?.role != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Chip(
+                  avatar: const Icon(Icons.badge_outlined, size: 18),
+                  label: Text(access!.role!.displayName),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ),
           PopupMenuButton<String>(
             tooltip: 'Akun',
             onSelected: (value) async {
@@ -102,9 +133,6 @@ class AppShell extends StatelessWidget {
               try {
                 await client.auth.signOut(scope: SignOutScope.local);
               } catch (error) {
-                // Supabase can report session_not_found when the local session
-                // has already been invalidated server-side. Treat that state
-                // as an idempotent sign-out; surface only real failures.
                 if (client.auth.currentSession != null && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -128,6 +156,14 @@ class AppShell extends StatelessWidget {
                       'Akun terautentikasi',
                 ),
               ),
+              if (access?.role != null)
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(
+                    access!.role!.displayName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
               const PopupMenuDivider(),
               const PopupMenuItem<String>(
                 value: 'sign_out',
@@ -156,11 +192,11 @@ class AppShell extends StatelessWidget {
                 NavigationRail(
                   selectedIndex: index,
                   onDestinationSelected: (value) {
-                    context.go(_items[value].path);
+                    context.go(items[value].path);
                   },
                   labelType: NavigationRailLabelType.all,
                   destinations: [
-                    for (final item in _items)
+                    for (final item in items)
                       NavigationRailDestination(
                         icon: Icon(item.icon),
                         selectedIcon: Icon(item.selectedIcon),
@@ -186,20 +222,32 @@ class AppShell extends StatelessWidget {
           return NavigationBar(
             selectedIndex: index,
             onDestinationSelected: (value) {
-              context.go(_items[value].path);
+              context.go(items[value].path);
             },
             destinations: [
-              for (final item in _items)
+              for (final item in items)
                 NavigationDestination(
                   icon: Icon(item.icon),
                   selectedIcon: Icon(item.selectedIcon),
-                  label: item.label,
+                  label: Text(item.label),
                 ),
             ],
           );
         },
       ),
     );
+  }
+
+  int _selectedIndex(List<_NavItem> items) {
+    if (location == '/') {
+      final index = items.indexWhere((item) => item.path == '/');
+      return index >= 0 ? index : 0;
+    }
+
+    final index = items.indexWhere(
+      (item) => item.path != '/' && location.startsWith(item.path),
+    );
+    return index >= 0 ? index : 0;
   }
 }
 
@@ -209,10 +257,12 @@ final class _NavItem {
     required this.label,
     required this.icon,
     required this.selectedIcon,
+    required this.capability,
   });
 
   final String path;
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+  final String capability;
 }
