@@ -142,4 +142,72 @@ void main() {
     expect(trace.source.cell, isNull);
     expect(trace.source.workbook, isNull);
   });
+  test('source sheet context parses target and cells', () {
+    final context = CommanderSourceSheetContext.fromMap({
+      'schema_version': 1,
+      'status': 'FOUND',
+      'context_mode': 'POMDAM_CELL_CONTEXT',
+      'record_id': 'record-a',
+      'domain': 'GAKKUM',
+      'row_radius': 2,
+      'workbook': {
+        'id': 'report-a',
+        'name': 'statistik.xlsx',
+        'sheet': 'SEP 26',
+        'sheet_index': 1,
+        'import_status': 'IMPORTED',
+        'sheet_state': 'visible',
+        'sheet_role': 'DATA',
+        'period_resolution_status': 'RESOLVED',
+      },
+      'target': {
+        'ref': 'C22',
+        'row_number': 22,
+        'column_letter': 'C',
+        'raw_value': '192',
+        'parsed_numeric': 192,
+        'data_status': 'VALID',
+        'semantic_role': 'FACT',
+        'row_label': '2. BAN POM UTK KAM UMUM',
+        'column_label': 'IM',
+      },
+      'cells': [
+        {
+          'id': 'cell-a',
+          'source_report_id': 'report-a',
+          'cell_ref': 'C21',
+          'row_number': 21,
+          'column_letter': 'C',
+          'raw_value': '1',
+          'parsed_numeric': 1,
+          'data_status': 'VALID',
+          'semantic_role': 'FACT',
+          'row_label': '1. MENDATANGI TKP',
+          'column_label': 'IM',
+          'is_target': false,
+        },
+        {
+          'id': 'cell-b',
+          'source_report_id': 'report-a',
+          'cell_ref': 'C22',
+          'row_number': 22,
+          'column_letter': 'C',
+          'raw_value': '192',
+          'parsed_numeric': 192,
+          'data_status': 'VALID',
+          'semantic_role': 'FACT',
+          'row_label': '2. BAN POM UTK KAM UMUM',
+          'column_label': 'IM',
+          'is_target': true,
+        },
+      ],
+    });
+
+    expect(context.found, isTrue);
+    expect(context.isPomdamCellContext, isTrue);
+    expect(context.target!.ref, 'C22');
+    expect(context.cells, hasLength(2));
+    expect(context.cells.last.isTarget, isTrue);
+  });
+
 }
