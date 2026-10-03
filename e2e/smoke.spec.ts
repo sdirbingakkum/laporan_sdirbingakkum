@@ -197,25 +197,28 @@ test.describe('critical interaction surface smoke', () => {
     await expect(record).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
     await record.click();
 
-    await expect(
-      page.getByText('SOURCE / LINEAGE', { exact: true }),
-    ).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
+    const lineage = page.getByText('SOURCE / LINEAGE', { exact: true });
+    for (let attempt = 0; attempt < 8 && !(await lineage.isVisible().catch(() => false)); attempt++) {
+      await page.mouse.wheel(0, 700);
+      await page.waitForTimeout(250);
+    }
+    await expect(lineage).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Buka source sheet',
-        exact: true,
-      }),
-    ).toBeVisible();
-
-    await page.getByRole('button', {
+    const sourceButton = page.getByRole('button', {
       name: 'Buka source sheet',
       exact: true,
-    }).click();
+    });
+    await expect(sourceButton).toBeVisible();
+    await sourceButton.click();
 
-    await expect(
-      page.getByText('SOURCE SHEET INSPECTOR', { exact: true }),
-    ).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
+    const inspector = page.getByText('SOURCE SHEET INSPECTOR', { exact: true });
+    for (let attempt = 0; attempt < 8 && !(await inspector.isVisible().catch(() => false)); attempt++) {
+      await page.mouse.wheel(0, 700);
+      await page.waitForTimeout(250);
+    }
+    await expect(inspector).toBeVisible({
+      timeout: SMOKE_ASSERTION_TIMEOUT,
+    });
 
     await expect(page.getByText(/TARGET /).first()).toBeVisible();
   });
