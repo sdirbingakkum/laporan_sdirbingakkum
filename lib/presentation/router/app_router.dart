@@ -57,24 +57,23 @@ String _initialWebLocation() {
   return knownRoutes.contains(path) ? path : '/';
 }
 
-String _loginLocationFor(Uri target) {
+String _loginLocationFor(String path) {
   return Uri(
     path: '/login',
-    queryParameters: {'returnTo': target.toString()},
+    queryParameters: {'returnTo': path},
   ).toString();
 }
 
 String? _safeReturnPath(String? value) {
-  if (value == null || value.isEmpty) return null;
-
-  final uri = Uri.tryParse(value);
-  if (uri == null || !uri.path.startsWith('/') || uri.path.startsWith('//')) {
+  if (value == null ||
+      value.isEmpty ||
+      !value.startsWith('/') ||
+      value.startsWith('//')) {
     return null;
   }
 
   const allowedRoutes = {
     '/',
-    '/commander/drilldown',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -86,7 +85,7 @@ String? _safeReturnPath(String? value) {
     '/data-quality',
   };
 
-  return allowedRoutes.contains(uri.path) ? uri.toString() : null;
+  return allowedRoutes.contains(value) ? value : null;
 }
 
 String? _requiredCapabilityFor(String location) {
@@ -137,7 +136,7 @@ FutureOr<String?> _authRedirect(
   final location = state.uri.path;
 
   if (!authenticated && location != '/login') {
-    return _loginLocationFor(state.uri);
+    return _loginLocationFor(location);
   }
 
   if (!authenticated) {
@@ -154,14 +153,14 @@ FutureOr<String?> _authRedirect(
     if (location == '/login') {
       final returnPath =
           _safeReturnPath(state.uri.queryParameters['returnTo']);
-      final requestedUri = Uri.parse(returnPath ?? access.defaultLocation);
-      final required = _requiredCapabilityFor(requestedUri.path);
+      final requestedPath = returnPath ?? access.defaultLocation;
+      final required = _requiredCapabilityFor(requestedPath);
 
       if (required != null && !access.hasCapability(required)) {
         return access.defaultLocation;
       }
 
-      return requestedUri.toString();
+      return requestedPath;
     }
 
     final required = _requiredCapabilityFor(location);
