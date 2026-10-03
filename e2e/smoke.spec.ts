@@ -163,15 +163,6 @@ test.describe('critical interaction surface smoke', () => {
       exact: true,
     });
     await expect(sourceButton).toBeVisible();
-    await sourceButton.click();
-
-    await expect(
-      page.getByRole('button', {
-        name: 'Tutup source sheet',
-        exact: true,
-      }),
-    ).toBeVisible({ timeout: 30_000 });
-
     const sourceContextResponse = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
@@ -179,14 +170,38 @@ test.describe('critical interaction surface smoke', () => {
         response.status() === 200,
     );
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Tutup source sheet',
-        exact: true,
-      }),
-    ).toBeVisible({ timeout: 30_000 });
+    await sourceButton.click();
 
-    await sourceContextResponse;
+    const closeInspectorButton = page.getByRole('button', {
+      name: 'Tutup source sheet',
+      exact: true,
+    });
+    await expect(closeInspectorButton).toBeVisible({ timeout: 30_000 });
+
+    const response = await sourceContextResponse;
+    const payload = (await response.json()) as {
+      status?: string;
+      context_mode?: string;
+      target?: { ref?: string; raw_value?: string };
+      workbook?: { name?: string; sheet?: string };
+      cells?: unknown[];
+    };
+
+    expect(payload.status).toBe('FOUND');
+    expect(payload.context_mode).toBe('ALL_POMDAM_CONTEXT');
+    expect(payload.target?.ref).toBe('C9');
+    expect(payload.target?.raw_value).toBe('146');
+    expect(payload.workbook?.name).toBe(
+      '1. STATISTIK GIAT GAKKUM(1).xlsx',
+    );
+    expect(payload.workbook?.sheet).toBe('SEP 26');
+    expect(Array.isArray(payload.cells)).toBe(true);
+    expect(payload.cells?.length).toBeGreaterThan(0);
+
+    const inspector = page.getByRole('group', {
+      name: /^SOURCE SHEET INSPECTOR/,
+    }).first();
+    await expect(inspector).toBeVisible({ timeout: 30_000 });
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {

@@ -666,10 +666,14 @@ class _SourceSheetContextCard extends StatelessWidget {
           _positionKey(cell.rowNumber!, cell.columnLetter): cell,
     };
 
-    return Card(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'SOURCE SHEET INSPECTOR',
+      child: Card(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -784,6 +788,7 @@ class _SourceSheetContextCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
+          ),
         ),
       ),
     );
