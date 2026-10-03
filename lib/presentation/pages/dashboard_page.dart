@@ -185,6 +185,12 @@ class _Header extends StatelessWidget {
                       ],
                       onChanged: onPomdamChanged,
                     ),
+                  )
+                else if (selectedPomdamId != null)
+                  OutlinedButton.icon(
+                    onPressed: () => onPomdamChanged(null),
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Kembali ke Semua POMDAM'),
                   ),
               ],
             ),
