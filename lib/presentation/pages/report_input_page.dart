@@ -160,6 +160,25 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
         ),
       ),
       data: (catalog) {
+        final monthlyPeriods = _monthlyPeriods(catalog);
+        final selectedPeriod =
+            _findPeriodById(monthlyPeriods, _selectedPeriodId) ??
+            _findPeriodForMonth(monthlyPeriods, _selectedMonth);
+
+        if (_selectedPeriodId != selectedPeriod?.id) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectedPeriodId != selectedPeriod?.id) {
+              setState(() {
+                _selectedPeriodId = selectedPeriod?.id;
+                if (selectedPeriod?.periodStart != null) {
+                  final start = selectedPeriod!.periodStart!;
+                  _selectedMonth = DateTime(start.year, start.month);
+                }
+              });
+            }
+          });
+        }
+
         final availablePomdams = [
           for (final pomdam in catalog.pomdams)
             if (access.canReadPomdam(pomdam.id)) pomdam,
@@ -194,9 +213,9 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                 _SubmissionMetaCard(
                   domainCode: _domainCode,
                   domains: _domains,
-                  periodLabelController: _periodLabelController,
-                  periodStart: _periodStart,
-                  periodEnd: _periodEnd,
+                  periods: monthlyPeriods,
+                  selectedPeriodId: selectedPeriod?.id,
+                  selectedMonth: _selectedMonth,
                   pomdams: availablePomdams,
                   pomdamId: effectivePomdamId,
                   onDomainChanged: (value) {
@@ -209,18 +228,32 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                   onPomdamChanged: (value) {
                     setState(() => _pomdamId = value);
                   },
-                  onStartChanged: (value) {
-                    if (value == null) return;
+                  onPeriodChanged: (value) {
+                    final period = _findPeriodById(monthlyPeriods, value);
                     setState(() {
-                      _periodStart = value;
-                      if (_periodEnd.isBefore(value)) {
-                        _periodEnd = DateTime(value.year, value.month + 1, 0);
+                      _selectedPeriodId = period?.id;
+                      if (period?.periodStart != null) {
+                        final start = period!.periodStart!;
+                        _selectedMonth = DateTime(start.year, start.month);
                       }
                     });
                   },
-                  onEndChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _periodEnd = value);
+                  onPickMonth: () async {
+                    final value = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2000, 1, 1),
+                      lastDate: DateTime(2100, 12, 31),
+                      initialDate: _selectedMonth,
+                      helpText: 'Pilih bulan laporan',
+                    );
+                    if (value == null || !mounted) return;
+                    final month = DateTime(value.year, value.month);
+                    final existing =
+                        _findPeriodForMonth(monthlyPeriods, month);
+                    setState(() {
+                      _selectedMonth = month;
+                      _selectedPeriodId = existing?.id;
+                    });
                   },
                 ),
                 const SizedBox(height: 14),
@@ -243,7 +276,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
                   child: FilledButton.icon(
                     onPressed: _saving
                         ? null
-                        : () => _submit(catalog, effectivePomdamId),
+                        : () => _submit(catalog, effectivePomdamId, selectedPeriod),
                     icon: _saving
                         ? const SizedBox(
                             width: 18,
