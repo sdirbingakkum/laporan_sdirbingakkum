@@ -536,7 +536,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
         payload: payload,
       );
 
-      _clearInputFields();
+      setState(_clearInputFields);
       ref.invalidate(reportInputCatalogProvider);
       ref.invalidate(reportAuditSummaryProvider);
       ref.invalidate(reportProvenanceProvider);
@@ -581,6 +581,20 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   String _friendlyError(Object error) {
     final message = error is AppException ? error.message : error.toString();
     const known = <String, String>{
+      'AUTHENTICATION_REQUIRED':
+          'Sesi login tidak valid. Silakan login kembali.',
+      'REPORT_WRITE_FORBIDDEN':
+          'Akun ini tidak memiliki hak untuk menyimpan laporan.',
+      'POMDAM_SCOPE_FORBIDDEN':
+          'Akun ini tidak memiliki akses ke POMDAM yang dipilih.',
+      'UNKNOWN_PERIOD':
+          'Periode laporan tidak ditemukan. Muat ulang form lalu coba lagi.',
+      'INVALID_PERIOD_YEAR':
+          'Tahun periode tidak valid.',
+      'INVALID_PERIOD_MONTH':
+          'Bulan periode tidak valid.',
+      'UNKNOWN_REPORT_TYPE':
+          'Jenis laporan tidak valid atau sudah tidak aktif.',
       'PERIOD_LOCKED_IMPORTED':
           'Periode/POMDAM ini berasal dari impor Excel dan dikunci. '
           'Pilih bulan yang belum diimpor untuk input aplikasi.',
