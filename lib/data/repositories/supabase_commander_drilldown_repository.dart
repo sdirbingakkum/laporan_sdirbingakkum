@@ -21,6 +21,17 @@ abstract interface class CommanderDrilldownRepository {
     required String recordId,
     int rowRadius = 4,
   });
+
+  Future<CommanderSourceFileContext> getSourceFileContext({
+    required String domainCode,
+    required String recordId,
+  });
+
+  Future<String> createSourceFileSignedUrl({
+    required String bucketId,
+    required String objectPath,
+    int expiresIn = 300,
+  });
 }
 
 final class SupabaseCommanderDrilldownRepository
@@ -116,6 +127,77 @@ final class SupabaseCommanderDrilldownRepository
       );
     }
   }
+  @override
+  Future<CommanderSourceFileContext> getSourceFileContext({
+    required String domainCode,
+    required String recordId,
+  }) async {
+    try {
+      final response = await _client.rpc(
+        'get_commander_source_file_context',
+        params: <String, dynamic>{
+          'p_domain_code': domainCode,
+          'p_record_id': recordId,
+        },
+      );
+
+      if (response is! Map) {
+        throw const DataAccessException(
+          'Source file context memiliki format respons yang tidak valid.',
+        );
+      }
+
+      return CommanderSourceFileContext.fromMap(
+        Map<String, dynamic>.from(response),
+      );
+    } on PostgrestException catch (error) {
+      if (error.code == '42501') {
+        throw const AuthorizationException(
+          'Source file tidak dapat diakses untuk scope akun ini.',
+        );
+      }
+
+      throw DataAccessException(
+        'Gagal membaca source file context: ' + error.message,
+      );
+    } on AppException {
+      rethrow;
+    } on Object {
+      throw const DataAccessException(
+        'Source file context tidak dapat dibaca dari Supabase.',
+      );
+    }
+  }
+
+  @override
+  Future<String> createSourceFileSignedUrl({
+    required String bucketId,
+    required String objectPath,
+    int expiresIn = 300,
+  }) async {
+    if (bucketId.isEmpty || objectPath.isEmpty) {
+      throw const DataAccessException(
+        'Path workbook asli tidak tersedia.',
+      );
+    }
+
+    try {
+      return await _client.storage
+          .from(bucketId)
+          .createSignedUrl(objectPath, expiresIn);
+    } on StorageException catch (error) {
+      throw DataAccessException(
+        'Gagal membuka workbook asli: ' + error.message,
+      );
+    } on AppException {
+      rethrow;
+    } on Object {
+      throw const DataAccessException(
+        'Workbook asli tidak dapat dibuka.',
+      );
+    }
+  }
+
   @override
   Future<CommanderSourceSheetContext> getSourceSheetContext({
     required String domainCode,
