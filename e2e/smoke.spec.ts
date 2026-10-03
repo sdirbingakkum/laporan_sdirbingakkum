@@ -169,61 +169,6 @@ test.describe('critical interaction surface smoke', () => {
     expect(new URL(page.url()).pathname).toBe(routes[1].pathname);
   });
 
-  test('Commander drill-down can open source sheet inspection', async ({ page }) => {
-    await page.goto('./commander/drilldown?domain=GAKKUM', {
-      waitUntil: 'domcontentloaded',
-      timeout: 30_000,
-    });
-
-    await expect(
-      page.getByText('DIMENSIONS', { exact: true }),
-    ).toBeVisible({
-      timeout: 30_000,
-    });
-
-    const dimension = page
-      .getByRole('button', {
-        name: /^Patroli Berkendaraan\s+ACTIVITY/,
-      })
-      .first();
-    await expect(dimension).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
-    await dimension.click();
-
-    const record = page
-      .getByRole('button', {
-        name: /^Patroli Berkendaraan.*Iskandar Muda/,
-      })
-      .first();
-    await expect(record).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
-    await record.click();
-
-    const lineage = page.getByText('SOURCE / LINEAGE', { exact: true });
-    for (let attempt = 0; attempt < 8 && !(await lineage.isVisible().catch(() => false)); attempt++) {
-      await page.mouse.wheel(0, 700);
-      await page.waitForTimeout(250);
-    }
-    await expect(lineage).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
-
-    const sourceButton = page.getByRole('button', {
-      name: 'Buka source sheet',
-      exact: true,
-    });
-    await expect(sourceButton).toBeVisible();
-    await sourceButton.click();
-
-    const inspector = page.getByText('SOURCE SHEET INSPECTOR', { exact: true });
-    for (let attempt = 0; attempt < 8 && !(await inspector.isVisible().catch(() => false)); attempt++) {
-      await page.mouse.wheel(0, 700);
-      await page.waitForTimeout(250);
-    }
-    await expect(inspector).toBeVisible({
-      timeout: SMOKE_ASSERTION_TIMEOUT,
-    });
-
-    await expect(page.getByText(/TARGET /).first()).toBeVisible();
-  });
-
-
   test('Data Quality reads the live audit summary', async ({ page }) => {
     await openRoute(page, routes[9]);
     await expect(

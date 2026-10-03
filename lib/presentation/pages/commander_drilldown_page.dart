@@ -179,6 +179,13 @@ class _Content extends StatelessWidget {
           selectedDimension: selectedDimension,
           selectedRecordId: selectedRecordId,
         ),
+        if (selectedRecordId != null) ...[
+          const SizedBox(height: 12),
+          _ProvenanceSection(
+            domainCode: snapshot.domainCode,
+            recordId: selectedRecordId!,
+          ),
+        ],
         const SizedBox(height: 12),
         Text(
           'DIMENSIONS',
@@ -231,13 +238,6 @@ class _Content extends StatelessWidget {
                 onTap: () => onRecordSelected(record.recordId),
               ),
             ),
-        if (selectedRecordId != null) ...[
-          const SizedBox(height: 8),
-          _ProvenanceSection(
-            domainCode: snapshot.domainCode,
-            recordId: selectedRecordId!,
-          ),
-        ],
       ],
     );
   }
