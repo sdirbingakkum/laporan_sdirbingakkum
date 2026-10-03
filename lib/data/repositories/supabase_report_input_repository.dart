@@ -31,7 +31,7 @@ final class SupabaseReportInputRepository implements ReportInputRepository {
       final gakkumRows = await _client
           .from('gakkum_activity_versions')
           .select(
-            'id,activity_id,level,display_order,taxonomy_version,gakkum_activities!inner(code,canonical_name,active)',
+            'id,activity_id,level,display_order,taxonomy_version,parent_version_id,gakkum_activities!inner(code,canonical_name,active)',
           )
           .eq('taxonomy_version', 'CURRENT_2026')
           .eq('gakkum_activities.active', true)
