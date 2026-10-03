@@ -15,12 +15,6 @@ abstract interface class CommanderDrilldownRepository {
     required String domainCode,
     required String recordId,
   });
-
-  Future<CommanderSourceSheetContext> getSourceSheetContext({
-    required String domainCode,
-    required String recordId,
-    int rowRadius = 4,
-  });
 }
 
 final class SupabaseCommanderDrilldownRepository
@@ -116,48 +110,4 @@ final class SupabaseCommanderDrilldownRepository
       );
     }
   }
-  @override
-  Future<CommanderSourceSheetContext> getSourceSheetContext({
-    required String domainCode,
-    required String recordId,
-    int rowRadius = 4,
-  }) async {
-    try {
-      final response = await _client.rpc(
-        'get_commander_source_sheet_context',
-        params: <String, dynamic>{
-          'p_domain_code': domainCode,
-          'p_record_id': recordId,
-          'p_row_radius': rowRadius,
-        },
-      );
-
-      if (response is! Map) {
-        throw const DataAccessException(
-          'Source sheet context memiliki format respons yang tidak valid.',
-        );
-      }
-
-      return CommanderSourceSheetContext.fromMap(
-        Map<String, dynamic>.from(response),
-      );
-    } on PostgrestException catch (error) {
-      if (error.code == '42501') {
-        throw const AuthorizationException(
-          'Source sheet context tidak dapat diakses untuk scope akun ini.',
-        );
-      }
-
-      throw DataAccessException(
-        'Gagal membaca source sheet context: ' + error.message,
-      );
-    } on AppException {
-      rethrow;
-    } on Object {
-      throw const DataAccessException(
-        'Source sheet context tidak dapat dibaca dari Supabase.',
-      );
-    }
-  }
-
 }

@@ -127,46 +127,57 @@ test.describe('critical interaction surface smoke', () => {
   });
 
 
-  test('preserves a deep link after re-authentication', async ({ page }) => {
-    await openRoute(page, routes[1]);
+  test('preserves a deep link after re-authentication', async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-    await page.getByRole('button', { name: 'Akun', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Keluar', exact: true }).click();
+    try {
+      await page.goto('./gakkum', {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
 
-    await expect(page.getByRole('button', { name: 'Masuk', exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: 'Masuk', exact: true }),
+      ).toBeVisible({ timeout: 30_000 });
 
-    const email = process.env.E2E_EMAIL;
-    const password = process.env.E2E_PASSWORD;
-    if (!email || !password) {
-      throw new Error('E2E credentials are required for re-authentication coverage.');
+      const email = process.env.E2E_EMAIL;
+      const password = process.env.E2E_PASSWORD;
+      if (!email || !password) {
+        throw new Error(
+          'E2E credentials are required for re-authentication coverage.',
+        );
+      }
+
+      const emailField = page.getByRole('textbox', {
+        name: 'Email',
+        exact: true,
+      });
+      const passwordField = page.getByRole('textbox', {
+        name: 'Password',
+        exact: true,
+      });
+
+      await emailField.fill(email);
+      await passwordField.click();
+      await passwordField.pressSequentially(password);
+
+      const passwordLength = await passwordField.evaluate((element) => {
+        return (element as HTMLInputElement).value.length;
+      });
+      if (passwordLength === 0) {
+        throw new Error('E2E password input remained empty after keyboard entry.');
+      }
+
+      await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+
+      await expect(
+        page.getByRole('heading', { name: 'Gakkum', exact: true }),
+      ).toBeVisible({ timeout: 30_000 });
+      expect(new URL(page.url()).pathname).toBe(routes[1].pathname);
+    } finally {
+      await context.close();
     }
-
-    const emailField = page.getByRole('textbox', {
-      name: 'Email',
-      exact: true,
-    });
-    const passwordField = page.getByRole('textbox', {
-      name: 'Password',
-      exact: true,
-    });
-
-    await emailField.fill(email);
-    await passwordField.click();
-    await passwordField.pressSequentially(password);
-
-    const passwordLength = await passwordField.evaluate((element) => {
-      return (element as HTMLInputElement).value.length;
-    });
-    if (passwordLength === 0) {
-      throw new Error('E2E password input remained empty after keyboard entry.');
-    }
-
-    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
-
-    await expect(
-      page.getByRole('heading', { name: 'Gakkum', exact: true }),
-    ).toBeVisible({ timeout: 30_000 });
-    expect(new URL(page.url()).pathname).toBe(routes[1].pathname);
   });
 
 
