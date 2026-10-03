@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../application/providers/commander_access_context_providers.dart';
 import '../../application/providers/commander_drilldown_providers.dart';
@@ -581,11 +582,268 @@ class _TraceViewState extends ConsumerState<_TraceView> {
                 domainCode: trace.domain,
                 recordId: trace.recordId,
               ),
+              const SizedBox(height: 12),
+              _OriginalSourceFileSection(
+                domainCode: trace.domain,
+                recordId: trace.recordId,
+              ),
             ],
           ],
         ],
       ],
     );
+  }
+}
+
+class _OriginalSourceFileSection extends ConsumerStatefulWidget {
+  const _OriginalSourceFileSection({
+    required this.domainCode,
+    required this.recordId,
+  });
+
+  final String domainCode;
+  final String recordId;
+
+  @override
+  ConsumerState<_OriginalSourceFileSection> createState() =>
+      _OriginalSourceFileSectionState();
+}
+
+class _OriginalSourceFileSectionState
+    extends ConsumerState<_OriginalSourceFileSection> {
+  bool _checked = false;
+  bool _opening = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: 'ORIGINAL XLSX SOURCE',
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+          child: !_checked ? _buildUnchecked(context) : _buildChecked(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnchecked(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ORIGINAL XLSX SOURCE',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
+              ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'Periksa apakah file XLSX asli dari source report sudah tersimpan di Storage.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => setState(() => _checked = true),
+          icon: const Icon(Icons.folder_open_outlined),
+          label: const Text('Periksa file XLSX asli'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChecked(BuildContext context) {
+    final state = ref.watch(
+      commanderSourceFileContextProvider(
+        CommanderSourceFileContextQuery(
+          domainCode: widget.domainCode,
+          recordId: widget.recordId,
+        ),
+      ),
+    );
+
+    return state.when(
+      loading: () => const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ORIGINAL XLSX SOURCE',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          SizedBox(height: 10),
+          LinearProgressIndicator(),
+        ],
+      ),
+      error: (error, stackTrace) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ORIGINAL XLSX SOURCE',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error is AppException
+                ? error.message
+                : 'File XLSX asli belum dapat diperiksa.',
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              ref.invalidate(
+                commanderSourceFileContextProvider(
+                  CommanderSourceFileContextQuery(
+                    domainCode: widget.domainCode,
+                    recordId: widget.recordId,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Coba lagi'),
+          ),
+        ],
+      ),
+      data: (fileContext) => _buildFileState(context, fileContext),
+    );
+  }
+
+  Widget _buildFileState(
+    BuildContext context,
+    CommanderSourceFileContext fileContext,
+  ) {
+    final file = fileContext.file;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ORIGINAL XLSX SOURCE',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
+              ),
+        ),
+        const SizedBox(height: 7),
+        if (fileContext.scopeRestricted) ...[
+          const _StatusBadge(label: 'SCOPE RESTRICTED'),
+          const SizedBox(height: 8),
+          Text(
+            'File workbook asli dibatasi untuk scope ini karena workbook bersama dapat memuat data Pomdam lain.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ] else if (!fileContext.found) ...[
+          const _StatusBadge(label: 'FILE NOT AVAILABLE'),
+          const SizedBox(height: 8),
+          Text(
+            fileContext.status == 'NO_SOURCE_CELL'
+                ? 'Fact ini tidak memiliki source cell untuk dihubungkan ke workbook asli.'
+                : 'File XLSX asli belum tersimpan di Storage. Source sheet inspector tetap menggunakan snapshot sel terimpor.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (file != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _TraceField(
+                label: 'STATUS',
+                value: file.availabilityStatus,
+              ),
+            ),
+        ] else if (file != null) ...[
+          const _StatusBadge(label: 'ORIGINAL XLSX AVAILABLE'),
+          const SizedBox(height: 8),
+          _TraceField(
+            label: 'FILE',
+            value: file.originalFilename,
+          ),
+          _TraceField(
+            label: 'TYPE',
+            value: file.contentType,
+          ),
+          if (file.byteSize != null)
+            _TraceField(
+              label: 'SIZE',
+              value: _formatBytes(file.byteSize!),
+            ),
+          if (file.fileSha256 != null)
+            _TraceField(
+              label: 'SHA-256',
+              value: file.fileSha256!,
+            ),
+          const SizedBox(height: 6),
+          OutlinedButton.icon(
+            onPressed: _opening ? null : () => _openOriginalFile(file),
+            icon: _opening
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.open_in_new),
+            label: Text(
+              _opening ? 'Membuka workbook…' : 'Buka workbook asli',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Akses memakai signed URL sementara (5 menit). File dibuka sebagai XLSX asli; aplikasi tidak mengirimkannya ke layanan penampil pihak ketiga.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ] else ...[
+          const _StatusBadge(label: 'FILE NOT AVAILABLE'),
+          const SizedBox(height: 8),
+          Text(
+            'Metadata file tidak lengkap sehingga workbook asli tidak dapat dibuka.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _openOriginalFile(CommanderSourceFile file) async {
+    if (file.objectPath.isEmpty) return;
+
+    setState(() => _opening = true);
+    try {
+      final repository = ref.read(commanderDrilldownRepositoryProvider);
+      final signedUrl = await repository.createSourceFileSignedUrl(
+        bucketId: file.bucketId,
+        objectPath: file.objectPath,
+        expiresIn: 300,
+      );
+
+      final launched = await launchUrl(
+        Uri.parse(signedUrl),
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Workbook asli tidak dapat dibuka di browser/perangkat ini.',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final message = error is AppException
+          ? error.message
+          : 'Workbook asli tidak dapat dibuka.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
   }
 }
 
@@ -1096,6 +1354,17 @@ class _MessageView extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) return bytes.toString() + ' B';
+  if (bytes < 1024 * 1024) {
+    return (bytes / 1024).toStringAsFixed(1) + ' KB';
+  }
+  if (bytes < 1024 * 1024 * 1024) {
+    return (bytes / (1024 * 1024)).toStringAsFixed(1) + ' MB';
+  }
+  return (bytes / (1024 * 1024 * 1024)).toStringAsFixed(1) + ' GB';
 }
 
 String _format(dynamic value) {
