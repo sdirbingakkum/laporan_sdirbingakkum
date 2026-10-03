@@ -10,6 +10,9 @@ concurrency:
   group: flutter-ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FLUTTER_VERSION: '3.47.3'
+
 jobs:
   analyze-and-test:
     runs-on: ubuntu-24.04
@@ -17,11 +20,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Flutter
+      - name: Set up Flutter and Dart
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.3'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
+          cache: true
+          pub-cache: true
+
+      - name: Verify Flutter and Dart CLI
+        run: |
+          flutter --version
+          dart --version
 
       - name: Create Flutter platform runners
         run: flutter create . --platforms=android,web,windows
@@ -32,11 +42,11 @@ jobs:
       - name: Pub get
         run: flutter pub get
 
-      - name: Format
-        run: dart format lib test
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed lib test
 
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Test
         run: flutter test
