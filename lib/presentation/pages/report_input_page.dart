@@ -35,21 +35,15 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     'TINDAK_PIDANA': 'Rekap Tindak Pidana',
   };
 
-  final _periodLabelController = TextEditingController();
   final _notesController = TextEditingController();
   final Map<String, TextEditingController> _valueControllers = {};
 
   String _domainCode = 'GAKKUM';
   String? _pomdamId;
-  DateTime _periodStart = DateTime(
+  String? _selectedPeriodId;
+  DateTime _selectedMonth = DateTime(
     DateTime.now().year,
     DateTime.now().month,
-    1,
-  );
-  DateTime _periodEnd = DateTime(
-    DateTime.now().year,
-    DateTime.now().month + 1,
-    0,
   );
   bool _saving = false;
   String _tindakSearch = '';
@@ -57,12 +51,10 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   @override
   void initState() {
     super.initState();
-    _periodLabelController.text = _defaultPeriodLabel();
   }
 
   @override
   void dispose() {
-    _periodLabelController.dispose();
     _notesController.dispose();
     for (final controller in _valueControllers.values) {
       controller.dispose();
@@ -70,7 +62,45 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     super.dispose();
   }
 
-  String _defaultPeriodLabel() {
+  List<ReportPeriod> _monthlyPeriods(ReportInputCatalog catalog) {
+    final periods = [
+      for (final period in catalog.periods)
+        if (period.periodType == 'MONTH' &&
+            period.periodStart != null &&
+            period.periodEnd != null)
+          period,
+    ];
+    periods.sort((a, b) => b.periodStart!.compareTo(a.periodStart!));
+    return periods;
+  }
+
+  ReportPeriod? _findPeriodById(
+    List<ReportPeriod> periods,
+    String? id,
+  ) {
+    if (id == null) return null;
+    for (final period in periods) {
+      if (period.id == id) return period;
+    }
+    return null;
+  }
+
+  ReportPeriod? _findPeriodForMonth(
+    List<ReportPeriod> periods,
+    DateTime month,
+  ) {
+    for (final period in periods) {
+      final start = period.periodStart;
+      if (start != null &&
+          start.year == month.year &&
+          start.month == month.month) {
+        return period;
+      }
+    }
+    return null;
+  }
+
+  String _monthLabel(DateTime month) {
     const months = [
       'Januari',
       'Februari',
@@ -85,7 +115,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
       'November',
       'Desember',
     ];
-    return '${months[DateTime.now().month - 1]} ${DateTime.now().year}';
+    return '${months[month.month - 1]} ${month.year}';
   }
 
   TextEditingController _controller(String key) {
