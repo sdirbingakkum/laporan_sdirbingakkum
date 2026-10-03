@@ -153,9 +153,10 @@ test.describe('critical interaction surface smoke', () => {
     await expect(record).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
     await record.click();
 
-    await expect(
-      page.getByText('SOURCE / LINEAGE', { exact: true }),
-    ).toBeVisible({ timeout: 30_000 });
+    const lineage = page.getByRole('group', {
+      name: /SOURCE \/ LINEAGE/,
+    });
+    await expect(lineage).toBeVisible({ timeout: 30_000 });
 
     const sourceButton = page.getByRole('button', {
       name: 'Buka source sheet',
