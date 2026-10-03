@@ -202,6 +202,39 @@ test.describe('critical interaction surface smoke', () => {
       name: /^SOURCE SHEET INSPECTOR/,
     }).first();
     await expect(inspector).toBeVisible({ timeout: 30_000 });
+
+    const sourceFileCheckResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/rpc/get_commander_source_file_context') &&
+        response.status() === 200,
+    );
+
+    await page.getByRole('button', {
+      name: 'Periksa file XLSX asli',
+      exact: true,
+    }).click();
+
+    const sourceFileResponse = await sourceFileCheckResponse;
+    const sourceFilePayload = (await sourceFileResponse.json()) as {
+      status?: string;
+      record_id?: string;
+      source_report_id?: string | null;
+      file?: unknown;
+    };
+
+    expect(sourceFilePayload.status).toBe('NO_SOURCE_FILE');
+    expect(sourceFilePayload.record_id).toBeTruthy();
+    expect(sourceFilePayload.source_report_id).toBeTruthy();
+    expect(sourceFilePayload.file).toBeNull();
+
+    const originalSource = page.getByRole('group', {
+      name: /^ORIGINAL XLSX SOURCE/,
+    }).first();
+    await expect(originalSource).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.getByText('FILE NOT AVAILABLE', { exact: true }).last(),
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
