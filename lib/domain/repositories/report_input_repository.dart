@@ -4,6 +4,11 @@ import '../entities/reference_entities.dart';
 abstract interface class ReportInputRepository {
   Future<ReportInputCatalog> getCatalog();
 
+  Future<ReportPeriod> getOrCreateMonthlyPeriod({
+    required int year,
+    required int month,
+  });
+
   Future<ReportPeriod> createPeriod({
     required DateTime periodStart,
     required DateTime periodEnd,
