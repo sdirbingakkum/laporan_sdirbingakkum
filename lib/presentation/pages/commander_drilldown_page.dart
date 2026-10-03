@@ -310,16 +310,11 @@ class _DimensionTile extends StatelessWidget {
         dimension.notReportedRows +
         dimension.estimatedRows;
 
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: dimension.name + ' ' + dimension.group,
-      onTap: onTap,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Row(
             children: [
@@ -365,7 +360,6 @@ class _DimensionTile extends StatelessWidget {
                 size: 20,
               ),
             ],
-            ),
           ),
         ),
       ),
@@ -386,20 +380,11 @@ class _RecordTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: record.dimensionName +
-          ' ' +
-          record.pomdamShortName +
-          ' ' +
-          (record.secondaryName ?? ''),
-      onTap: onTap,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Row(
             children: [
@@ -455,7 +440,6 @@ class _RecordTile extends StatelessWidget {
                 ),
               ],
             ],
-            ),
           ),
         ),
       ),
