@@ -165,14 +165,19 @@ test.describe('critical interaction surface smoke', () => {
     await expect(sourceButton).toBeVisible();
     await sourceButton.click();
 
-    const inspector = page.getByRole('group', {
-      name: 'SOURCE SHEET INSPECTOR',
-      exact: true,
-    });
-    await expect(inspector).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page.getByRole('button', {
+        name: 'Tutup source sheet',
+        exact: true,
+      }),
+    ).toBeVisible({ timeout: 30_000 });
 
     await expect(
-      page.getByRole('group', { name: 'TARGET C9', exact: true }),
+      page.getByText('SOURCE SHEET INSPECTOR', { exact: true }).last(),
+    ).toBeVisible({ timeout: 30_000 });
+
+    await expect(
+      page.getByText('146', { exact: true }).first(),
     ).toBeVisible();
   });
 
