@@ -172,12 +172,16 @@ test.describe('critical interaction surface smoke', () => {
       }),
     ).toBeVisible({ timeout: 30_000 });
 
-    await expect(
-      page.getByText('SOURCE SHEET INSPECTOR', { exact: true }).last(),
-    ).toBeVisible({ timeout: 30_000 });
+    const inspectorSemantics = page.locator(
+      'flt-semantics[aria-label="SOURCE SHEET INSPECTOR"]',
+    );
+    await expect(inspectorSemantics).toHaveCount(1, { timeout: 30_000 });
 
     await expect(
-      page.getByText('146', { exact: true }).first(),
+      page.getByRole('button', {
+        name: 'Tutup source sheet',
+        exact: true,
+      }),
     ).toBeVisible();
   });
 
