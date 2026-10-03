@@ -56,6 +56,38 @@ final commanderSourceSheetContextProvider = FutureProvider.autoDispose
   },
 );
 
+final commanderSourceFileContextProvider = FutureProvider.autoDispose
+    .family<CommanderSourceFileContext, CommanderSourceFileContextQuery>(
+  (ref, query) async {
+    return ref
+        .watch(commanderDrilldownRepositoryProvider)
+        .getSourceFileContext(
+          domainCode: query.domainCode,
+          recordId: query.recordId,
+        );
+  },
+);
+
+final class CommanderSourceFileContextQuery {
+  const CommanderSourceFileContextQuery({
+    required this.domainCode,
+    required this.recordId,
+  });
+
+  final String domainCode;
+  final String recordId;
+
+  @override
+  bool operator ==(Object other) {
+    return other is CommanderSourceFileContextQuery &&
+        other.domainCode == domainCode &&
+        other.recordId == recordId;
+  }
+
+  @override
+  int get hashCode => Object.hash(domainCode, recordId);
+}
+
 final class CommanderSourceSheetContextQuery {
   const CommanderSourceSheetContextQuery({
     required this.domainCode,
