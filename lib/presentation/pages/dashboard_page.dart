@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/providers/commander_access_context_providers.dart';
 import '../../application/providers/commander_providers.dart';
 import '../../core/errors/app_exception.dart';
+import '../../domain/entities/commander_access_context_entities.dart';
 import '../../domain/entities/commander_entities.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -16,27 +18,131 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
-  String? _pomdamId;
+  String? _selectedPomdamId;
 
   @override
   Widget build(BuildContext context) {
-    final query = CommanderDashboardQuery(pomdamId: _pomdamId);
-    final state = ref.watch(commanderDashboardProvider(query));
+    final accessState = ref.watch(commanderAccessContextProvider);
 
-    return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(commanderDashboardProvider(query)),
-      child: state.when(
-        loading: () => const _LoadingView(),
-        error: (error, stack) => _ErrorView(
-          error: error,
-          retry: () => ref.invalidate(commanderDashboardProvider(query)),
-        ),
-        data: (snapshot) => _CommanderView(
-          snapshot: snapshot,
-          selectedPomdamId: _pomdamId,
-          onPomdamChanged: (value) => setState(() => _pomdamId = value),
-        ),
+    return accessState.when(
+      loading: () => const _LoadingView(),
+      error: (error, stack) => _ErrorView(
+        error: error,
+        retry: () => ref.invalidate(commanderAccessContextProvider),
       ),
+      data: (access) {
+        if (!access.canUseCommanderDashboard) {
+          return const _AccessStateView();
+        }
+
+        final effectivePomdamId = access.isPomdamScoped
+            ? (access.pomdamIds.length == 1 ? access.pomdamIds.first : null)
+            : _selectedPomdamId;
+
+        if (access.isPomdamScoped && effectivePomdamId == null) {
+          return const _AccessStateView(
+            message:
+                'Scope POMDAM belum dikonfigurasi dengan tepat. '
+                'Commander Dashboard membutuhkan tepat satu POMDAM untuk role ini.',
+          );
+        }
+
+        if (!access.isAllPomdam &&
+            effectivePomdamId != null &&
+            !access.canReadPomdam(effectivePomdamId)) {
+          return const _AccessStateView(
+            message: 'Scope POMDAM akun tidak valid.',
+          );
+        }
+
+        final query = CommanderDashboardQuery(pomdamId: effectivePomdamId);
+        final state = ref.watch(commanderDashboardProvider(query));
+
+        void handlePomdamChanged(String? value) {
+          if (!access.isAllPomdam) return;
+
+          if (value == null) {
+            setState(() => _selectedPomdamId = null);
+            return;
+          }
+
+          setState(() => _selectedPomdamId = value);
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async =>
+              ref.invalidate(commanderDashboardProvider(query)),
+          child: state.when(
+            loading: () => const _LoadingView(),
+            error: (error, stack) => _ErrorView(
+              error: error,
+              retry: () => ref.invalidate(commanderDashboardProvider(query)),
+            ),
+            data: (snapshot) {
+              final snapshotScopeMatches =
+                  access.isPomdamScoped
+                      ? snapshot.scope.pomdamId == effectivePomdamId &&
+                          !snapshot.scope.isAllPomdam
+                      : snapshot.scope.isAllPomdam ==
+                          (effectivePomdamId == null);
+
+              if (!snapshotScopeMatches) {
+                return const _AccessStateView(
+                  message:
+                      'Scope snapshot tidak sesuai dengan authorization context.',
+                );
+              }
+
+              return _CommanderView(
+                snapshot: snapshot,
+                selectedPomdamId: effectivePomdamId,
+                access: access,
+                onPomdamChanged: handlePomdamChanged,
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+
+class _AccessStateView extends StatelessWidget {
+  const _AccessStateView({
+    this.message =
+        'Akun tidak memiliki akses Commander Dashboard yang sesuai.',
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.lock_outline, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  'Dashboard tidak tersedia',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Text(message),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -45,11 +151,13 @@ class _CommanderView extends StatelessWidget {
   const _CommanderView({
     required this.snapshot,
     required this.selectedPomdamId,
+    required this.access,
     required this.onPomdamChanged,
   });
 
   final CommanderDashboardSnapshot snapshot;
   final String? selectedPomdamId;
+  final CommanderAccessContext access;
   final ValueChanged<String?> onPomdamChanged;
 
   @override
@@ -70,6 +178,7 @@ class _CommanderView extends StatelessWidget {
         _Header(
           snapshot: snapshot,
           selectedPomdamId: selectedPomdamId,
+          access: access,
           onPomdamChanged: onPomdamChanged,
         ),
         if (snapshot.attention.isNotEmpty) ...[
@@ -102,7 +211,7 @@ class _CommanderView extends StatelessWidget {
         ],
         const SizedBox(height: 14),
         _TrustPanel(domains: snapshot.domains),
-        if (snapshot.pomdamMatrix.isNotEmpty) ...[
+        if (access.isAllPomdam && snapshot.pomdamMatrix.isNotEmpty) ...[
           const SizedBox(height: 14),
           _MatrixPanel(
             rows: snapshot.pomdamMatrix,
@@ -119,11 +228,13 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.snapshot,
     required this.selectedPomdamId,
+    required this.access,
     required this.onPomdamChanged,
   });
 
   final CommanderDashboardSnapshot snapshot;
   final String? selectedPomdamId;
+  final CommanderAccessContext access;
   final ValueChanged<String?> onPomdamChanged;
 
   @override
@@ -164,13 +275,13 @@ class _Header extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (snapshot.pomdamMatrix.length > 1)
-                  SizedBox(
-                    width: 290,
+                if (access.isAllPomdam && snapshot.pomdamMatrix.length > 1)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 320),
                     child: DropdownButtonFormField<String?>(
                       initialValue: selectedPomdamId,
                       decoration: const InputDecoration(
-                        labelText: 'Scope',
+                        labelText: 'Scope POMDAM',
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
@@ -188,7 +299,7 @@ class _Header extends StatelessWidget {
                       onChanged: onPomdamChanged,
                     ),
                   )
-                else if (selectedPomdamId != null)
+                else if (access.isAllPomdam && selectedPomdamId != null)
                   OutlinedButton.icon(
                     onPressed: () => onPomdamChanged(null),
                     icon: const Icon(Icons.clear),
@@ -204,6 +315,10 @@ class _Header extends StatelessWidget {
                 _Badge(
                   icon: Icons.account_balance_outlined,
                   label: scope,
+                ),
+                _Badge(
+                  icon: Icons.person_outline,
+                  label: access.role!.displayName,
                 ),
                 const _Badge(
                   icon: Icons.schedule_outlined,
