@@ -9,6 +9,7 @@ import '../../application/providers/commander_access_context_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/commander_access_context_entities.dart';
 import '../pages/access_denied_page.dart';
+import '../pages/commander_drilldown_page.dart';
 import '../pages/criminal_offense_page.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/data_quality_page.dart';
@@ -41,6 +42,7 @@ String _initialWebLocation() {
     '/',
     '/login',
     '/access-denied',
+    '/commander/drilldown',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -88,6 +90,10 @@ String? _safeReturnPath(String? value) {
 
 String? _requiredCapabilityFor(String location) {
   if (location == '/') {
+    return CommanderCapabilities.viewCommanderCop;
+  }
+
+  if (location == '/commander/drilldown') {
     return CommanderCapabilities.viewCommanderCop;
   }
 
@@ -203,6 +209,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/',
             builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: '/commander/drilldown',
+            builder: (context, state) {
+              final domainCode =
+                  state.uri.queryParameters['domain']?.trim() ?? '';
+              final pomdamId =
+                  state.uri.queryParameters['pomdamId']?.trim();
+              final dimensionCode =
+                  state.uri.queryParameters['dimensionCode']?.trim();
+              final recordId =
+                  state.uri.queryParameters['recordId']?.trim();
+
+              return CommanderDrilldownPage(
+                domainCode: domainCode,
+                pomdamId: pomdamId,
+                dimensionCode: dimensionCode,
+                recordId: recordId,
+              );
+            },
           ),
           GoRoute(
             path: '/gakkum',
