@@ -172,17 +172,17 @@ test.describe('critical interaction surface smoke', () => {
       }),
     ).toBeVisible({ timeout: 30_000 });
 
-    const inspectorSemantics = page.locator(
-      'flt-semantics[aria-label="SOURCE SHEET INSPECTOR"]',
-    );
-    await expect(inspectorSemantics).toHaveCount(1, { timeout: 30_000 });
+    const closeInspectorButton = page.getByRole('button', {
+      name: 'Tutup source sheet',
+      exact: true,
+    });
+    await expect(closeInspectorButton).toBeVisible({ timeout: 30_000 });
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Tutup source sheet',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(page.locator('body')).toContainText(
+      '1. STATISTIK GIAT GAKKUM(1).xlsx',
+    );
+    await expect(page.locator('body')).toContainText('ALL-POMDAM CONTEXT');
+    await expect(page.locator('body')).toContainText('146');
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
