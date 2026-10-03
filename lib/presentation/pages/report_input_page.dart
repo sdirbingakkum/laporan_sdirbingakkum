@@ -505,28 +505,30 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   Future<void> _submit(
     ReportInputCatalog catalog,
     String? pomdamId,
+    ReportPeriod? selectedPeriod,
   ) async {
     if (pomdamId == null || pomdamId.isEmpty) {
       _showMessage('Pilih POMDAM terlebih dahulu.');
       return;
     }
 
-    final label = _periodLabelController.text.trim();
-    if (label.isEmpty) {
-      _showMessage('Nama periode wajib diisi.');
+    Map<String, dynamic> payload;
+    try {
+      payload = _buildPayload(catalog);
+    } on FormatException catch (error) {
+      _showMessage(error.message);
       return;
     }
 
     setState(() => _saving = true);
     try {
       final repository = ref.read(reportInputRepositoryProvider);
-      final period = await repository.createPeriod(
-        periodStart: _periodStart,
-        periodEnd: _periodEnd,
-        periodLabel: label,
-      );
+      final period = selectedPeriod ??
+          await repository.getOrCreateMonthlyPeriod(
+            year: _selectedMonth.year,
+            month: _selectedMonth.month,
+          );
 
-      final payload = _buildPayload(catalog);
       await repository.submitReport(
         reportType: _domainCode,
         periodId: period.id,
@@ -534,19 +536,33 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
         payload: payload,
       );
 
+      _clearInputFields();
       ref.invalidate(reportInputCatalogProvider);
       ref.invalidate(reportAuditSummaryProvider);
       ref.invalidate(reportProvenanceProvider);
       ref.invalidate(dashboardSummaryProvider);
+      ref.invalidate(commanderDashboardProvider);
       ref.invalidate(gakkumDashboardProvider);
+      ref.invalidate(gakkumPeriodsProvider);
       ref.invalidate(violationDashboardProvider);
+      ref.invalidate(violationPeriodsProvider);
+      ref.invalidate(simDashboardProvider);
+      ref.invalidate(simPeriodsProvider);
+      ref.invalidate(provosDashboardProvider);
+      ref.invalidate(provosPeriodsProvider);
+      ref.invalidate(lakaDashboardProvider);
+      ref.invalidate(lakaPeriodsProvider);
       ref.invalidate(criminalOffenseDashboardProvider);
+      ref.invalidate(criminalOffensePeriodsProvider);
 
       if (!mounted) return;
-      _showMessage('Laporan berhasil disimpan ke database.');
+      _showMessage(
+        'Laporan ${_domains[_domainCode] ?? _domainCode} berhasil disimpan untuk '
+        '${period.periodLabel}.',
+      );
     } catch (error) {
       if (!mounted) return;
-      _showMessage(error.toString());
+      _showMessage(_friendlyError(error));
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -554,6 +570,59 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     }
   }
 
+  void _clearInputFields() {
+    for (final controller in _valueControllers.values) {
+      controller.clear();
+    }
+    _notesController.clear();
+    _tindakSearch = '';
+  }
+
+  String _friendlyError(Object error) {
+    final message = error is AppException ? error.message : error.toString();
+    const known = <String, String>{
+      'PERIOD_LOCKED_IMPORTED':
+          'Periode/POMDAM ini berasal dari impor Excel dan dikunci. '
+          'Pilih bulan yang belum diimpor untuk input aplikasi.',
+      'INCOMPLETE_GAKKUM_PAYLOAD':
+          'Struktur GAKKUM berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PELANGGARAN_PAYLOAD':
+          'Struktur Pelanggaran berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_SIM_PAYLOAD':
+          'Struktur SIM TNI berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_STRENGTH_PAYLOAD':
+          'Struktur Kekuatan Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_EDUCATION_PAYLOAD':
+          'Struktur Pendidikan Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_PROVOS_PERSONNEL_PAYLOAD':
+          'Struktur Personel Provos berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_ACCIDENT_PAYLOAD':
+          'Struktur Kejadian Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_VICTIM_OUTCOME_PAYLOAD':
+          'Struktur Korban Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_VICTIM_RANK_PAYLOAD':
+          'Struktur Pangkat Korban Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_PERSONNEL_PAYLOAD':
+          'Struktur Personel Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_LAKA_MATERIAL_PAYLOAD':
+          'Struktur Material Laka berubah. Muat ulang form sebelum mengirim.',
+      'INCOMPLETE_TINDAK_PIDANA_PAYLOAD':
+          'Struktur Tindak Pidana berubah. Muat ulang form sebelum mengirim.',
+      'VALID_VALUE_REQUIRED':
+          'Setiap nilai yang diisi harus berupa bilangan bulat non-negatif.',
+      'INVALID_NON_NEGATIVE_INTEGER':
+          'Nilai harus berupa bilangan bulat non-negatif.',
+      'INTEGER_OUT_OF_RANGE':
+          'Nilai terlalu besar untuk disimpan di database.',
+      'INVALID_INPUT_STATUS':
+          'Status input tidak valid.',
+    };
+
+    for (final entry in known.entries) {
+      if (message.contains(entry.key)) return entry.value;
+    }
+    return message;
+  }
   Map<String, dynamic> _buildPayload(ReportInputCatalog catalog) {
     final notes = _notesController.text.trim();
     switch (_domainCode) {
