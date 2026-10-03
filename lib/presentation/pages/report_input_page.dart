@@ -329,7 +329,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
   Widget _buildViolations(ReportInputCatalog catalog) {
     return _SectionCard(
       title: 'PELANGGARAN',
-      subtitle: 'Isi angka per jenis pelanggaran dan golongan personel.',
+      subtitle: '17 jenis pelanggaran aktif CURRENT_2026 × 4 golongan personel.',
       child: Column(
         children: [
           for (final option in catalog.violations)
@@ -1032,8 +1032,9 @@ class _InputRuleCard extends StatelessWidget {
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
-                'Aturan penting: kosong = NOT_REPORTED; isi 0 = VALID bernilai nol. '
-                'Operator tidak dapat memasukkan source_cell, INVALID_SOURCE, atau ESTIMATED.',
+                'Aturan input: kosong = NOT_REPORTED; isi 0 = VALID bernilai nol; '
+                'hanya bilangan bulat non-negatif yang diterima. Operator tidak dapat '
+                'memasukkan source_cell, INVALID_SOURCE, atau ESTIMATED.',
               ),
             ),
           ],
