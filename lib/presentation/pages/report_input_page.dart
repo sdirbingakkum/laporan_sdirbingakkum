@@ -468,7 +468,7 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
       ref.invalidate(reportInputCatalogProvider);
       ref.invalidate(reportAuditSummaryProvider);
       ref.invalidate(reportProvenanceProvider);
-      ref.invalidate(dashboardProvider);
+      ref.invalidate(dashboardSummaryProvider);
       ref.invalidate(gakkumDashboardProvider);
       ref.invalidate(violationDashboardProvider);
       ref.invalidate(criminalOffenseDashboardProvider);
