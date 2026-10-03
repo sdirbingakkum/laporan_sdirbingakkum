@@ -762,17 +762,30 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     return <String, dynamic>{};
   }
 
+  int? _parseInputValue(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return null;
+
+    final value = int.tryParse(trimmed);
+    if (value == null || value < 0) {
+      throw const FormatException(
+        'Nilai harus berupa bilangan bulat non-negatif.',
+      );
+    }
+    return value;
+  }
+
   Map<String, dynamic> _entry(
     String idField,
     String id,
     String text,
     String notes,
   ) {
-    final trimmed = text.trim();
+    final value = _parseInputValue(text);
     return {
       idField: id,
-      'value': int.tryParse(trimmed),
-      'data_status': trimmed.isEmpty ? 'NOT_REPORTED' : 'VALID',
+      'value': value,
+      'data_status': value == null ? 'NOT_REPORTED' : 'VALID',
       'notes': notes.isEmpty ? null : notes,
     };
   }
@@ -782,11 +795,11 @@ class _ReportInputPageState extends ConsumerState<ReportInputPage> {
     String text,
     String notes,
   ) {
-    final trimmed = text.trim();
+    final value = _parseInputValue(text);
     return {
       ...ids,
-      'value': int.tryParse(trimmed),
-      'data_status': trimmed.isEmpty ? 'NOT_REPORTED' : 'VALID',
+      'value': value,
+      'data_status': value == null ? 'NOT_REPORTED' : 'VALID',
       'notes': notes.isEmpty ? null : notes,
     };
   }
@@ -1107,6 +1120,10 @@ class _NumberRow extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              inputFormatters: const [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              textAlign: TextAlign.end,
               decoration: const InputDecoration(
                 labelText: 'Nilai',
                 border: OutlineInputBorder(),
@@ -1155,6 +1172,10 @@ class _MatrixCard extends StatelessWidget {
                     child: TextField(
                       controller: controllers[column.id],
                       keyboardType: TextInputType.number,
+                      inputFormatters: const [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      textAlign: TextAlign.end,
                       decoration: InputDecoration(
                         labelText: column.code,
                         border: const OutlineInputBorder(),
