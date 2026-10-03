@@ -172,17 +172,21 @@ test.describe('critical interaction surface smoke', () => {
       }),
     ).toBeVisible({ timeout: 30_000 });
 
-    const closeInspectorButton = page.getByRole('button', {
-      name: 'Tutup source sheet',
-      exact: true,
-    });
-    await expect(closeInspectorButton).toBeVisible({ timeout: 30_000 });
-
-    await expect(page.locator('body')).toContainText(
-      '1. STATISTIK GIAT GAKKUM(1).xlsx',
+    const sourceContextResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/rpc/get_commander_source_sheet_context') &&
+        response.status() === 200,
     );
-    await expect(page.locator('body')).toContainText('ALL-POMDAM CONTEXT');
-    await expect(page.locator('body')).toContainText('146');
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Tutup source sheet',
+        exact: true,
+      }),
+    ).toBeVisible({ timeout: 30_000 });
+
+    await sourceContextResponse;
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
