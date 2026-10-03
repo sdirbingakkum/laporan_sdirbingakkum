@@ -19,6 +19,7 @@ import '../pages/login_page.dart';
 import '../pages/pomdam_page.dart';
 import '../pages/provos_page.dart';
 import '../pages/reports_page.dart';
+import '../pages/report_input_page.dart';
 import '../pages/sim_tni_page.dart';
 import '../pages/violation_page.dart';
 import '../shell/app_shell.dart';
@@ -51,6 +52,7 @@ String _initialWebLocation() {
     '/tindak-pidana',
     '/pomdam',
     '/reports',
+    '/input-laporan',
     '/data-quality',
   };
 
@@ -83,6 +85,7 @@ String? _safeReturnPath(String? value) {
     '/tindak-pidana',
     '/pomdam',
     '/reports',
+    '/input-laporan',
     '/data-quality',
   };
 
@@ -100,6 +103,10 @@ String? _requiredCapabilityFor(String location) {
 
   if (location == '/reports') {
     return CommanderCapabilities.viewReports;
+  }
+
+  if (location == '/input-laporan') {
+    return CommanderCapabilities.manageReportData;
   }
 
   if (location == '/data-quality') {
@@ -262,6 +269,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/reports',
             builder: (context, state) => const ReportsPage(),
+          ),
+          GoRoute(
+            path: '/input-laporan',
+            builder: (context, state) => const ReportInputPage(),
           ),
           GoRoute(
             path: '/data-quality',
