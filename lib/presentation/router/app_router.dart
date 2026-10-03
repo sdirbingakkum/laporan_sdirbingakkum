@@ -5,6 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../application/providers/commander_access_context_providers.dart';
+import '../../core/errors/app_exception.dart';
+import '../../domain/entities/commander_access_context_entities.dart';
+import '../pages/access_denied_page.dart';
 import '../pages/criminal_offense_page.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/data_quality_page.dart';
@@ -36,6 +40,7 @@ String _initialWebLocation() {
   const knownRoutes = {
     '/',
     '/login',
+    '/access-denied',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -58,7 +63,10 @@ String _loginLocationFor(String path) {
 }
 
 String? _safeReturnPath(String? value) {
-  if (value == null || value.isEmpty || !value.startsWith('/') || value.startsWith('//')) {
+  if (value == null ||
+      value.isEmpty ||
+      !value.startsWith('/') ||
+      value.startsWith('//')) {
     return null;
   }
 
@@ -78,35 +86,77 @@ String? _safeReturnPath(String? value) {
   return allowedRoutes.contains(value) ? value : null;
 }
 
-String? _authRedirect(GoRouterState state) {
-  final authenticated = Supabase.instance.client.auth.currentSession != null;
+Future<CommanderAccessContext> _readAccessContext(Ref ref) {
+  return ref.read(commanderAccessContextProvider.future);
+}
+
+FutureOr<String?> _authRedirect(
+  GoRouterState state,
+  Ref ref,
+) async {
+  final authenticated =
+      Supabase.instance.client.auth.currentSession != null;
   final location = state.uri.path;
 
   if (!authenticated && location != '/login') {
     return _loginLocationFor(location);
   }
 
-  if (authenticated && location == '/login') {
-    return _safeReturnPath(state.uri.queryParameters['returnTo']) ?? '/';
+  if (!authenticated) {
+    return null;
   }
 
-  return null;
+  try {
+    final access = await _readAccessContext(ref);
+
+    if (location == '/access-denied') {
+      return access.defaultLocation;
+    }
+
+    if (location == '/login') {
+      final returnPath =
+          _safeReturnPath(state.uri.queryParameters['returnTo']);
+
+      if (returnPath == '/' && !access.canUseCommanderDashboard) {
+        return access.defaultLocation;
+      }
+
+      return returnPath ?? access.defaultLocation;
+    }
+
+    if (location == '/' && !access.canUseCommanderDashboard) {
+      return access.defaultLocation;
+    }
+
+    return null;
+  } on AuthorizationException {
+    return location == '/access-denied' ? null : '/access-denied';
+  } on AppException {
+    return location == '/access-denied' ? null : '/access-denied';
+  }
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authRefresh = _AuthRefreshNotifier(
     Supabase.instance.client.auth.onAuthStateChange,
+    onAuthStateChanged: () {
+      ref.invalidate(commanderAccessContextProvider);
+    },
   );
   ref.onDispose(authRefresh.dispose);
 
   return GoRouter(
     initialLocation: _initialWebLocation(),
     refreshListenable: authRefresh,
-    redirect: (context, state) => _authRedirect(state),
+    redirect: (context, state) => _authRedirect(state, ref),
     routes: [
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/access-denied',
+        builder: (context, state) => const AccessDeniedPage(),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -163,15 +213,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 final class _AuthRefreshNotifier extends ChangeNotifier {
-  _AuthRefreshNotifier(Stream<AuthState> authStateStream) {
+  _AuthRefreshNotifier(
+    Stream<AuthState> authStateStream, {
+    required this.onAuthStateChanged,
+  }) {
     _subscription = authStateStream.listen(
-      (_) => notifyListeners(),
+      (_) {
+        onAuthStateChanged();
+        notifyListeners();
+      },
       onError: (Object error, StackTrace stackTrace) {
         debugPrint('Supabase auth state error: $error');
       },
     );
   }
 
+  final VoidCallback onAuthStateChanged;
   late final StreamSubscription<AuthState> _subscription;
 
   @override
