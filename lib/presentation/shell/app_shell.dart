@@ -226,7 +226,7 @@ class _DesktopRail extends StatelessWidget {
                       _RailItem(
                         item: item,
                         selected: location == item.path ||
-                            (item.path != '/' && location.startsWith('\${item.path}/')),
+                            (item.path != '/' && location.startsWith('${item.path}/')),
                         onTap: () => onNavigate(item.path),
                       ),
                   ],
