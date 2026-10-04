@@ -270,7 +270,7 @@ class _Header extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'COMMANDER COMMON OPERATING PICTURE',
+                        'Ringkasan kondisi laporan',
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
@@ -284,7 +284,7 @@ class _Header extends StatelessWidget {
                     child: DropdownButtonFormField<String?>(
                       initialValue: selectedPomdamId,
                       decoration: const InputDecoration(
-                        labelText: 'Scope POMDAM',
+                        labelText: 'Pilih POMDAM',
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
@@ -325,11 +325,11 @@ class _Header extends StatelessWidget {
                 ),
                 const _Badge(
                   icon: Icons.schedule_outlined,
-                  label: 'LATEST AVAILABLE',
+                  label: 'Data terbaru',
                 ),
                 _Badge(
                   icon: Icons.layers_outlined,
-                  label: snapshot.domains.length.toString() + ' DOMAIN',
+                  label: snapshot.domains.length.toString() + ' laporan',
                 ),
               ],
             ),
@@ -337,7 +337,7 @@ class _Header extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 9),
             Text(
-              'AS-OF PER DOMAIN',
+              'Periode data',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -421,7 +421,7 @@ class _AttentionPanel extends StatelessWidget {
                 const Icon(Icons.warning_amber_rounded, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'ATTENTION',
+                  'Perlu perhatian',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -430,7 +430,7 @@ class _AttentionPanel extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 7),
                     child: Text(
-                      '· ' + errors.toString() + ' ERROR',
+                      '· ' + errors.toString() + ' perlu diperiksa',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
