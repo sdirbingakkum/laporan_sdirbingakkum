@@ -118,7 +118,7 @@ test('operator can submit a controlled GAKKUM report and read it back', async ({
   });
 
   await expect(
-    page.getByRole('heading', { name: 'Giat Gakkum', exact: true }),
+    page.getByRole('heading', { name: 'Gakkum', exact: true }),
   ).toBeVisible({ timeout: 30_000 });
 
   const recordResponse = await recordResponsePromise;
