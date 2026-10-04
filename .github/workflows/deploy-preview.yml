@@ -149,7 +149,7 @@ jobs:
           mkdir -p build/web/preview/ui-mobile-first-analytics
           cp -a main-src/build/web/. build/web/
           rm -rf build/web/preview/ui-mobile-first-analytics
-          cp -a preview-src/build/web build/web/preview/ui-mobile-first-analytics
+          cp -a preview-src/build/web/. build/web/preview/ui-mobile-first-analytics/
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
             "$(git -C main-src rev-parse HEAD)" > build/web/preview/ui-mobile-first-analytics/deployment.json
