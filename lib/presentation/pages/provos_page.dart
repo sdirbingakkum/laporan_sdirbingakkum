@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +8,7 @@ import '../../domain/entities/provos_entities.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../widgets/analytics_ui.dart';
 import '../widgets/report_filters.dart';
+import '../widgets/visual_analytics.dart';
 
 class ProvosPage extends ConsumerStatefulWidget {
   const ProvosPage({super.key});
@@ -51,52 +51,126 @@ class _ProvosPageState extends ConsumerState<ProvosPage> {
           ),
         );
 
-        return ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const AnalyticsPageHeader(
-              title: 'Provos',
-            ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                MonthlyPeriodSelector(
-                  periods: periods,
-                  selectedPeriodId: selectedPeriod.id,
-                  onChanged: (value) {
-                    setState(() => _selectedPeriodId = value);
-                  },
-                ),
-                _PomdamFilter(
-                  state: pomdamsState,
-                  selectedValue: _selectedPomdamId,
-                  onChanged: (value) {
-                    setState(() => _selectedPomdamId = value);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            dashboard.when(
-              loading: () => const _LoadingCard(),
-              error: (error, stackTrace) =>
-                  _MessageState(message: _errorMessage(error)),
-              data: (snapshot) => _DashboardContent(snapshot: snapshot),
+        return VisualReportFrame(
+          title: 'Provos',
+          accent: AppVisualPalettes.provos.primary,
+          periodControl: CompactMonthlyPeriodSelector(
+            periods: periods,
+            selectedPeriodId: selectedPeriod.id,
+            onChanged: (value) => setState(() => _selectedPeriodId = value),
+          ),
+          filters: [
+            _PomdamFilter(
+              state: pomdamsState,
+              selectedValue: _selectedPomdamId,
+              onChanged: (value) =>
+                  setState(() => _selectedPomdamId = value),
             ),
           ],
+          child: dashboard.when(
+            loading: () => const _LoadingVisual(),
+            error: (error, stackTrace) =>
+                _MessageState(message: _errorMessage(error)),
+            data: (snapshot) => _DashboardVisual(snapshot: snapshot),
+          ),
         );
       },
     );
   }
 
   String _errorMessage(Object error) {
-    if (error is AppException) {
-      return error.message;
-    }
+    if (error is AppException) return error.message;
     return 'Data Provos belum dapat dibaca.';
   }
+}
+
+class _DashboardVisual extends StatelessWidget {
+  const _DashboardVisual({required this.snapshot});
+
+  final ProvosDashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppVisualPalettes.provos;
+
+    return Column(
+      children: [
+        ResponsiveGrid(
+          minWidth: 220,
+          children: [
+            _SectionRadial(
+              title: 'Kekuatan',
+              metrics: snapshot.strengthMetrics,
+              palette: palette,
+            ),
+            _SectionRadial(
+              title: 'Personel',
+              metrics: snapshot.personnelMetrics,
+              palette: palette,
+            ),
+            _SectionRadial(
+              title: 'Pendidikan',
+              metrics: snapshot.educationMetrics,
+              palette: palette,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        VisualPanel(
+          title: 'Distribusi terbesar',
+          accent: palette.primary,
+          child: AnimatedRankBarChart(
+            items: [
+              for (final metric in snapshot.allMetrics)
+                VisualDatum(
+                  label: metric.name,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            palette: palette,
+            height: 290,
+            maxItems: 8,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionRadial extends StatelessWidget {
+  const _SectionRadial({
+    required this.title,
+    required this.metrics,
+    required this.palette,
+  });
+
+  final String title;
+  final List<ProvosMetric> metrics;
+  final VisualPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = metrics.fold<int>(
+      0,
+      (sum, metric) => sum + metric.validTotal,
+    );
+
+    return VisualPanel(
+      title: title,
+      accent: palette.primary,
+      child: AnimatedRadialMetric(
+        value: total,
+        max: mathMaxForRadial(total),
+        palette: palette,
+        label: 'total',
+      ),
+    );
+  }
+}
+
+double mathMaxForRadial(int value) {
+  if (value <= 0) return 1;
+  return value.toDouble();
 }
 
 class _PomdamFilter extends StatelessWidget {
@@ -111,364 +185,45 @@ class _PomdamFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return state.when(
-      loading: () => const SizedBox(
-        width: 280,
-        child: LinearProgressIndicator(),
-      ),
-      error: (error, stackTrace) => SizedBox(
-        width: 280,
-        child: Text('POMDAM tidak tersedia: $error'),
-      ),
-      data: (pomdams) => SizedBox(
-        width: 280,
-        child: DropdownButtonFormField<String?>(
-          initialValue: selectedValue,
-          decoration: const InputDecoration(
-            labelText: 'POMDAM',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Semua POMDAM'),
-            ),
-            for (final pomdam in pomdams)
-              DropdownMenuItem<String?>(
-                value: pomdam.id,
-                child: Text(
-                  '${pomdam.code} · ${pomdam.shortName}',
-                ),
+  Widget build(BuildContext context) => state.when(
+        loading: () => const SizedBox(
+          width: 210,
+          child: LinearProgressIndicator(),
+        ),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (pomdams) => SizedBox(
+          width: 210,
+          child: DropdownButtonFormField<String?>(
+            initialValue: selectedValue,
+            decoration:
+                const InputDecoration(labelText: 'POMDAM', isDense: true),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Semua POMDAM'),
               ),
-          ],
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-}
-
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.snapshot});
-
-  final ProvosDashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ResponsiveGrid(
-          minWidth: 270,
-          children: [
-            _VisualSection(title: 'Kekuatan Provos', metrics: snapshot.strengthMetrics),
-            _VisualSection(title: 'Personel', metrics: snapshot.personnelMetrics),
-            _VisualSection(title: 'Pendidikan', metrics: snapshot.educationMetrics),
-          ],
-        ),
-        const SizedBox(height: 14),
-        _Section(
-          title: 'Kekuatan Provos',
-          metrics: snapshot.strengthMetrics,
-        ),
-        const SizedBox(height: 16),
-        _Section(
-          title: 'Personel',
-          metrics: snapshot.personnelMetrics,
-        ),
-        const SizedBox(height: 16),
-        _Section(
-          title: 'Pendidikan',
-          metrics: snapshot.educationMetrics,
-        ),
-      ],
-    );
-  }
-}
-
-class _VisualSection extends StatelessWidget {
-  const _VisualSection({
-    required this.title,
-    required this.metrics,
-  });
-
-  final String title;
-  final List<ProvosMetric> metrics;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnalyticsSection(
-      title: title,
-      trailing: Text(
-        metrics.fold<int>(0, (sum, item) => sum + item.validTotal).toString(),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-      ),
-      child: VisualBarList(
-        items: [
-          for (final metric in metrics)
-            VisualBarItem(
-              label: metric.name,
-              value: metric.validTotal.toDouble(),
-            ),
-        ],
-        maxItems: 5,
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  const _Section({
-    required this.title,
-    required this.metrics,
-  });
-
-  final String title;
-  final List<ProvosMetric> metrics;
-
-  @override
-  Widget build(BuildContext context) {
-    if (metrics.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text('$title: tidak ada data.'),
+              for (final pomdam in pomdams)
+                DropdownMenuItem<String?>(
+                  value: pomdam.id,
+                  child: Text('\${pomdam.code} · \${pomdam.shortName}'),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
         ),
       );
-    }
-
-    final summary = _Summary.fromMetrics(metrics);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _MetricCard(
-                  title: 'Total valid',
-                  value: summary.validTotal.toString(),
-                ),
-                _MetricCard(
-                  title: 'Valid records',
-                  value: summary.validCount.toString(),
-                ),
-                _MetricCard(
-                  title: 'Tidak dilaporkan',
-                  value: summary.notReportedCount.toString(),
-                ),
-                _MetricCard(
-                  title: 'Invalid source',
-                  value: summary.invalidSourceCount.toString(),
-                ),
-                if (summary.estimatedCount > 0)
-                  _MetricCard(
-                    title: 'Estimated',
-                    value: summary.estimatedCount.toString(),
-                  ),
-                if (summary.missingValueCount > 0)
-                  _MetricCard(
-                    title: 'Nilai kosong',
-                    value: summary.missingValueCount.toString(),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            AnalyticsSection(
-              title: 'Distribusi $title',
-              child: VisualBarList(
-                items: [
-                  for (final metric in metrics)
-                    VisualBarItem(
-                      label: metric.name,
-                      value: metric.validTotal.toDouble(),
-                    ),
-                ],
-                maxItems: 8,
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (summary.invalidSourceCount > 0)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Sebagian baris berstatus INVALID_SOURCE dan tidak dimasukkan '
-                  'ke Total valid.',
-                ),
-              ),
-            for (final metric in metrics)
-              _MetricRow(metric: metric),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-class _MetricRow extends StatelessWidget {
-  const _MetricRow({required this.metric});
-
-  final ProvosMetric metric;
+class _LoadingVisual extends StatelessWidget {
+  const _LoadingVisual();
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              metric.code,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              metric.name,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text(
-              metric.validTotal.toString(),
-              textAlign: TextAlign.end,
-            ),
-          ),
-          if (metric.issueCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Chip(
-                label: Text(metric.issueCount.toString()),
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-final class _Summary {
-  const _Summary({
-    required this.validTotal,
-    required this.validCount,
-    required this.notReportedCount,
-    required this.invalidSourceCount,
-    required this.estimatedCount,
-    required this.missingValueCount,
-  });
-
-  final int validTotal;
-  final int validCount;
-  final int notReportedCount;
-  final int invalidSourceCount;
-  final int estimatedCount;
-  final int missingValueCount;
-
-  factory _Summary.fromMetrics(List<ProvosMetric> metrics) {
-    return _Summary(
-      validTotal: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.validTotal,
-      ),
-      validCount: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.validCount,
-      ),
-      notReportedCount: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.notReportedCount,
-      ),
-      invalidSourceCount: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.invalidSourceCount,
-      ),
-      estimatedCount: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.estimatedCount,
-      ),
-      missingValueCount: metrics.fold(
-        0,
-        (sum, metric) => sum + metric.missingValueCount,
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-  });
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 170,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(title),
-            ],
-          ),
+  Widget build(BuildContext context) => const VisualPanel(
+        child: SizedBox(
+          height: 280,
+          child: Center(child: CircularProgressIndicator()),
         ),
-      ),
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 12),
-            Text('Membaca data Provos…'),
-          ],
-        ),
-      ),
-    );
-  }
+      );
 }
 
 class _MessageState extends StatelessWidget {
@@ -477,12 +232,10 @@ class _MessageState extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(message, textAlign: TextAlign.center),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
+      );
 }
