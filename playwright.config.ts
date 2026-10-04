@@ -39,7 +39,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
-      dependencies: ['setup'],
+      dependencies: process.env.E2E_ACCEPTANCE_TEST === 'true' ? [] : ['setup'],
       testIgnore: [/auth\.setup\.ts/, /auth\.spec\.ts/],
     },
   ],
