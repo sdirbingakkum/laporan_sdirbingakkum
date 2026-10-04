@@ -1,0 +1,77 @@
+name: Production Acceptance E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RUN_PRODUCTION_ACCEPTANCE to enable the controlled write test
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    if: ${{ inputs.confirm == 'RUN_PRODUCTION_ACCEPTANCE' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      E2E_ACCEPTANCE_TEST: true
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_COMMANDER_EMAIL: ${{ secrets.E2E_COMMANDER_EMAIL }}
+      E2E_COMMANDER_PASSWORD: ${{ secrets.E2E_COMMANDER_PASSWORD }}
+      PLAYWRIGHT_TEST_BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Validate acceptance secrets
+        shell: bash
+        run: |
+          test -n "$E2E_EMAIL" || (echo "::error::Missing E2E_EMAIL" && exit 1)
+          test -n "$E2E_PASSWORD" || (echo "::error::Missing E2E_PASSWORD" && exit 1)
+          test -n "$E2E_COMMANDER_EMAIL" || (echo "::error::Missing E2E_COMMANDER_EMAIL" && exit 1)
+          test -n "$E2E_COMMANDER_PASSWORD" || (echo "::error::Missing E2E_COMMANDER_PASSWORD" && exit 1)
+
+      - name: Install E2E dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Wait for deployed commit
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
+        run: |
+          for attempt in $(seq 1 30); do
+            status="$(curl -L -s -o /tmp/deployment.json -w '%{http_code}' "$BASE_URL/deployment.json")"
+            actual=""
+            if [ "$status" = "200" ]; then
+              actual="$(jq -r '.commit // empty' /tmp/deployment.json 2>/dev/null || true)"
+            fi
+            echo "attempt=$attempt http_status=$status deployed_sha=$actual"
+            if [ "$status" = "200" ] && [ "$actual" = "$EXPECTED_SHA" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Expected commit was not deployed."
+          exit 1
+
+      - name: Run controlled acceptance E2E
+        env:
+          E2E_EXPECTED_SHA: ${{ github.sha }}
+        run: npx playwright test e2e/acceptance.spec.ts
+
+      - name: Upload acceptance report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: production-acceptance-report
+          path: playwright-report/
+          if-no-files-found: ignore
