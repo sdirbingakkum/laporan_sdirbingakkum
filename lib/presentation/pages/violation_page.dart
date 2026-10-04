@@ -57,6 +57,7 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
 
         return VisualReportFrame(
           title: 'Pelanggaran',
+          contentKey: selectedPeriod.id,
           accent: AppVisualPalettes.pelanggaran.primary,
           periodControl: CompactMonthlyPeriodSelector(
             periods: periods,
