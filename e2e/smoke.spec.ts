@@ -197,14 +197,9 @@ test.describe('critical interaction surface smoke', () => {
     for (const label of ['POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
+    await expect(periodButton(page)).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /^Tahun\s+/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /^Bulan\s+/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /^Kategori\s+Semua kategori$/ }),
+      page.getByRole('button', { name: /^Kategori\s+Semua kategori/ }),
     ).toBeVisible();
   });
 
