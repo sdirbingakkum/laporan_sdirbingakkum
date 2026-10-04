@@ -5,6 +5,7 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../application/providers/violation_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/report_filters.dart';
 import '../../domain/entities/violation_entities.dart';
 
 class ViolationPage extends ConsumerStatefulWidget {
@@ -71,26 +72,12 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 _PomdamFilter(
                   state: pomdamsState,
