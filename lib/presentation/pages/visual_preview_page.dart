@@ -183,11 +183,13 @@ class VisualPreviewPage extends StatelessWidget {
               VisualPanel(
                 title: 'Kapasitas Provos',
                 accent: AppVisualPalettes.provos.primary,
-                child: AnimatedRadialMetric(
-                  value: 271,
-                  max: 320,
-                  palette: AppVisualPalettes.provos,
-                  label: 'personel',
+                child: Center(
+                  child: AnimatedMetric(
+                    value: 271,
+                    label: 'personel',
+                    color: AppVisualPalettes.provos.primary,
+                    size: 34,
+                  ),
                 ),
               ),
             ],
