@@ -22,7 +22,7 @@ class DataQualityPage extends ConsumerWidget {
           header: true,
           headingLevel: 2,
           child: Text(
-            'Kualitas Data',
+            'Kualitas data',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),

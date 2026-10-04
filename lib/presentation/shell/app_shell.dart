@@ -182,7 +182,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (_active('/laka-lalin')) return 'Laka Lalu Lintas';
     if (_active('/tindak-pidana')) return 'Tindak Pidana';
     if (_active('/perbandingan')) return 'Bandingkan';
-    if (_active('/data-quality')) return 'Kualitas Data';
+    if (_active('/data-quality')) return 'Kualitas data';
     if (_active('/input-laporan')) return 'Input Laporan';
     if (_active('/reports')) return 'Status Laporan';
     if (_active('/pomdam')) return 'POMDAM';
@@ -371,7 +371,7 @@ class _SecondaryMenu extends StatelessWidget {
       if (access.hasCapability(CommanderCapabilities.viewDataQuality))
         const _NavItem(
           path: '/data-quality',
-          label: 'Kualitas Data',
+          label: 'Kualitas data',
           icon: Icons.verified_outlined,
           selectedIcon: Icons.verified_rounded,
         ),
