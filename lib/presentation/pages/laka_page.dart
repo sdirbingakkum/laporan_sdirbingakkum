@@ -43,16 +43,10 @@ class _LakaPageState extends ConsumerState<LakaPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Laka Lalin',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            const AnalyticsPageHeader(
+              title: 'Laka Lalu Lintas',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Kejadian, personel, materiil, pangkat korban, dan akibat korban ditampilkan sebagai bagian terpisah. Status fakta dipertahankan.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
