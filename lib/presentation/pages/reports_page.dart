@@ -23,11 +23,14 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'Laporan aktif',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+        Semantics(
+          header: true,
+          child: Text(
+            'Laporan',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
         ),
         const SizedBox(height: 6),
         Text(
