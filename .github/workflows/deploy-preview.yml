@@ -137,7 +137,7 @@ jobs:
             perbandingan \
             reports \
             input-laporan \
-            data-quality
+            data-quality             visual-preview
           do
             mkdir -p "build/web/$route"
             cp build/web/index.html "build/web/$route/index.html"
