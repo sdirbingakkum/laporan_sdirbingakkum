@@ -40,8 +40,7 @@ class DataQualityPage extends ConsumerWidget {
             }
 
             final totals = _Totals.fromSummaries(summaries);
-            final clean = totals.integrityIssues == 0 &&
-                totals.zeroImportedSourceReports == 0;
+            final clean = totals.integrityIssues == 0;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +76,6 @@ final class _Totals {
     required this.estimatedRows,
     required this.sourceCells,
     required this.integrityIssues,
-    required this.zeroImportedSourceReports,
   });
 
   final int reports;
@@ -88,7 +86,6 @@ final class _Totals {
   final int estimatedRows;
   final int sourceCells;
   final int integrityIssues;
-  final int zeroImportedSourceReports;
 
   factory _Totals.fromSummaries(List<ReportSummary> rows) {
     return _Totals(
@@ -105,8 +102,6 @@ final class _Totals {
           rows.fold(0, (sum, row) => sum + row.sourceCellCount),
       integrityIssues:
           rows.fold(0, (sum, row) => sum + row.integrityIssueCount),
-      zeroImportedSourceReports:
-          rows.where((row) => row.importedSourceReports == 0).length,
     );
   }
 }
@@ -185,10 +180,16 @@ class _ReportQualityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provenanceOk = summary.nullSourceCell == 0 &&
+    final importedFactRows = summary.factRows - summary.nullSourceCell;
+    final provenanceOk = importedFactRows >= 0 &&
         summary.danglingSourceCell == 0 &&
-        summary.sourceCellCount == summary.factRows;
-    final sourceOk = summary.importedSourceReports > 0;
+        summary.sourceCellCount == importedFactRows;
+    final applicationFactRows = summary.nullSourceCell;
+    final sourceLabel = summary.importedSourceReports > 0
+        ? (applicationFactRows > 0 ? 'MIXED SOURCE' : 'SOURCE OK')
+        : (applicationFactRows == summary.factRows && summary.factRows > 0
+            ? 'INPUT APLIKASI'
+            : 'SOURCE REVIEW');
     final qualityOk = provenanceOk &&
         summary.validNullValue == 0 &&
         summary.nonvalidWithValue == 0;
@@ -211,7 +212,7 @@ class _ReportQualityCard extends StatelessWidget {
               children: [
                 Chip(
                   label: Text(
-                    sourceOk ? 'SOURCE OK' : 'SOURCE MISSING',
+                    sourceLabel,
                   ),
                 ),
                 Chip(
