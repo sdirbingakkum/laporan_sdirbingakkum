@@ -787,6 +787,189 @@ class _HeatmapCell extends StatelessWidget {
   }
 }
 
+
+
+class DomainVisualCard extends StatelessWidget {
+  const DomainVisualCard({
+    required this.title,
+    required this.value,
+    required this.palette,
+    super.key,
+    this.unit,
+    this.icon,
+    this.trend,
+    this.status,
+    this.onTap,
+  });
+
+  final String title;
+  final num? value;
+  final String? unit;
+  final IconData? icon;
+  final VisualPalette palette;
+  final List<double> trend;
+  final HeatmapState? status;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: [
+            palette.primary.withValues(alpha: .13),
+            palette.secondary.withValues(alpha: .045),
+            Colors.white,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: palette.primary.withValues(alpha: .12)),
+      ),
+      padding: const EdgeInsets.all(17),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (icon != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: palette.primary.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(icon, color: palette.primary, size: 19),
+                ),
+              if (icon != null) const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.muted,
+                      ),
+                ),
+              ),
+              if (status != null) _StatusOrb(state: status!),
+            ],
+          ),
+          const SizedBox(height: 15),
+          AnimatedMetric(
+            value: value ?? 0,
+            suffix: unit,
+            color: palette.primary,
+            size: 34,
+          ),
+          if (trend.length > 1) ...[
+            const SizedBox(height: 12),
+            AnimatedSparkline(
+              points: trend,
+              color: palette.primary,
+              height: 42,
+            ),
+          ],
+        ],
+      ),
+    );
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: content,
+      ),
+    ).animate().fadeIn(duration: 360.ms).slideY(begin: .06, end: 0);
+  }
+}
+
+class _StatusOrb extends StatelessWidget {
+  const _StatusOrb({required this.state});
+
+  final HeatmapState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (state) {
+      HeatmapState.good => AppTheme.success,
+      HeatmapState.warning => AppTheme.warning,
+      HeatmapState.error => AppTheme.danger,
+      HeatmapState.none => AppTheme.muted,
+    };
+
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: .30),
+            blurRadius: 9,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class VisualStatCluster extends StatelessWidget {
+  const VisualStatCluster({
+    required this.values,
+    super.key,
+  });
+
+  final List<VisualStat> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final value in values)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: value.color.withValues(alpha: .075),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                StatusDot(color: value.color, size: 8),
+                const SizedBox(width: 6),
+                Text(
+                  '\${value.value}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+final class VisualStat {
+  const VisualStat({
+    required this.value,
+    required this.color,
+  });
+
+  final String value;
+  final Color color;
+}
+
 class VisualFilterButton extends StatelessWidget {
   const VisualFilterButton({
     required this.label,
