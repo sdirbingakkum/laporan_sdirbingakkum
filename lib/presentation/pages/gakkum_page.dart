@@ -64,26 +64,12 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 pomdamsState.when(
                   loading: () => const SizedBox(
