@@ -44,7 +44,6 @@ async function signIn(
 
   const accountButton = page.getByRole('button', { name: 'Akun', exact: true });
   await expect(accountButton).toBeVisible({ timeout: 30_000 });
-  await expect(accountButton).toBeVisible({ timeout: 15_000 });
   await accountButton.click();
   await expect(page.getByText(expectedEmail, { exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(expectedRole, { exact: true })).toBeVisible({ timeout: 15_000 });
