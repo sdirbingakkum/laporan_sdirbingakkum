@@ -204,17 +204,6 @@ class _CommanderView extends StatelessWidget {
         'ERROR' || 'INVALID_SOURCE' => HeatmapState.error,
         _ => HeatmapState.none,
       };
-
-  static HeatmapState _statusFor(CommanderDataTrust trust) {
-    if (trust.invalidSourceRows > 0) return HeatmapState.error;
-    if (trust.notReportedRows > 0 || trust.estimatedRows > 0) {
-      return HeatmapState.warning;
-    }
-    if (trust.factRows > 0 && trust.validRows > 0) {
-      return HeatmapState.good;
-    }
-    return HeatmapState.none;
-  }
 }
 
 class _TopBar extends StatelessWidget {
