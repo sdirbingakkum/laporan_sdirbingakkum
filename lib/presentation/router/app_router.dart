@@ -33,6 +33,7 @@ String _initialWebLocation() {
   final path = Uri.base.path;
   const githubPagesBases = [
     '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics',
+    '/preview/ui-animated-visual-analytics',
     '/laporan_sdirbingakkum',
   ];
 
@@ -163,7 +164,12 @@ FutureOr<String?> _authRedirect(
       Supabase.instance.client.auth.currentSession != null;
   final location = state.uri.path;
 
-  if (location == '/visual-preview') return null;
+  if ({
+    '/visual-preview',
+    '/preview/ui-animated-visual-analytics/visual-preview',
+  }.contains(location)) {
+    return null;
+  }
 
   if (!authenticated && location != '/login') {
     return _loginLocationFor(state.uri);
@@ -223,6 +229,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/visual-preview',
+        builder: (context, state) => const VisualPreviewPage(),
+      ),
+      GoRoute(
+        path: '/preview/ui-animated-visual-analytics/visual-preview',
         builder: (context, state) => const VisualPreviewPage(),
       ),
       GoRoute(
