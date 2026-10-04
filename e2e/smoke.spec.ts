@@ -14,7 +14,7 @@ const routeCatalog: Record<string, Route> = {
   dashboard: {
     url: './',
     pathname: '/laporan_sdirbingakkum/',
-    heading: 'Dashboard',
+    heading: 'Ringkasan laporan',
   },
   gakkum: {
     url: './gakkum',
@@ -39,7 +39,7 @@ const routeCatalog: Record<string, Route> = {
   lakaLalin: {
     url: './laka-lalin',
     pathname: '/laporan_sdirbingakkum/laka-lalin',
-    heading: 'Laka Lalin',
+    heading: 'Laka Lalu Lintas',
   },
   tindakPidana: {
     url: './tindak-pidana',
@@ -59,7 +59,7 @@ const routeCatalog: Record<string, Route> = {
   dataQuality: {
     url: './data-quality',
     pathname: '/laporan_sdirbingakkum/data-quality',
-    heading: 'Data Quality',
+    heading: 'Kualitas data',
   },
 };
 
@@ -166,20 +166,36 @@ test.describe('deep-link route smoke', () => {
 test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
     await openRoute(page, routeCatalog.simTni);
-    await expect(filterButton(page, 'Periode')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Tahun\s+/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Bulan\s+/ }),
+    ).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
     await openRoute(page, routeCatalog.tindakPidana);
-    for (const label of ['Periode', 'Sumber versi', 'POMDAM', 'Personel']) {
+    for (const label of ['Sumber versi', 'POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
+    await expect(
+      page.getByRole('button', { name: /^Tahun\s+/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Bulan\s+/ }),
+    ).toBeVisible();
   });
 
   test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
     await openRoute(page, routeCatalog.gakkum);
-    await expect(filterButton(page, 'Periode')).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Tahun\s+/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Bulan\s+/ }),
+    ).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 2', exact: true })).toBeVisible();
@@ -187,9 +203,15 @@ test.describe('critical interaction surface smoke', () => {
 
   test('Pelanggaran exposes period, POMDAM, personel, and category controls', async ({ page }) => {
     await openRoute(page, routeCatalog.pelanggaran);
-    for (const label of ['Periode', 'POMDAM', 'Personel']) {
+    for (const label of ['POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
+    await expect(
+      page.getByRole('button', { name: /^Tahun\s+/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Bulan\s+/ }),
+    ).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Semua kategori', exact: true })).toBeVisible();
   });
 
