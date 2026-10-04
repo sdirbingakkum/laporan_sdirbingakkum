@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../widgets/analytics_ui.dart';
 import '../widgets/visual_analytics.dart';
 
