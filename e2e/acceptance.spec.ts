@@ -52,7 +52,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       commanderPage,
       commanderEmail,
       requiredEnv('E2E_COMMANDER_PASSWORD'),
-      'dirbingakum@puspomad.mil.id',
+      'danpuspomad@puspomad.mil.id',
       'Komandan Puspomad',
       'LAPORAN SDIRBIN GAKKUM',
     );
