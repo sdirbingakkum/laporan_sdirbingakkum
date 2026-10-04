@@ -153,9 +153,9 @@ jobs:
           mkdir -p build/web/preview/ui-animated-visual-analytics
           cp -a main-src/build/web/. build/web/
           rm -rf build/web/preview/ui-animated-visual-analytics
-          cp -a preview-src/build/web/. build/web/preview/ui-animated-visual-analytics/
+          cp -a preview-src/build/web/. "$PREVIEW_ROOT/"
           MAIN_COMMIT="$(git -C main-src rev-parse HEAD)"
-          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          PREVIEW_ROOT="build/web/preview/${GITHUB_REF_NAME}"
           printf '{"commit":"%s"}\n' "$MAIN_COMMIT" > build/web/deployment.json
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
@@ -163,7 +163,7 @@ jobs:
 
       - name: Verify preview Pages artifact
         run: |
-          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          PREVIEW_ROOT="build/web/preview/${GITHUB_REF_NAME}"
           test -f "$PREVIEW_ROOT/index.html"
           test -f "$PREVIEW_ROOT/visual-preview/index.html"
           grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/index.html"
