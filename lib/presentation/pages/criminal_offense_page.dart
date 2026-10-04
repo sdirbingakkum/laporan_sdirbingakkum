@@ -271,7 +271,7 @@ class _PomdamFilter extends StatelessWidget {
               for (final pomdam in pomdams)
                 DropdownMenuItem<String?>(
                   value: pomdam.id,
-                  child: Text('\${pomdam.code} · \${pomdam.shortName}'),
+                  child: Text('${pomdam.code} · ${pomdam.shortName}'),
                 ),
             ],
             onChanged: onChanged,
@@ -312,7 +312,7 @@ class _PersonnelFilter extends StatelessWidget {
               for (final category in categories)
                 DropdownMenuItem<String?>(
                   value: category.id,
-                  child: Text('\${category.code} · \${category.name}'),
+                  child: Text('${category.code} · ${category.name}'),
                 ),
             ],
             onChanged: onChanged,
