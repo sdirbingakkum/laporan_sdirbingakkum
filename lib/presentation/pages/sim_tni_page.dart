@@ -50,19 +50,10 @@ class _SimTniPageState extends ConsumerState<SimTniPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'SIM TNI',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'SIM TNI',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Agregasi mengikuti jenis SIM dan POMDAM. Status fakta '
-              'dipertahankan dan nilai source tidak diubah menjadi nol.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
