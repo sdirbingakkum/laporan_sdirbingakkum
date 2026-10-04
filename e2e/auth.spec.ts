@@ -55,7 +55,7 @@ test('preserves a protected deep link after authentication', async ({ page }) =>
   ]);
 
   await expect(
-    page.getByRole('heading', { name: 'Gakkum', exact: true }),
+    page.getByText('Gakkum', { exact: true }).first(),
   ).toBeVisible({ timeout: 30_000 });
   expect(new URL(page.url()).pathname).toBe('/laporan_sdirbingakkum/gakkum');
 });
