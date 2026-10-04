@@ -368,6 +368,11 @@ class VisualBarList extends StatelessWidget {
   }
 }
 
+String _formatVisualValue(double value) {
+  if (value == value.truncateToDouble()) return value.toInt().toString();
+  return value.toStringAsFixed(1).replaceAll('.', ',');
+}
+
 final class VisualBarItem {
   const VisualBarItem({
     required this.label,
