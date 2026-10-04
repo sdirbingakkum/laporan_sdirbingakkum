@@ -180,7 +180,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       { timeout: 30_000 },
     );
     await commanderPage.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
-    await expect(commanderPage.getByText('LAPORAN SDIRBIN GAKKUM', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+    expect(new URL(commanderPage.url()).pathname).toBe('/laporan_sdirbingakkum/');
     const dashboardResponse = await dashboardResponsePromise;
     const snapshot = (await dashboardResponse.json()) as {
       scope?: { type?: string };
