@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../theme/app_theme.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -21,6 +23,8 @@ class _LoginPageState extends State<LoginPage> {
     final value = GoRouterState.of(context).uri.queryParameters['returnTo'];
     const allowedRoutes = {
       '/',
+      '/laporan',
+      '/perbandingan',
       '/gakkum',
       '/pelanggaran',
       '/sim-tni',
@@ -96,96 +100,106 @@ class _LoginPageState extends State<LoginPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(28),
-                child: AutofillGroup(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.gavel_rounded,
-                        size: 42,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Laporan Sdirbin Gakkum',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
+      backgroundColor: AppTheme.canvas,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+                  child: AutofillGroup(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppTheme.brand,
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Masuk menggunakan akun yang sudah diberikan administrator.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 28),
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.username],
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
-                        autofillHints: const [AutofillHints.password],
-                        onSubmitted: (_) {
-                          if (!_loading) {
-                            _signIn();
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            tooltip: _obscurePassword
-                                ? 'Tampilkan password'
-                                : 'Sembunyikan password',
-                            onPressed: () {
-                              setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              );
-                            },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
+                            child: const Icon(
+                              Icons.insights_rounded,
+                              color: Colors.white,
+                              size: 25,
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton(
-                        onPressed: _loading ? null : _signIn,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          child: _loading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Masuk'),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Laporan Sdirbin Gakkum',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 7),
+                        Text(
+                          'Masuk untuk melihat analisis dan laporan bulanan.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.muted,
+                              ),
+                        ),
+                        const SizedBox(height: 26),
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.username],
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.mail_outline_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 13),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
+                          onSubmitted: (_) {
+                            if (!_loading) _signIn();
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Tampilkan password'
+                                  : 'Sembunyikan password',
+                              onPressed: () {
+                                setState(
+                                  () => _obscurePassword = !_obscurePassword,
+                                );
+                              },
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          height: 50,
+                          child: FilledButton(
+                            onPressed: _loading ? null : _signIn,
+                            child: _loading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Masuk'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
