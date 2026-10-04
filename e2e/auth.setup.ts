@@ -50,7 +50,7 @@ setup('authenticate staging user', async ({ page }) => {
 
   const landing =
     e2eRole === 'operator'
-      ? page.getByText('Laporan aktif', { exact: true })
+      ? page.getByRole('heading', { name: 'Laporan', exact: true })
       : page.getByText('LAPORAN SDIRBIN GAKKUM', { exact: true }).first();
 
   await expect(landing).toBeVisible({ timeout: 30_000 });
