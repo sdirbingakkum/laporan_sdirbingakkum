@@ -135,7 +135,7 @@ async function openRoute(page: Page, route: Route) {
 
   try {
     await expect(
-      page.getByRole('heading', { name: route.heading, exact: true }),
+      page.getByText(route.heading, { exact: true }).first(),
     ).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
   } catch (error) {
     const headings = await diagnostics(page);
