@@ -20,13 +20,20 @@ async function signIn(
   await page.goto('./', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
   const loginButton = page.getByRole('button', { name: 'Masuk', exact: true });
+  const emailField = page.getByRole('textbox', { name: 'Email', exact: true });
+  const passwordField = page.getByRole('textbox', {
+    name: 'Password',
+    exact: true,
+  });
+
   await expect(loginButton).toBeVisible({ timeout: 30_000 });
+  await expect(emailField).toBeVisible({ timeout: 30_000 });
+  await expect(passwordField).toBeVisible({ timeout: 30_000 });
 
   const authResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' &&
-      response.url().includes('/auth/v1/token') &&
-      response.status() === 200,
+      response.url().includes('/auth/v1/token'),
     { timeout: 30_000 },
   );
   const accessContextPromise = page.waitForResponse(
@@ -37,9 +44,39 @@ async function signIn(
     { timeout: 30_000 },
   );
 
-  await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-  await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
+  await emailField.fill(email);
+  await passwordField.click();
+  await passwordField.pressSequentially(password);
+  await expect(passwordField).toHaveValue(password);
+
   await loginButton.click();
+
+  const authResponse = await authResponsePromise;
+  let authPayload: {
+    user?: { email?: string | null };
+    error?: string;
+    error_description?: string;
+    msg?: string;
+  };
+  try {
+    authPayload = (await authResponse.json()) as typeof authPayload;
+  } catch (_) {
+    authPayload = {};
+  }
+
+  if (authResponse.status() !== 200) {
+    throw new Error(
+      'Supabase password login failed with HTTP ' +
+        authResponse.status() +
+        ': ' +
+        (authPayload.error_description ??
+          authPayload.msg ??
+          authPayload.error ??
+          'unknown authentication error'),
+    );
+  }
+
+  expect(authPayload.user?.email).toBe(expectedEmail);
 
   await page.waitForURL(
     (url) => new URL(url).pathname === expectedPath,
@@ -57,12 +94,6 @@ async function signIn(
         String(error),
     );
   });
-
-  const authResponse = await authResponsePromise;
-  const authPayload = (await authResponse.json()) as {
-    user?: { email?: string | null };
-  };
-  expect(authPayload.user?.email).toBe(expectedEmail);
 
   const accessResponse = await accessContextPromise;
   const accessPayload = (await accessResponse.json()) as {
@@ -103,11 +134,12 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
 
     // Only after Commander identity is proven, perform the controlled Operator write.
     const operatorPage = await operatorContext.newPage();
+    const operatorEmail = requiredEnv('E2E_EMAIL');
     await signIn(
       operatorPage,
-      requiredEnv('E2E_EMAIL'),
+      operatorEmail,
       requiredEnv('E2E_PASSWORD'),
-      'operator@puspomad.mil.id',
+      operatorEmail,
       'PUSPOMAD_OPERATOR',
       'Operator Puspomad',
       '/laporan_sdirbingakkum/reports',
