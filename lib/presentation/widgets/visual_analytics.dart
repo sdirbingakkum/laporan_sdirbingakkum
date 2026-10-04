@@ -1315,14 +1315,18 @@ class VisualReportFrame extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Semantics(
+                  container: true,
                   header: true,
                   headingLevel: 2,
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -.5,
-                        ),
+                  label: title,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -.5,
+                          ),
+                    ),
                   ),
                 ),
               ),
