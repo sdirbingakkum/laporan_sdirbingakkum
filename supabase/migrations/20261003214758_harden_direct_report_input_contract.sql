@@ -834,7 +834,7 @@ begin
   end if;
   return true;
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.assert_commander_access(p_pomdam_id uuid)
  RETURNS boolean
@@ -873,7 +873,7 @@ begin
 
   return true;
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.assert_current_role()
  RETURNS boolean
@@ -888,7 +888,7 @@ begin
   end if;
   return true;
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.assert_report_input_values(p_entries jsonb)
  RETURNS void
@@ -942,7 +942,7 @@ begin
     end if;
   end loop;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_read_pomdam(p_pomdam_id uuid)
  RETURNS boolean
@@ -976,7 +976,7 @@ AS $function$
         and s.active = true
     )
   end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_read_source_file_object(p_object_path text)
  RETURNS boolean
@@ -1007,7 +1007,7 @@ AS $function$
             and ur.active = true
         )
     )
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.can_read_source_report(p_source_report_id uuid)
  RETURNS boolean
@@ -1039,7 +1039,7 @@ AS $function$
         and not private.can_read_pomdam(x.pomdam_id)
     )
   end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.current_user_role()
  RETURNS text
@@ -1055,7 +1055,7 @@ AS $function$
   where ur.user_id = (select auth.uid())
     and ur.active = true
   limit 1
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.get_commander_fact_provenance_impl(p_domain_code text, p_record_id uuid)
  RETURNS jsonb
@@ -1195,7 +1195,7 @@ begin
 
   return v_payload;
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.get_commander_source_file_context_impl(p_domain_code text, p_record_id uuid)
  RETURNS jsonb
@@ -1315,7 +1315,7 @@ begin
     'file', v_file
   );
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.get_commander_source_sheet_context_impl(p_domain_code text, p_record_id uuid, p_row_radius integer DEFAULT 4)
  RETURNS jsonb
@@ -1429,7 +1429,7 @@ begin
     'cells', v_cells
   );
 end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.get_my_access_context_impl()
  RETURNS jsonb
@@ -1530,7 +1530,7 @@ AS $function$
         'capabilities', (select capabilities from role_capabilities)
       )
   end
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.has_current_capability(p_capability_code text)
  RETURNS boolean
@@ -1551,7 +1551,7 @@ AS $function$
       and ur.active = true
       and rc.capability_code = p_capability_code
   )
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.sync_report_provenance()
  RETURNS trigger
@@ -1611,7 +1611,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_report_period(p_period_start date, p_period_end date, p_period_label text, p_period_type text DEFAULT 'MONTH'::text)
  RETURNS report_periods
@@ -1693,7 +1693,7 @@ exception
 
     raise;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_cop_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1813,7 +1813,7 @@ select jsonb_build_object(
    'operational_risk_thresholds_defined',false
  )
 );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_domain_drilldown(p_domain_code text, p_pomdam_id uuid DEFAULT NULL::uuid, p_dimension_code text DEFAULT NULL::text, p_limit integer DEFAULT 50)
  RETURNS jsonb
@@ -2127,7 +2127,7 @@ select jsonb_build_object(
   )
 )
 from requested;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_fact_provenance(p_domain_code text, p_record_id uuid)
  RETURNS jsonb
@@ -2136,7 +2136,7 @@ CREATE OR REPLACE FUNCTION public.get_commander_fact_provenance(p_domain_code te
  SET search_path TO 'public'
 AS $function$
   select private.get_commander_fact_provenance_impl(p_domain_code,p_record_id)
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_gakkum_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2232,7 +2232,7 @@ select jsonb_build_object(
   'aggregation_rule','SUM VALID leaf records; parent record excluded when child records exist'
 )
 from current_stats s cross join top_items t;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_laka_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2301,7 +2301,7 @@ select jsonb_build_object(
  'aggregation_rule','Primary KPI sums only laka_accident_records VALID values; victims, victim rank, and material are separate measures'
 )
 from stats s cross join victims v cross join by_type b;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_pelanggaran_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2364,7 +2364,7 @@ select jsonb_build_object(
  'aggregation_rule','SUM VALID values across violation x personnel cells; fact rows are not operational counts'
 )
 from stats s cross join top_items t;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_provos_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2459,7 +2459,7 @@ select jsonb_build_object(
  'aggregation_rule','NYATA / DSPP uses only valid strength records; personnel and education are separate sections'
 )
 from strength s cross join trust t cross join education e cross join ratio;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_sim_tni_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2517,7 +2517,7 @@ select jsonb_build_object(
  'aggregation_rule','SUM VALID value by SIM type'
 )
 from stats s cross join by_type b;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_source_file_context(p_domain_code text, p_record_id uuid)
  RETURNS jsonb
@@ -2529,7 +2529,7 @@ AS $function$
     p_domain_code,
     p_record_id
   )
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_source_sheet_context(p_domain_code text, p_record_id uuid, p_row_radius integer DEFAULT 4)
  RETURNS jsonb
@@ -2542,7 +2542,7 @@ AS $function$
     p_record_id,
     p_row_radius
   );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_commander_tindak_pidana_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2641,7 +2641,7 @@ select jsonb_build_object(
  'aggregation_rule','SUM VALID values only when exactly one source_period exists; multiple source periods make primary value ambiguous'
 )
 from current c cross join source_current sc cross join top_items t;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_criminal_offense_dashboard(p_period_id uuid, p_source_period text, p_pomdam_id uuid DEFAULT NULL::uuid, p_personnel_category_id uuid DEFAULT NULL::uuid)
  RETURNS TABLE(offense_version_id uuid, offense_id uuid, canonical_key text, canonical_name text, source_number integer, source_label text, source_period text, display_order integer, record_count bigint, valid_total bigint, valid_count bigint, not_reported_count bigint, invalid_source_count bigint, estimated_total bigint, estimated_count bigint, missing_value_count bigint)
@@ -2703,7 +2703,7 @@ AS $function$
     v.source_period,
     v.display_order
   ORDER BY v.display_order, v.source_number, o.canonical_key;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_my_access_context()
  RETURNS jsonb
@@ -2712,7 +2712,7 @@ CREATE OR REPLACE FUNCTION public.get_my_access_context()
  SET search_path TO ''
 AS $function$
   select private.get_my_access_context_impl()
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_or_create_monthly_report_period(p_year integer, p_month integer)
  RETURNS report_periods
@@ -2809,7 +2809,7 @@ exception
 
     raise;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.submit_report(p_report_type text, p_period_id uuid, p_pomdam_id uuid, p_payload jsonb)
  RETURNS jsonb
@@ -3674,7 +3674,7 @@ begin
     'pomdam_id',p_pomdam_id
   );
 end;
-$function$
+$function$;
 
 create or replace view "public"."report_audit_summary" as
 WITH facts AS (
@@ -4608,7 +4608,7 @@ exception
 
     raise;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_or_create_monthly_report_period(p_year integer, p_month integer)
@@ -4706,7 +4706,7 @@ exception
 
     raise;
 end;
-$function$
+$function$;
 
 
 revoke execute on function public.get_or_create_monthly_report_period(integer, integer) from public;
@@ -4764,7 +4764,7 @@ begin
     end if;
   end loop;
 end;
-$function$
+$function$;
 
 
 revoke execute on function private.assert_report_input_values(jsonb) from public;
@@ -5633,5 +5633,5 @@ begin
     'pomdam_id',p_pomdam_id
   );
 end;
-$function$
+$function$;
 
