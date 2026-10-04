@@ -56,19 +56,10 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Pelanggaran',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Pelanggaran',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Agregasi mengikuti violation_version_id. Versi historis '
-              'tidak digabung dengan versi lain secara otomatis.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
