@@ -7,6 +7,7 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/provos_entities.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/analytics_ui.dart';
 import '../widgets/report_filters.dart';
 
 class ProvosPage extends ConsumerStatefulWidget {
@@ -253,7 +254,21 @@ class _Section extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+            AnalyticsSection(
+              title: 'Distribusi $title',
+              child: VisualBarList(
+                items: [
+                  for (final metric in metrics)
+                    VisualBarItem(
+                      label: metric.name,
+                      value: metric.validTotal.toDouble(),
+                    ),
+                ],
+                maxItems: 8,
+              ),
+            ),
+            const SizedBox(height: 14),
             if (summary.invalidSourceCount > 0)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
