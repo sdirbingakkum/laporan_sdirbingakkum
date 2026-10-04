@@ -1159,3 +1159,82 @@ double _niceMax(double value) {
 
   return nice * magnitude;
 }
+
+
+
+class VisualReportFrame extends StatelessWidget {
+  const VisualReportFrame({
+    required this.title,
+    required this.child,
+    super.key,
+    this.periodControl,
+    this.filters = const [],
+    this.accent,
+  });
+
+  final String title;
+  final Widget child;
+  final Widget? periodControl;
+  final List<Widget> filters;
+  final Color? accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accent ?? Theme.of(context).colorScheme.primary;
+
+    return AppPage(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  headingLevel: 2,
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -.5,
+                        ),
+                  ),
+                ),
+              ),
+              if (periodControl != null) periodControl!,
+            ],
+          ),
+          if (filters.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: filters,
+            ),
+          ],
+          const SizedBox(height: 18),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, .025),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: KeyedSubtree(
+              key: ValueKey(child.key),
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
