@@ -5,6 +5,7 @@ import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/gakkum_entities.dart';
+import '../widgets/report_filters.dart';
 import '../widgets/analytics_ui.dart';
 
 class GakkumPage extends ConsumerStatefulWidget {
