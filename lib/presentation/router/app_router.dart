@@ -10,12 +10,14 @@ import '../../core/errors/app_exception.dart';
 import '../../domain/entities/commander_access_context_entities.dart';
 import '../pages/access_denied_page.dart';
 import '../pages/commander_drilldown_page.dart';
+import '../pages/comparison_page.dart';
 import '../pages/criminal_offense_page.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/data_quality_page.dart';
 import '../pages/gakkum_page.dart';
 import '../pages/laka_page.dart';
 import '../pages/login_page.dart';
+import '../pages/laporan_hub_page.dart';
 import '../pages/pomdam_page.dart';
 import '../pages/provos_page.dart';
 import '../pages/reports_page.dart';
@@ -44,6 +46,8 @@ String _initialWebLocation() {
     '/login',
     '/access-denied',
     '/commander/drilldown',
+    '/laporan',
+    '/perbandingan',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -77,6 +81,8 @@ String? _safeReturnPath(String? value) {
   const allowedRoutes = {
     '/',
     '/commander/drilldown',
+    '/laporan',
+    '/perbandingan',
     '/gakkum',
     '/pelanggaran',
     '/sim-tni',
@@ -98,6 +104,14 @@ String? _requiredCapabilityFor(String location) {
   }
 
   if (location == '/commander/drilldown') {
+    return CommanderCapabilities.viewCommanderCop;
+  }
+
+  if (location == '/laporan') {
+    return CommanderCapabilities.viewDomainData;
+  }
+
+  if (location == '/perbandingan') {
     return CommanderCapabilities.viewCommanderCop;
   }
 
@@ -217,6 +231,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/',
             builder: (context, state) => const DashboardPage(),
+          ),
+          GoRoute(
+            path: '/laporan',
+            builder: (context, state) => const LaporanHubPage(),
+          ),
+          GoRoute(
+            path: '/perbandingan',
+            builder: (context, state) => const ComparisonPage(),
           ),
           GoRoute(
             path: '/commander/drilldown',
