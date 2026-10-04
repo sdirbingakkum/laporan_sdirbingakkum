@@ -47,12 +47,9 @@ class MonthlyPeriodSelector extends StatelessWidget {
       });
 
     if (monthPeriods.isEmpty) {
-      return const SizedBox(
-        width: 312,
-        child: InputDecorator(
-          decoration: InputDecoration(labelText: 'Periode'),
-          child: Text('Belum ada periode bulanan'),
-        ),
+      return const InputDecorator(
+        decoration: InputDecoration(labelText: 'Periode'),
+        child: Text('Belum ada periode bulanan'),
       );
     }
 
@@ -62,8 +59,9 @@ class MonthlyPeriodSelector extends StatelessWidget {
         .toList()
       ..sort();
 
-    // Default to the latest available month when no period has been chosen yet.
-    ReportPeriod selected = monthPeriods.last;
+    // Default ke bulan terbaru yang memang tersedia, bukan mengasumsikan
+    // semua bulan dalam satu tahun sudah memiliki laporan.
+    var selected = monthPeriods.last;
     for (final period in monthPeriods) {
       if (period.id == selectedPeriodId) {
         selected = period;
@@ -76,76 +74,80 @@ class MonthlyPeriodSelector extends StatelessWidget {
         .where((period) => period.reportYear == selectedYear)
         .toList();
 
-    final selectedMonth = selected.periodStart?.month ??
+    final selectedMonth =
+        selected.periodStart?.month ??
         _monthFromLabel(selected.periodLabel) ??
-        (periodsInYear.first.periodStart?.month ?? 1);
+        (periodsInYear.last.periodStart?.month ?? 1);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth < 312 ? constraints.maxWidth : 312.0;
+        final width = constraints.maxWidth < 312
+            ? constraints.maxWidth
+            : 312.0;
+
         return SizedBox(
           width: width,
           child: Row(
-        children: [
-          Expanded(
-            child: DropdownButtonFormField<int>(
-              initialValue: selectedYear,
-              decoration: const InputDecoration(labelText: 'Tahun'),
-              items: [
-                for (final year in years)
-                  DropdownMenuItem<int>(
-                    value: year,
-                    child: Text(year.toString()),
-                  ),
-              ],
-              onChanged: (year) {
-                if (year == null) return;
-                final candidates =
-                    monthPeriods.where((period) => period.reportYear == year).toList();
-                if (candidates.isEmpty) return;
-                final period = candidates.last;
-                onChanged(period.id);
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: DropdownButtonFormField<int>(
-              initialValue: selectedMonth,
-              decoration: const InputDecoration(labelText: 'Bulan'),
-              items: [
-                for (final period in periodsInYear)
-                  DropdownMenuItem<int>(
-                    value: period.periodStart?.month ??
-                        _monthFromLabel(period.periodLabel) ??
-                        1,
-                    child: Text(
-                      _monthName(
-                        period.periodStart?.month ??
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedYear,
+                  decoration: const InputDecoration(labelText: 'Tahun'),
+                  items: [
+                    for (final year in years)
+                      DropdownMenuItem<int>(
+                        value: year,
+                        child: Text(year.toString()),
+                      ),
+                  ],
+                  onChanged: (year) {
+                    if (year == null) return;
+                    final candidates = monthPeriods
+                        .where((period) => period.reportYear == year)
+                        .toList();
+                    if (candidates.isEmpty) return;
+                    onChanged(candidates.last.id);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedMonth,
+                  decoration: const InputDecoration(labelText: 'Bulan'),
+                  items: [
+                    for (final period in periodsInYear)
+                      DropdownMenuItem<int>(
+                        value: period.periodStart?.month ??
                             _monthFromLabel(period.periodLabel) ??
                             1,
+                        child: Text(
+                          _monthName(
+                            period.periodStart?.month ??
+                                _monthFromLabel(period.periodLabel) ??
+                                1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: (month) {
-                if (month == null) return;
-                for (final period in periodsInYear) {
-                  final candidate = period.periodStart?.month ??
-                      _monthFromLabel(period.periodLabel);
-                  if (candidate == month) {
-                    onChanged(period.id);
-                    return;
-                  }
-                }
-              },
-            ),
+                  ],
+                  onChanged: (month) {
+                    if (month == null) return;
+                    for (final period in periodsInYear) {
+                      final candidate = period.periodStart?.month ??
+                          _monthFromLabel(period.periodLabel);
+                      if (candidate == month) {
+                        onChanged(period.id);
+                        return;
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
-          ],
-        ),
-      );
-    },
+        );
+      },
     );
   }
 
