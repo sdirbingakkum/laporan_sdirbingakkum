@@ -261,6 +261,6 @@ class CompactMonthlyPeriodSelector extends StatelessWidget {
     if (start == null) return period.periodLabel;
 
     final month = _months[start.month - 1];
-    return '\$month \${start.year}';
+    return '$month ${start.year}';
   }
 }
