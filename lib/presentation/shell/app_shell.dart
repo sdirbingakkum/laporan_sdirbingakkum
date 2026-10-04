@@ -6,6 +6,29 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../application/providers/commander_access_context_providers.dart';
 import '../../domain/entities/commander_access_context_entities.dart';
 import '../theme/app_theme.dart';
+import '../widgets/analytics_ui.dart';
+
+const _reportItems = <_NavEntry>[
+  _NavEntry(path: '/laporan', label: 'Ringkasan'),
+  _NavEntry(path: '/gakkum', label: 'Gakkum', icon: Icons.gavel_outlined),
+  _NavEntry(
+    path: '/pelanggaran',
+    label: 'Pelanggaran',
+    icon: Icons.rule_outlined,
+  ),
+  _NavEntry(path: '/sim-tni', label: 'SIM TNI', icon: Icons.badge_outlined),
+  _NavEntry(path: '/provos', label: 'Provos', icon: Icons.shield_outlined),
+  _NavEntry(
+    path: '/laka-lalin',
+    label: 'Laka Lalu Lintas',
+    icon: Icons.car_crash_outlined,
+  ),
+  _NavEntry(
+    path: '/tindak-pidana',
+    label: 'Tindak Pidana',
+    icon: Icons.policy_outlined,
+  ),
+];
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({
@@ -26,50 +49,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _operationsOpen = true;
   bool _adminOpen = false;
 
-  static const _reports = <_NavEntry>[
-    _NavEntry(
-      path: '/laporan',
-      label: 'Ringkasan',
-    ),
-    _NavEntry(
-      path: '/gakkum',
-      label: 'Gakkum',
-      icon: Icons.gavel_outlined,
-    ),
-    _NavEntry(
-      path: '/pelanggaran',
-      label: 'Pelanggaran',
-      icon: Icons.rule_outlined,
-    ),
-    _NavEntry(
-      path: '/sim-tni',
-      label: 'SIM TNI',
-      icon: Icons.badge_outlined,
-    ),
-    _NavEntry(
-      path: '/provos',
-      label: 'Provos',
-      icon: Icons.shield_outlined,
-    ),
-    _NavEntry(
-      path: '/laka-lalin',
-      label: 'Laka Lalu Lintas',
-      icon: Icons.car_crash_outlined,
-    ),
-    _NavEntry(
-      path: '/tindak-pidana',
-      label: 'Tindak Pidana',
-      icon: Icons.policy_outlined,
-    ),
-  ];
-
   bool _isActive(String path) {
     if (path == '/') return widget.location == '/';
     return widget.location == path || widget.location.startsWith('$path/');
   }
-
-  bool get _reportGroupActive =>
-      _isActive('/laporan') || _reports.any((item) => _isActive(item.path));
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +198,7 @@ class _NavigationPanel extends StatelessWidget {
   final VoidCallback onAdminToggle;
   final ValueChanged<String> onNavigate;
 
-  static const _reportItems = AppShell._reports;
+  static const _reportItems = _reportItems;
 
   bool _active(String path) {
     if (path == '/') return location == '/';
@@ -560,7 +543,7 @@ class _PrimaryNavTile extends StatelessWidget {
                   label,
                   style: TextStyle(
                     color: foreground,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w650,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
               ),
