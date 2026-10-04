@@ -53,6 +53,7 @@ class _LakaPageState extends ConsumerState<LakaPage> {
 
         return VisualReportFrame(
           title: 'Laka Lalu Lintas',
+          contentKey: selectedPeriod.id,
           accent: AppVisualPalettes.laka.primary,
           periodControl: CompactMonthlyPeriodSelector(
             periods: periods,
