@@ -70,6 +70,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
+
 class _CommanderView extends StatelessWidget {
   const _CommanderView({
     required this.snapshot,
@@ -104,74 +105,83 @@ class _CommanderView extends StatelessWidget {
             selectedPomdamId: selectedPomdamId,
             onPomdamChanged: onPomdamChanged,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 1050
-                  ? 3
-                  : constraints.maxWidth >= 720
-                      ? 2
-                      : 1;
-              final gap = 12.0;
-              final cardWidth =
-                  (constraints.maxWidth - gap * (columns - 1)) / columns;
-
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
+              final wide = constraints.maxWidth >= 1080;
+              final domains = Column(
                 children: [
-                  for (final domain in snapshot.domains)
-                    SizedBox(
-                      width: cardWidth,
-                      height: 140, // fix height for overview card
-                      child: DomainOverviewCard(
-                        icon: _iconFor(domain.code),
-                        label: domain.name,
-                        color: _paletteFor(domain.code).primary,
-                        kpiValue: domain.primaryMetric.value?.toInt(),
-                        kpiLabel: domain.primaryMetric.unit.isEmpty
-                            ? 'TOTAL'
-                            : domain.primaryMetric.unit.toUpperCase(),
-                        onTap: _routes[domain.code] == null
+                  for (var index = 0; index < snapshot.domains.length; index++)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == snapshot.domains.length - 1 ? 0 : 8,
+                      ),
+                      child: DomainSignalRow(
+                        icon: _iconFor(snapshot.domains[index].code),
+                        label: snapshot.domains[index].displayCode,
+                        color: _paletteFor(snapshot.domains[index].code).primary,
+                        value: snapshot.domains[index].primaryMetric.value,
+                        unit: snapshot.domains[index].primaryMetric.unit.isEmpty
+                            ? null
+                            : snapshot.domains[index].primaryMetric.unit.toUpperCase(),
+                        trend: [
+                          for (final point in snapshot.domains[index].trend.series)
+                            if (point.plottedValue != null) point.plottedValue!,
+                        ],
+                        status: _trustState(snapshot.domains[index].dataTrust.validPct),
+                        onTap: _routes[snapshot.domains[index].code] == null
                             ? () {}
-                            : () => context.go(_routes[domain.code]!),
+                            : () => context.go(_routes[snapshot.domains[index].code]!),
+                        compact: true,
                       ),
                     ),
                 ],
               );
+
+              if (!wide || !access.isAllPomdam || snapshot.pomdamMatrix.isEmpty) {
+                return domains;
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: domains),
+                  const SizedBox(width: 28),
+                  Expanded(
+                    flex: 2,
+                    child: VisualPanel(
+                      title: 'Status POMDAM',
+                      accent: AppTheme.brand,
+                      child: AnimatedHeatmap(
+                        columns: const [
+                          'Gakkum',
+                          'Pelang.',
+                          'SIM',
+                          'Provos',
+                          'Laka',
+                          'Pidana',
+                        ],
+                        rows: [
+                          for (final row in snapshot.pomdamMatrix)
+                            HeatmapRow(
+                              label: row.shortName,
+                              values: [
+                                _heatmapState(row.stateFor('GAKKUM')),
+                                _heatmapState(row.stateFor('PELANGGARAN')),
+                                _heatmapState(row.stateFor('SIM_TNI')),
+                                _heatmapState(row.stateFor('PROVOS')),
+                                _heatmapState(row.stateFor('LAKA_LALIN')),
+                                _heatmapState(row.stateFor('TINDAK_PIDANA')),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
             },
           ),
-          if (access.isAllPomdam && snapshot.pomdamMatrix.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            VisualPanel(
-              title: 'Status POMDAM',
-              accent: AppTheme.brand,
-              child: AnimatedHeatmap(
-                columns: const [
-                  'Gakkum',
-                  'Pelang.',
-                  'SIM',
-                  'Provos',
-                  'Laka',
-                  'Pidana',
-                ],
-                rows: [
-                  for (final row in snapshot.pomdamMatrix)
-                    HeatmapRow(
-                      label: row.shortName,
-                      values: [
-                        _heatmapState(row.stateFor('GAKKUM')),
-                        _heatmapState(row.stateFor('PELANGGARAN')),
-                        _heatmapState(row.stateFor('SIM_TNI')),
-                        _heatmapState(row.stateFor('PROVOS')),
-                        _heatmapState(row.stateFor('LAKA_LALIN')),
-                        _heatmapState(row.stateFor('TINDAK_PIDANA')),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -197,6 +207,14 @@ class _CommanderView extends StatelessWidget {
         _ => AppVisualPalettes.gakkum,
       };
 
+  static HeatmapState _trustState(double? validPct) {
+    final value = validPct;
+    if (value == null) return HeatmapState.none;
+    if (value >= 95) return HeatmapState.good;
+    if (value >= 80) return HeatmapState.warning;
+    return HeatmapState.error;
+  }
+
   static HeatmapState _heatmapState(String value) => switch (value) {
         'VALID' || 'COMPLETE' || 'OK' => HeatmapState.good,
         'GAP' || 'ATTENTION' || 'NOT_REPORTED' || 'ESTIMATED' =>
@@ -205,7 +223,6 @@ class _CommanderView extends StatelessWidget {
         _ => HeatmapState.none,
       };
 }
-
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.snapshot,
