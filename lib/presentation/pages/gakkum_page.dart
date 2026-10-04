@@ -48,19 +48,10 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Giat Gakkum',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Gakkum',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Periode, POMDAM, dan level taxonomy dipilih secara eksplisit. '
-              'Parent dan child tidak dijumlahkan menjadi satu angka.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
