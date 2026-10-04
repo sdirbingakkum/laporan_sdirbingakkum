@@ -19,7 +19,7 @@ create policy report_periods_insert_managed
     and nullif(trim(period_label), '') is not null
   );
 
-grant insert, update on table public.report_submissions to authenticated;
+grant select, insert, update on table public.report_submissions to authenticated;
 
 grant insert, update on table public.gakkum_records to authenticated;
 grant insert, update on table public.violation_records to authenticated;
