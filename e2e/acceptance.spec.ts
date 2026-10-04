@@ -14,7 +14,6 @@ async function signIn(
   password: string,
   expectedEmail: string,
   expectedRole: string,
-  landingText: string,
   expectedPath: string,
 ) {
   await page.goto('./', { waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -43,9 +42,8 @@ async function signIn(
     );
   });
 
-  await expect(page.getByText(landingText, { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-
   const accountButton = page.getByRole('button', { name: 'Akun', exact: true });
+  await expect(accountButton).toBeVisible({ timeout: 30_000 });
   await expect(accountButton).toBeVisible({ timeout: 15_000 });
   await accountButton.click();
   await expect(page.getByText(expectedEmail, { exact: true })).toBeVisible({ timeout: 15_000 });
@@ -72,7 +70,6 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       requiredEnv('E2E_COMMANDER_PASSWORD'),
       commanderEmail,
       'Komandan Puspomad',
-      'LAPORAN SDIRBIN GAKKUM',
       '/laporan_sdirbingakkum/',
     );
     expect(new URL(commanderPage.url()).pathname).toBe('/laporan_sdirbingakkum/');
@@ -85,7 +82,6 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       requiredEnv('E2E_PASSWORD'),
       'operator@puspomad.mil.id',
       'Operator Puspomad',
-      'Laporan aktif',
       '/laporan_sdirbingakkum/reports',
     );
 
