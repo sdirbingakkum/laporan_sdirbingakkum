@@ -5,6 +5,7 @@ import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/gakkum_entities.dart';
+import '../widgets/analytics_ui.dart';
 
 class GakkumPage extends ConsumerStatefulWidget {
   const GakkumPage({super.key});
@@ -179,7 +180,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Distribusi kegiatan',
+          trailing: Text(
+            'Menampilkan 6 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final activity in snapshot.activities)
+                VisualBarItem(
+                  label: activity.activityName,
+                  value: activity.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 6,
+          ),
+        ),
+        const SizedBox(height: 14),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(20),
