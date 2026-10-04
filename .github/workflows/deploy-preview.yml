@@ -95,6 +95,7 @@ jobs:
             reports \
             input-laporan \
             data-quality \
+            visual-preview \
             laporan \
             perbandingan
           do
