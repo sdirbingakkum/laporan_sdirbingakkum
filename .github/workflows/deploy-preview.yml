@@ -119,6 +119,7 @@ jobs:
           flutter build web \
             --release \
             --base-href "$PREVIEW_PATH" \
+            --dart-define=VISUAL_PREVIEW=true \
             --dart-define-from-file=/tmp/preview-supabase-defines.json
           rm -f /tmp/preview-supabase-defines.json
 
