@@ -217,44 +217,45 @@ class CompactMonthlyPeriodSelector extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
+      excludeSemantics: true,
       label: _label(current),
       child: PopupMenuButton<String>(
         initialValue: current.id,
         onSelected: onChanged,
-      itemBuilder: (context) => [
-        for (final period in available)
-          PopupMenuItem<String>(
-            value: period.id,
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_month_rounded, size: 18),
-                const SizedBox(width: 8),
-                Text(_label(period)),
-              ],
+        itemBuilder: (context) => [
+          for (final period in available)
+            PopupMenuItem<String>(
+              value: period.id,
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded, size: 18),
+                  const SizedBox(width: 8),
+                  Text(_label(period)),
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.calendar_month_rounded, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              _label(current),
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(width: 6),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-          ],
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.calendar_month_rounded, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                _label(current),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+            ],
           ),
         ),
       ),
