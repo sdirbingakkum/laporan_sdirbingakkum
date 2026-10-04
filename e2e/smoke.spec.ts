@@ -1,9 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const EXPECTED_SHA = process.env.E2E_EXPECTED_SHA;
+const E2E_ROLE = (process.env.E2E_ROLE ?? 'operator').toLowerCase();
 const SMOKE_ASSERTION_TIMEOUT = 15_000;
 
-const routes = [
+const commanderRoutes = [
   { url: './', pathname: '/laporan_sdirbingakkum/', heading: 'Dashboard' },
   { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Gakkum' },
   { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
@@ -15,6 +16,20 @@ const routes = [
   { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Laporan' },
   { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data Quality' },
 ];
+
+const operatorRoutes = [
+  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Gakkum' },
+  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
+  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
+  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
+  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
+  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
+  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
+  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Laporan' },
+  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data Quality' },
+];
+
+const routes = E2E_ROLE === 'operator' ? operatorRoutes : commanderRoutes;
 
 test.beforeEach(async ({ request }) => {
   if (!EXPECTED_SHA) return;
@@ -128,6 +143,7 @@ test.describe('critical interaction surface smoke', () => {
 
 
   test('Commander cannot open the report input surface without manage capability', async ({ page }) => {
+    test.skip(E2E_ROLE !== 'commander', 'Commander-only authorization test');
     await page.goto('./input-laporan', {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
@@ -139,6 +155,7 @@ test.describe('critical interaction surface smoke', () => {
   });
 
   test('Commander drill-down can open source sheet inspection', async ({ page }) => {
+    test.skip(E2E_ROLE !== 'commander', 'Commander-only drill-down test');
     await page.goto('./commander/drilldown?domain=GAKKUM', {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
