@@ -101,43 +101,60 @@ class _DashboardVisual extends StatelessWidget {
         ),
     ];
 
-    return ResponsiveGridShim(
+    final totalReports = snapshot.validCount +
+        snapshot.notReportedCount +
+        snapshot.estimatedCount +
+        snapshot.invalidSourceCount +
+        snapshot.missingValueCount;
+    final validPercent =
+        totalReports == 0 ? 0.0 : (snapshot.validCount / totalReports * 100);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: AnimatedMetric(
+                  value: snapshot.validTotal,
+                  label: 'TOTAL',
+                  color: palette.primary,
+                ),
+              ),
+              Expanded(
+                child: AnimatedMetric(
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
         VisualPanel(
-          title: 'Distribusi',
+          title: 'Distribusi SIM TNI',
           accent: palette.primary,
           child: AnimatedDonutChart(
             items: items,
             palette: palette,
             centerValue: snapshot.validTotal,
             centerLabel: 'total',
-            height: 285,
+            height: 320,
           ),
         ),
+        const SizedBox(height: 24),
         VisualPanel(
-          title: 'Kualitas',
-          accent: palette.secondary,
-          child: Row(
-            children: [
-              Expanded(
-                child: AnimatedStatusRing(
-                  valid: snapshot.validCount,
-                  attention:
-                      snapshot.notReportedCount + snapshot.estimatedCount,
-                  error: snapshot.invalidSourceCount +
-                      snapshot.missingValueCount,
-                  palette: palette,
-                ),
-              ),
-              Expanded(
-                child: AnimatedMetric(
-                  value: snapshot.validTotal,
-                  label: 'SIM valid',
-                  color: palette.primary,
-                  size: 40,
-                ),
-              ),
-            ],
+          title: 'Kualitas Data',
+          accent: palette.primary,
+          child: AnimatedStatusRing(
+            valid: snapshot.validCount,
+            attention: snapshot.notReportedCount + snapshot.estimatedCount,
+            error: snapshot.invalidSourceCount + snapshot.missingValueCount,
+            palette: palette,
           ),
         ),
       ],

@@ -20,16 +20,11 @@ class DataQualityPage extends ConsumerWidget {
           header: true,
           headingLevel: 2,
           child: Text(
-            'Kualitas data',
+            'Kualitas Data',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Audit live terhadap fact, status, coverage POMDAM, source-cell, dan source report.',
-          style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 20),
         state.when(
@@ -51,7 +46,7 @@ class DataQualityPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _StatusSummary(totals: totals, clean: clean),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 for (final summary in summaries)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -122,57 +117,48 @@ class _StatusSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              clean ? 'Audit integrity: OK' : 'Audit integrity: REVIEW',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: clean
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.error,
-                  ),
+    final validPercent = totals.factRows == 0
+        ? 0.0
+        : (totals.validRows / totals.factRows * 100);
+
+    return VisualPanel(
+      accent: AppTheme.success,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: AnimatedMetric(
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
+                  size: 56,
+                ),
+              ),
+              Expanded(
+                child: AnimatedMetric(
+                  value: totals.factRows,
+                  label: 'TOTAL FACTS',
+                  color: AppTheme.brandDark,
+                  size: 56,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          AnimatedStatusRing(
+            valid: totals.validRows,
+            attention: totals.notReportedRows + totals.estimatedRows,
+            error: totals.invalidSourceRows + totals.integrityIssues,
+            palette: const VisualPalette(
+              primary: AppTheme.success,
+              secondary: AppTheme.warning,
+              tertiary: AppTheme.danger,
+              soft: AppTheme.border,
             ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _Metric(title: 'Report periods', value: '${totals.reports}'),
-                _Metric(title: 'Fact rows', value: '${totals.factRows}'),
-                _Metric(title: 'VALID', value: '${totals.validRows}'),
-                _Metric(
-                  title: 'NOT_REPORTED',
-                  value: '${totals.notReportedRows}',
-                ),
-                _Metric(
-                  title: 'INVALID_SOURCE',
-                  value: '${totals.invalidSourceRows}',
-                ),
-                _Metric(
-                  title: 'ESTIMATED',
-                  value: '${totals.estimatedRows}',
-                ),
-                _Metric(
-                  title: 'Source cells',
-                  value: '${totals.sourceCells}',
-                ),
-                _Metric(
-                  title: 'Integrity issues',
-                  value: '${totals.integrityIssues}',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'VALID menyumbang nilai numerik. NOT_REPORTED dan INVALID_SOURCE tidak diperlakukan sebagai nol.',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -189,104 +175,57 @@ class _ReportQualityCard extends StatelessWidget {
     final provenanceOk = importedFactRows >= 0 &&
         summary.danglingSourceCell == 0 &&
         summary.sourceCellCount == importedFactRows;
-    final applicationFactRows = summary.nullSourceCell;
-    final sourceLabel = summary.importedSourceReports > 0
-        ? (applicationFactRows > 0 ? 'MIXED SOURCE' : 'SOURCE OK')
-        : (applicationFactRows == summary.factRows && summary.factRows > 0
-            ? 'INPUT APLIKASI'
-            : 'SOURCE REVIEW');
     final qualityOk = provenanceOk &&
         summary.validNullValue == 0 &&
         summary.nonvalidWithValue == 0;
+    
+    final hasIssues = summary.integrityIssueCount > 0 || !qualityOk;
+    final statusColor = hasIssues ? AppTheme.danger : AppTheme.success;
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              summary.reportTypeCode,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
+              ),
             ),
-            Text(summary.periodLabel),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    summary.reportTypeCode,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+                  Text(
+                    summary.periodLabel,
+                    style: const TextStyle(color: AppTheme.muted),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Chip(
-                  label: Text(
-                    sourceLabel,
-                  ),
+                Text(
+                  '${summary.validRows} valid',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                Chip(
-                  label: Text(
-                    provenanceOk ? 'PROVENANCE OK' : 'PROVENANCE REVIEW',
-                  ),
-                ),
-                Chip(
-                  label: Text(
-                    qualityOk ? 'VALUE CONTRACT OK' : 'VALUE CONTRACT REVIEW',
-                  ),
-                ),
-                if (summary.nonImportedSourceReports > 0)
-                  Chip(
-                    label: Text(
-                      '${summary.nonImportedSourceReports} non-imported source',
-                    ),
+                if (hasIssues)
+                  Text(
+                    '${summary.integrityIssueCount} issues',
+                    style: const TextStyle(color: AppTheme.danger),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Facts ${summary.factRows} · POMDAM ${summary.pomdamCount} · source cells ${summary.sourceCellCount}',
-            ),
-            Text(
-              'VALID ${summary.validRows} · NOT_REPORTED ${summary.notReportedRows} · INVALID_SOURCE ${summary.invalidSourceRows} · ESTIMATED ${summary.estimatedRows}',
-            ),
-            if (summary.integrityIssueCount > 0)
-              Text(
-                'Integrity issues: ${summary.integrityIssueCount}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      child: Card(
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 3),
-              Text(title),
-            ],
-          ),
         ),
       ),
     );
@@ -301,16 +240,8 @@ class _LoadingCard extends StatelessWidget {
     return const Card(
       child: Padding(
         padding: EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 12),
-            Text('Membaca audit data terbaru…'),
-          ],
+        child: Center(
+          child: CircularProgressIndicator(),
         ),
       ),
     );

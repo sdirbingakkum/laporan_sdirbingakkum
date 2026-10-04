@@ -158,80 +158,65 @@ class _DashboardVisual extends StatelessWidget {
     final ordered = [...snapshot.metrics]
       ..sort((a, b) => b.validTotal.compareTo(a.validTotal));
 
-    final top = ordered.take(6).toList();
-    final rest = ordered.skip(6).fold<double>(
-          0,
-          (sum, metric) => sum + metric.validTotal,
-        );
-
-    final donut = [
-      for (final metric in top)
-        VisualDatum(
-          label: metric.canonicalName,
-          value: metric.validTotal.toDouble(),
-        ),
-      if (rest > 0) VisualDatum(label: 'Lainnya', value: rest),
-    ];
+    final totalReports = snapshot.validCount +
+        snapshot.notReportedCount +
+        snapshot.estimatedCount +
+        snapshot.invalidSourceCount +
+        snapshot.missingValueCount;
+    final validPercent =
+        totalReports == 0 ? 0.0 : (snapshot.validCount / totalReports * 100);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ResponsiveGrid(
-          minWidth: 300,
-          children: [
-            VisualPanel(
-              title: 'Tindak pidana',
-              accent: palette.primary,
-              child: AnimatedRankBarChart(
-                items: [
-                  for (final metric in ordered)
-                    VisualDatum(
-                      label: metric.canonicalName,
-                      value: metric.validTotal.toDouble(),
-                    ),
-                ],
-                palette: palette,
-                height: 300,
-                maxItems: 10,
-              ),
-            ),
-            VisualPanel(
-              title: 'Komposisi',
-              accent: palette.secondary,
-              child: AnimatedDonutChart(
-                items: donut,
-                palette: palette,
-                centerValue: snapshot.validTotal,
-                centerLabel: 'total',
-                height: 300,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        VisualPanel(
-          title: 'Kualitas',
-          accent: palette.primary,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
           child: Row(
             children: [
               Expanded(
-                child: AnimatedStatusRing(
-                  valid: snapshot.validCount,
-                  attention:
-                      snapshot.notReportedCount + snapshot.estimatedCount,
-                  error: snapshot.invalidSourceCount +
-                      snapshot.missingValueCount,
-                  palette: palette,
+                child: AnimatedMetric(
+                  value: snapshot.validTotal,
+                  label: 'TOTAL',
+                  color: palette.primary,
                 ),
               ),
               Expanded(
                 child: AnimatedMetric(
-                  value: snapshot.validTotal,
-                  label: 'tindak pidana valid',
-                  color: palette.primary,
-                  size: 40,
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Tindak Pidana',
+          accent: palette.primary,
+          child: AnimatedRankBarChart(
+            items: [
+              for (final metric in ordered)
+                VisualDatum(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            palette: palette,
+            height: 320,
+            maxItems: 10,
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Kualitas Data',
+          accent: palette.primary,
+          child: AnimatedStatusRing(
+            valid: snapshot.validCount,
+            attention: snapshot.notReportedCount + snapshot.estimatedCount,
+            error: snapshot.invalidSourceCount + snapshot.missingValueCount,
+            palette: palette,
           ),
         ),
       ],

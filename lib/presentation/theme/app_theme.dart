@@ -56,7 +56,7 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.all(Radius.circular(20)),
           side: BorderSide(color: border),
         ),
       ),
@@ -129,4 +129,14 @@ abstract final class AppTheme {
       ),
     );
   }
+}
+
+abstract final class AppDomainColors {
+  static const gakkum = Color(0xFFFF5722);
+  static const pelanggaran = Color(0xFFFF9800);
+  static const simTni = Color(0xFF2196F3);
+  static const provos = Color(0xFF4CAF50);
+  static const laka = Color(0xFF9C27B0);
+  static const tindakPidana = Color(0xFFE91E63);
+  static const pomdam = Color(0xFF009688);
 }

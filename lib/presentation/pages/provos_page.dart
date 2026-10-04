@@ -94,31 +94,44 @@ class _DashboardVisual extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppVisualPalettes.provos;
 
+    final totalValidCount = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.validCount);
+    final totalNotReported = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.notReportedCount);
+    final totalEstimated = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.estimatedCount);
+    final totalInvalidSource = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.invalidSourceCount);
+    final totalMissingValue = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.missingValueCount);
+    final totalValidTotal = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.validTotal);
+
+    final totalReports = totalValidCount + totalNotReported + totalEstimated + totalInvalidSource + totalMissingValue;
+    final validPercent = totalReports == 0 ? 0.0 : (totalValidCount / totalReports * 100);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ResponsiveGrid(
-          minWidth: 220,
-          children: [
-            _SectionRadial(
-              title: 'Kekuatan',
-              metrics: snapshot.strengthMetrics,
-              palette: palette,
-            ),
-            _SectionRadial(
-              title: 'Personel',
-              metrics: snapshot.personnelMetrics,
-              palette: palette,
-            ),
-            _SectionRadial(
-              title: 'Pendidikan',
-              metrics: snapshot.educationMetrics,
-              palette: palette,
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: AnimatedMetric(
+                  value: totalValidTotal,
+                  label: 'TOTAL',
+                  color: palette.primary,
+                ),
+              ),
+              Expanded(
+                child: AnimatedMetric(
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24),
         VisualPanel(
-          title: 'Distribusi terbesar',
+          title: 'Distribusi Terbesar',
           accent: palette.primary,
           child: AnimatedRankBarChart(
             items: [
@@ -129,8 +142,19 @@ class _DashboardVisual extends StatelessWidget {
                 ),
             ],
             palette: palette,
-            height: 290,
+            height: 320,
             maxItems: 8,
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Kualitas Data',
+          accent: palette.primary,
+          child: AnimatedStatusRing(
+            valid: totalValidCount,
+            attention: totalNotReported + totalEstimated,
+            error: totalInvalidSource + totalMissingValue,
+            palette: palette,
           ),
         ),
       ],
@@ -138,62 +162,7 @@ class _DashboardVisual extends StatelessWidget {
   }
 }
 
-class _SectionRadial extends StatelessWidget {
-  const _SectionRadial({
-    required this.title,
-    required this.metrics,
-    required this.palette,
-  });
 
-  final String title;
-  final List<ProvosMetric> metrics;
-  final VisualPalette palette;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = metrics.fold<int>(
-      0,
-      (sum, metric) => sum + metric.validTotal,
-    );
-
-    return VisualPanel(
-      title: title,
-      accent: palette.primary,
-      child: Row(
-        children: [
-          Expanded(
-            child: AnimatedStatusRing(
-              valid: metrics.fold<int>(
-                0,
-                (sum, metric) => sum + metric.validCount,
-              ),
-              attention: metrics.fold<int>(
-                0,
-                (sum, metric) =>
-                    sum + metric.notReportedCount + metric.estimatedCount,
-              ),
-              error: metrics.fold<int>(
-                0,
-                (sum, metric) =>
-                    sum + metric.invalidSourceCount + metric.missingValueCount,
-              ),
-              palette: palette,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: AnimatedMetric(
-              value: total,
-              label: 'total',
-              color: palette.primary,
-              size: 34,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 class _PomdamFilter extends StatelessWidget {
   const _PomdamFilter({
     required this.state,

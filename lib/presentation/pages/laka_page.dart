@@ -93,75 +93,60 @@ class _DashboardVisual extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppVisualPalettes.laka;
-
     final accident = _data(snapshot.accident);
-    final personnel = _data(snapshot.personnel);
-    final material = _data(snapshot.material);
-    final outcome = _data(snapshot.victimOutcome);
+
+    final valid = _valid(snapshot);
+    final attention = _attention(snapshot);
+    final error = _error(snapshot);
+    final totalReports = valid + attention + error;
+    final validPercent = totalReports == 0 ? 0.0 : (valid / totalReports * 100);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ResponsiveGrid(
-          minWidth: 300,
-          children: [
-            VisualPanel(
-              title: 'Kejadian',
-              accent: palette.primary,
-              child: AnimatedRankBarChart(
-                items: accident,
-                palette: palette,
-                maxItems: 7,
-                height: 270,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: AnimatedMetric(
+                  value: snapshot.accident.validTotal,
+                  label: 'TOTAL',
+                  color: palette.primary,
+                ),
               ),
-            ),
-            VisualPanel(
-              title: 'Akibat korban',
-              accent: palette.secondary,
-              child: AnimatedDonutChart(
-                items: outcome,
-                palette: palette,
-                centerValue: snapshot.victimOutcome.validTotal,
-                centerLabel: 'korban',
-                height: 270,
+              Expanded(
+                child: AnimatedMetric(
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        ResponsiveGrid(
-          minWidth: 260,
-          children: [
-            VisualPanel(
-              title: 'Personel',
-              accent: palette.secondary,
-              child: AnimatedRankBarChart(
-                items: personnel,
-                palette: palette,
-                maxItems: 5,
-                height: 210,
-              ),
-            ),
-            VisualPanel(
-              title: 'Materiil',
-              accent: palette.tertiary,
-              child: AnimatedRankBarChart(
-                items: material,
-                palette: palette,
-                maxItems: 5,
-                height: 210,
-              ),
-            ),
-            VisualPanel(
-              title: 'Kualitas',
-              accent: palette.primary,
-              child: AnimatedStatusRing(
-                valid: _valid(snapshot),
-                attention: _attention(snapshot),
-                error: _error(snapshot),
-                palette: palette,
-              ),
-            ),
-          ],
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Kejadian',
+          accent: palette.primary,
+          child: AnimatedRankBarChart(
+            items: accident,
+            palette: palette,
+            maxItems: 7,
+            height: 320,
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Kualitas Data',
+          accent: palette.primary,
+          child: AnimatedStatusRing(
+            valid: valid,
+            attention: attention,
+            error: error,
+            palette: palette,
+          ),
         ),
       ],
     );

@@ -110,86 +110,66 @@ class _DashboardVisual extends StatelessWidget {
     final palette = AppVisualPalettes.pelanggaran;
     final ordered = [...snapshot.metrics]
       ..sort((a, b) => b.validTotal.compareTo(a.validTotal));
-    final top = ordered.take(5).toList();
-    final rest = ordered.skip(5).fold<double>(
-          0,
-          (sum, metric) => sum + metric.validTotal,
-        );
 
-    final donut = [
-      for (final metric in top)
-        VisualDatum(
-          label: metric.canonicalName,
-          value: metric.validTotal.toDouble(),
-        ),
-      if (rest > 0) const VisualDatum(label: 'Lainnya', value: 0)
-    ];
-
-    if (rest > 0 && donut.isNotEmpty) {
-      donut.removeLast();
-      donut.add(VisualDatum(label: 'Lainnya', value: rest));
-    }
+    final totalReports = snapshot.validCount +
+        snapshot.notReportedCount +
+        snapshot.estimatedCount +
+        snapshot.invalidSourceCount +
+        snapshot.missingValueCount;
+    final validPercent =
+        totalReports == 0 ? 0.0 : (snapshot.validCount / totalReports * 100);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ResponsiveGrid(
-          minWidth: 300,
-          children: [
-            VisualPanel(
-              title: 'Peringkat',
-              accent: palette.primary,
-              child: AnimatedRankBarChart(
-                items: [
-                  for (final metric in ordered)
-                    VisualDatum(
-                      label: metric.canonicalName,
-                      value: metric.validTotal.toDouble(),
-                    ),
-                ],
-                palette: palette,
-                maxItems: 8,
-                height: 270,
-              ),
-            ),
-            VisualPanel(
-              title: 'Komposisi',
-              accent: palette.secondary,
-              child: AnimatedDonutChart(
-                items: donut,
-                palette: palette,
-                centerValue: snapshot.validTotal,
-                centerLabel: 'total',
-                height: 270,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        VisualPanel(
-          title: 'Kualitas',
-          accent: palette.primary,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
           child: Row(
             children: [
               Expanded(
-                child: AnimatedStatusRing(
-                  valid: snapshot.validCount,
-                  attention:
-                      snapshot.notReportedCount + snapshot.estimatedCount,
-                  error: snapshot.invalidSourceCount +
-                      snapshot.missingValueCount,
-                  palette: palette,
+                child: AnimatedMetric(
+                  value: snapshot.validTotal,
+                  label: 'TOTAL',
+                  color: palette.primary,
                 ),
               ),
               Expanded(
                 child: AnimatedMetric(
-                  value: snapshot.validTotal,
-                  label: 'pelanggaran valid',
-                  color: palette.primary,
-                  size: 42,
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Peringkat Pelanggaran',
+          accent: palette.primary,
+          child: AnimatedRankBarChart(
+            items: [
+              for (final metric in ordered)
+                VisualDatum(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            palette: palette,
+            maxItems: 8,
+            height: 320,
+          ),
+        ),
+        const SizedBox(height: 24),
+        VisualPanel(
+          title: 'Kualitas Data',
+          accent: palette.primary,
+          child: AnimatedStatusRing(
+            valid: snapshot.validCount,
+            attention: snapshot.notReportedCount + snapshot.estimatedCount,
+            error: snapshot.invalidSourceCount + snapshot.missingValueCount,
+            palette: palette,
           ),
         ),
       ],

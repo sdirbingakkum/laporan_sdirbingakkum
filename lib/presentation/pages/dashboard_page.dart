@@ -123,24 +123,18 @@ class _CommanderView extends StatelessWidget {
                   for (final domain in snapshot.domains)
                     SizedBox(
                       width: cardWidth,
-                      child: DomainVisualCard(
-                        title: domain.name,
-                        value: domain.primaryMetric.value,
-                        unit: domain.primaryMetric.unit.isEmpty
-                            ? null
-                            : ' ${domain.primaryMetric.unit}',
+                      height: 140, // fix height for overview card
+                      child: DomainOverviewCard(
                         icon: _iconFor(domain.code),
-                        palette: _paletteFor(domain.code),
-                        trend: [
-                          for (final point in domain.trend.series)
-                            if (point.plottedValue != null)
-                              point.plottedValue!,
-                        ],
-                        status: _statusFor(domain.dataTrust),
+                        label: domain.name,
+                        color: _paletteFor(domain.code).primary,
+                        kpiValue: domain.primaryMetric.value.toInt(),
+                        kpiLabel: domain.primaryMetric.unit.isEmpty
+                            ? 'TOTAL'
+                            : domain.primaryMetric.unit.toUpperCase(),
                         onTap: _routes[domain.code] == null
-                            ? null
-                            : () =>
-                                context.go(_routes[domain.code]!),
+                            ? () {}
+                            : () => context.go(_routes[domain.code]!),
                       ),
                     ),
                 ],

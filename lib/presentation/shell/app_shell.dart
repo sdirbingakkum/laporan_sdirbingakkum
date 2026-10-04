@@ -279,11 +279,23 @@ class _RailItem extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  static const _pathColors = {
+    '/': Color(0xFF1677FF),
+    '/gakkum': Color(0xFFFF5722),
+    '/pelanggaran': Color(0xFFFF9800),
+    '/sim-tni': Color(0xFF2196F3),
+    '/provos': Color(0xFF4CAF50),
+    '/laka': Color(0xFF9C27B0),
+    '/tindak-pidana': Color(0xFFE91E63),
+    '/pomdam': Color(0xFF009688),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? AppTheme.brandDark : AppTheme.muted;
+    final domainColor = _pathColors[item.path] ?? AppTheme.brandDark;
+    final foreground = selected ? domainColor : AppTheme.muted;
     final background =
-        selected ? AppTheme.brand.withValues(alpha: .09) : Colors.transparent;
+        selected ? domainColor.withValues(alpha: .09) : Colors.transparent;
 
     return Tooltip(
       message: item.label,
@@ -297,24 +309,42 @@ class _RailItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: SizedBox(
               height: 62,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Icon(
-                    selected ? item.selectedIcon : item.icon,
-                    size: 22,
-                    color: foreground,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight:
-                              selected ? FontWeight.w800 : FontWeight.w700,
-                          color: foreground,
+                  if (selected)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: domainColor,
+                          shape: BoxShape.circle,
                         ),
+                      ),
+                    ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        selected ? item.selectedIcon : item.icon,
+                        size: 22,
+                        color: foreground,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight:
+                                  selected ? FontWeight.w800 : FontWeight.w700,
+                              color: foreground,
+                            ),
+                      ),
+                    ],
                   ),
                 ],
               ),

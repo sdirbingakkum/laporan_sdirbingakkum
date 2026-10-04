@@ -37,46 +37,113 @@ final class VisualPalette {
 
 abstract final class AppVisualPalettes {
   static const gakkum = VisualPalette(
-    primary: Color(0xFF1677FF),
-    secondary: Color(0xFF18C8FF),
-    tertiary: Color(0xFF6C63FF),
-    soft: Color(0xFF9B8CFF),
+    primary: AppDomainColors.gakkum,
+    secondary: Color(0xFFFF8A65),
+    tertiary: Color(0xFFFFCCBC),
+    soft: Color(0xFFFBE9E7),
   );
 
   static const pelanggaran = VisualPalette(
-    primary: Color(0xFFFF8A00),
-    secondary: Color(0xFFFF4D6D),
-    tertiary: Color(0xFFFFC857),
-    soft: Color(0xFFFFB36B),
+    primary: AppDomainColors.pelanggaran,
+    secondary: Color(0xFFFFB74D),
+    tertiary: Color(0xFFFFE0B2),
+    soft: Color(0xFFFFF3E0),
   );
 
   static const simTni = VisualPalette(
-    primary: Color(0xFF7B61FF),
-    secondary: Color(0xFFB06CFF),
-    tertiary: Color(0xFF3BC7FF),
-    soft: Color(0xFFD08CFF),
+    primary: AppDomainColors.simTni,
+    secondary: Color(0xFF64B5F6),
+    tertiary: Color(0xFFBBDEFB),
+    soft: Color(0xFFE3F2FD),
   );
 
   static const provos = VisualPalette(
-    primary: Color(0xFF00A86B),
-    secondary: Color(0xFF33D69F),
-    tertiary: Color(0xFF0AB5A5),
-    soft: Color(0xFF7FE3C5),
+    primary: AppDomainColors.provos,
+    secondary: Color(0xFF81C784),
+    tertiary: Color(0xFFC8E6C9),
+    soft: Color(0xFFE8F5E9),
   );
 
   static const laka = VisualPalette(
-    primary: Color(0xFFFF4B4B),
-    secondary: Color(0xFFFF7A59),
-    tertiary: Color(0xFFFFC857),
-    soft: Color(0xFFFF9E8A),
+    primary: AppDomainColors.laka,
+    secondary: Color(0xFFBA68C8),
+    tertiary: Color(0xFFE1BEE7),
+    soft: Color(0xFFF3E5F5),
   );
 
   static const pidana = VisualPalette(
-    primary: Color(0xFFEF9B00),
-    secondary: Color(0xFFFFC34D),
-    tertiary: Color(0xFFDE5D00),
-    soft: Color(0xFFFFD77A),
+    primary: AppDomainColors.tindakPidana,
+    secondary: Color(0xFFF06292),
+    tertiary: Color(0xFFF8BBD0),
+    soft: Color(0xFFFCE4EC),
   );
+}
+
+class DomainOverviewCard extends StatelessWidget {
+  const DomainOverviewCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    super.key,
+    this.kpiValue,
+    this.kpiLabel,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final int? kpiValue;
+  final String? kpiLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.07),
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const Spacer(),
+              if (kpiValue != null) ...
+                [
+                  Text(
+                    kpiValue.toString(),
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: color.withValues(alpha: 0.85),
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class VisualPanel extends StatelessWidget {
@@ -86,7 +153,7 @@ class VisualPanel extends StatelessWidget {
     this.title,
     this.trailing,
     this.accent,
-    this.padding = const EdgeInsets.all(18),
+    this.padding = const EdgeInsets.all(24),
   });
 
   final Widget child;
@@ -148,7 +215,7 @@ class AnimatedMetric extends StatelessWidget {
     this.label,
     this.color,
     this.suffix,
-    this.size = 34,
+    this.size = 56,
   });
 
   final num value;
