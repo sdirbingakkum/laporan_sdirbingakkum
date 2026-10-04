@@ -44,7 +44,10 @@ String _initialWebLocation() {
 
     if (path.startsWith('$base/')) {
       final route = path.substring(base.length);
-      return route.isEmpty ? '/' : route;
+      final normalized = route.length > 1 && route.endsWith('/')
+          ? route.substring(0, route.length - 1)
+          : route;
+      return normalized.isEmpty ? '/' : normalized;
     }
   }
 
@@ -167,6 +170,7 @@ FutureOr<String?> _authRedirect(
   if ({
     '/visual-preview',
     '/preview/ui-animated-visual-analytics/visual-preview',
+    '/visual-preview/',
   }.contains(location)) {
     return null;
   }
