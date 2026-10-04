@@ -7,6 +7,7 @@ import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../widgets/report_filters.dart';
 import '../../domain/entities/violation_entities.dart';
+import '../widgets/analytics_ui.dart';
 
 class ViolationPage extends ConsumerStatefulWidget {
   const ViolationPage({super.key});
@@ -308,7 +309,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Pelanggaran terbanyak',
+          trailing: Text(
+            'Menampilkan 8 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 8,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (snapshot.invalidSourceCount > 0)
           const Card(
             child: Padding(
