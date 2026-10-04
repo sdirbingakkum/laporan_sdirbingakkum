@@ -412,7 +412,7 @@ class AnimatedRankBarChart extends StatelessWidget {
       ..removeWhere((item) => !item.value.isFinite || item.value <= 0)
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final visible = data.take(math.min(maxItems, 6)).toList();
+    final visible = data.take(math.min(maxItems, 6).toInt()).toList();
     if (visible.isEmpty) return const _EmptyVisual();
 
     final maxValue = visible.map((item) => item.value).fold<double>(0, math.max);
@@ -420,7 +420,7 @@ class AnimatedRankBarChart extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
 
     return SizedBox(
-      height: math.max(height, visible.length * rowHeight),
+      height: math.max(height, visible.length * rowHeight).toDouble(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
