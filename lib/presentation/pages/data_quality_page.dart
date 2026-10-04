@@ -125,74 +125,92 @@ class _StatusSummary extends StatelessWidget {
     final integrityLabel =
         clean ? 'Audit integrity: OK' : 'Audit integrity: REVIEW';
 
-    return VisualPanel(
-      accent: AppTheme.success,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            integrityLabel,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: clean ? AppTheme.success : AppTheme.danger,
-              letterSpacing: 0.2,
+    // We MUST use a genuine Material Card here, as Playwright's getByRole('group')
+    // test directly relies on Flutter Web's implicit mapping of a Card
+    // to a <flt-semantics role="group"> container.
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: AppTheme.success.withValues(alpha: 0.2), 
+          width: 1.5,
+        ),
+      ),
+      color: AppTheme.success.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // The VERY FIRST visible text inside the Card becomes the group's
+            // accessible name. Playwright asserts on this exact string prefix.
+            Text(
+              integrityLabel,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: clean ? AppTheme.success : AppTheme.danger,
+                letterSpacing: 0.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: AnimatedMetric(
-                  value: validPercent,
-                  suffix: '%',
-                  label: 'VALID',
-                  color: AppTheme.success,
-                  size: 56,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: AnimatedMetric(
+                    value: validPercent,
+                    suffix: '%',
+                    label: 'VALID',
+                    color: AppTheme.success,
+                    size: 56,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: AnimatedMetric(
-                  value: totals.factRows,
-                  label: 'TOTAL FACTS',
-                  color: AppTheme.brandDark,
-                  size: 56,
+                Expanded(
+                  child: AnimatedMetric(
+                    value: totals.factRows,
+                    label: 'TOTAL FACTS',
+                    color: AppTheme.brandDark,
+                    size: 56,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 20,
-            runSpacing: 4,
-            children: [
-              Text(
-                'Fact rows: ${totals.factRows}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.muted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Valid: ${totals.validRows}  ·  Not reported: ${totals.notReportedRows}',
-                style: TextStyle(fontSize: 12, color: AppTheme.muted),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          AnimatedStatusRing(
-            valid: totals.validRows,
-            attention: totals.notReportedRows + totals.estimatedRows,
-            error: totals.invalidSourceRows + totals.integrityIssues,
-            palette: VisualPalette(
-              primary: AppTheme.success,
-              secondary: AppTheme.warning,
-              tertiary: AppTheme.danger,
-              soft: AppTheme.border,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            // The fact rows string required by Playwright getByText(/Fact rows/)
+            Wrap(
+              spacing: 20,
+              runSpacing: 4,
+              children: [
+                Text(
+                  'Fact rows: ${totals.factRows}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Valid: ${totals.validRows}  ·  Not reported: ${totals.notReportedRows}',
+                  style: TextStyle(fontSize: 12, color: AppTheme.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            AnimatedStatusRing(
+              valid: totals.validRows,
+              attention: totals.notReportedRows + totals.estimatedRows,
+              error: totals.invalidSourceRows + totals.integrityIssues,
+              palette: VisualPalette(
+                primary: AppTheme.success,
+                secondary: AppTheme.warning,
+                tertiary: AppTheme.danger,
+                soft: AppTheme.border,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
