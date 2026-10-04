@@ -5,6 +5,7 @@ import '../../application/providers/criminal_offense_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/criminal_offense_entities.dart';
+import '../widgets/analytics_ui.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../widgets/report_filters.dart';
 
@@ -315,7 +316,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Tindak pidana terbanyak',
+          trailing: Text(
+            'Menampilkan 10 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 10,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (allValuesZero)
           const Card(
             child: Padding(
