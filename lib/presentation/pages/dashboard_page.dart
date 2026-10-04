@@ -128,7 +128,7 @@ class _CommanderView extends StatelessWidget {
                         value: domain.primaryMetric.value,
                         unit: domain.primaryMetric.unit.isEmpty
                             ? null
-                            : ' \${domain.primaryMetric.unit}',
+                            : ' ${domain.primaryMetric.unit}',
                         icon: _iconFor(domain.code),
                         palette: _paletteFor(domain.code),
                         trend: [
@@ -257,7 +257,7 @@ class _TopBar extends StatelessWidget {
                 for (final row in snapshot.pomdamMatrix)
                   DropdownMenuItem<String?>(
                     value: row.pomdamId,
-                    child: Text('\${row.code} · \${row.shortName}'),
+                    child: Text('${row.code} · ${row.shortName}'),
                   ),
               ],
               onChanged: onPomdamChanged,
