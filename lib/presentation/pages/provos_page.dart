@@ -6,7 +6,6 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/provos_entities.dart';
 import '../../domain/entities/reference_entities.dart';
-import '../theme/app_theme.dart';
 import '../widgets/report_filters.dart';
 import '../widgets/visual_analytics.dart';
 
@@ -85,70 +84,39 @@ class _ProvosPageState extends ConsumerState<ProvosPage> {
   }
 }
 
+
 class _DashboardVisual extends StatelessWidget {
   const _DashboardVisual({required this.snapshot});
-
   final ProvosDashboardSnapshot snapshot;
-
   @override
   Widget build(BuildContext context) {
     final palette = AppVisualPalettes.provos;
-
     final totalValidCount = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.validCount);
     final totalNotReported = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.notReportedCount);
     final totalEstimated = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.estimatedCount);
     final totalInvalidSource = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.invalidSourceCount);
     final totalMissingValue = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.missingValueCount);
     final totalValidTotal = snapshot.allMetrics.fold<int>(0, (sum, m) => sum + m.validTotal);
-
-    final totalReports = totalValidCount + totalNotReported + totalEstimated + totalInvalidSource + totalMissingValue;
-    final validPercent = totalReports == 0 ? 0.0 : (totalValidCount / totalReports * 100);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: AnimatedMetric(
-                  value: totalValidTotal,
-                  label: 'TOTAL',
-                  color: palette.primary,
-                ),
-              ),
-              Expanded(
-                child: AnimatedMetric(
-                  value: validPercent,
-                  suffix: '%',
-                  label: 'VALID',
-                  color: AppTheme.success,
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 20),
+          child: AnimatedMetric(value: totalValidTotal, label: 'TOTAL', color: palette.primary, size: 62),
         ),
-        const SizedBox(height: 24),
         VisualPanel(
-          title: 'Distribusi Terbesar',
+          title: 'Distribusi terbesar',
           accent: palette.primary,
           child: AnimatedRankBarChart(
-            items: [
-              for (final metric in snapshot.allMetrics)
-                VisualDatum(
-                  label: metric.name,
-                  value: metric.validTotal.toDouble(),
-                ),
-            ],
+            items: [for (final metric in snapshot.allMetrics) VisualDatum(label: metric.name, value: metric.validTotal.toDouble())],
             palette: palette,
-            height: 320,
-            maxItems: 8,
+            height: 250,
+            maxItems: 6,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         VisualPanel(
-          title: 'Kualitas Data',
+          title: 'Status data',
           accent: palette.primary,
           child: AnimatedStatusRing(
             valid: totalValidCount,
@@ -161,8 +129,6 @@ class _DashboardVisual extends StatelessWidget {
     );
   }
 }
-
-
 class _PomdamFilter extends StatelessWidget {
   const _PomdamFilter({
     required this.state,

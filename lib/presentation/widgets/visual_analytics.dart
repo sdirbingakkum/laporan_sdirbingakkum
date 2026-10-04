@@ -79,6 +79,7 @@ abstract final class AppVisualPalettes {
   );
 }
 
+
 class DomainOverviewCard extends StatelessWidget {
   const DomainOverviewCard({
     required this.icon,
@@ -99,54 +100,159 @@ class DomainOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.07),
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const Spacer(),
-              if (kpiValue != null) ...
-                [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      kpiValue.toString(),
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        color: color,
-                        height: 1,
+    return DomainSignalRow(
+      icon: icon,
+      label: label,
+      color: color,
+      value: kpiValue,
+      unit: kpiLabel,
+      onTap: onTap,
+      compact: true,
+    );
+  }
+}
+
+class DomainSignalRow extends StatelessWidget {
+  const DomainSignalRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    super.key,
+    this.value,
+    this.unit,
+    this.trend = const [],
+    this.status,
+    this.compact = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final num? value;
+  final String? unit;
+  final List<double> trend;
+  final HeatmapState? status;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontal = compact ? 14.0 : 18.0;
+    final numberSize = compact ? 34.0 : 46.0;
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            constraints: BoxConstraints(minHeight: compact ? 108 : 92),
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontal,
+              vertical: compact ? 13 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .035),
+              borderRadius: BorderRadius.circular(16),
+              border: Border(
+                left: BorderSide(color: color, width: 5),
+                top: BorderSide(color: color.withValues(alpha: .08)),
+                right: BorderSide(color: color.withValues(alpha: .08)),
+                bottom: BorderSide(color: color.withValues(alpha: .08)),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: compact ? 38 : 44,
+                  height: compact ? 38 : 44,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: .10),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color, size: compact ? 19 : 21),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.ink,
+                              letterSpacing: .2,
+                            ),
+                      ),
+                      if (unit != null && unit!.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          unit!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trend.length > 1) ...[
+                  SizedBox(
+                    width: compact ? 80 : 120,
+                    child: AnimatedSparkline(
+                      points: trend,
+                      color: color,
+                      height: compact ? 34 : 42,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                if (status != null) ...[
+                  _StatusOrb(state: status!),
+                  const SizedBox(width: 14),
+                ],
+                if (value != null)
+                  SizedBox(
+                    width: compact ? 92 : 130,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        _formatNumber(value!.toDouble()),
+                        style: TextStyle(
+                          fontSize: numberSize,
+                          fontWeight: FontWeight.w900,
+                          color: color,
+                          height: 1,
+                          letterSpacing: -1.2,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: color.withValues(alpha: 0.85),
-                  letterSpacing: 0.3,
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: color.withValues(alpha: .65),
+                  size: 22,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: .02, end: 0);
   }
 }
 
@@ -157,7 +263,7 @@ class VisualPanel extends StatelessWidget {
     this.title,
     this.trailing,
     this.accent,
-    this.padding = const EdgeInsets.all(24),
+    this.padding = const EdgeInsets.fromLTRB(4, 10, 4, 8),
   });
 
   final Widget child;
@@ -170,43 +276,55 @@ class VisualPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accent ?? Theme.of(context).colorScheme.primary;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, color.withValues(alpha: .035)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (title != null || trailing != null)
-              Row(
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: color.withValues(alpha: .10))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null || trailing != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (title != null)
                     Expanded(
-                      child: Semantics(
-                        header: true,
-                        headingLevel: 3,
-                        child: Text(
-                          title!,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Semantics(
+                              header: true,
+                              headingLevel: 3,
+                              child: Text(
+                                title!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.ink,
+                                    ),
                               ),
-                        ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   if (trailing != null) trailing!,
                 ],
               ),
-            if (title != null || trailing != null) const SizedBox(height: 14),
-            child,
-          ],
-        ),
+            ),
+          child,
+        ],
       ),
     );
   }
@@ -234,19 +352,20 @@ class AnimatedMetric extends StatelessWidget {
 
     final number = TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: value.toDouble()),
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 650),
       curve: Curves.easeOutCubic,
       builder: (context, animated, _) => FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.centerLeft,
         child: Text(
           '${animated.round()}${suffix ?? ''}',
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                fontSize: size,
-                letterSpacing: -1.4,
-                color: resolvedColor,
-              ),
+          style: TextStyle(
+            fontSize: size,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.8,
+            height: .95,
+            color: resolvedColor,
+          ),
         ),
       ),
     );
@@ -257,14 +376,15 @@ class AnimatedMetric extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         number,
-        const SizedBox(height: 2),
+        const SizedBox(height: 5),
         Text(
           label!,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: AppTheme.muted,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w900,
+                letterSpacing: .35,
               ),
         ),
       ],
@@ -289,116 +409,89 @@ class AnimatedRankBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final data = [...items]
+      ..removeWhere((item) => !item.value.isFinite || item.value <= 0)
       ..sort((a, b) => b.value.compareTo(a.value));
-    final visible = data.take(maxItems).toList();
 
-    if (visible.isEmpty || visible.every((item) => item.value <= 0)) {
-      return const _EmptyVisual();
-    }
+    final visible = data.take(math.min(maxItems, 6).toInt()).toList();
+    if (visible.isEmpty) return const _EmptyVisual();
 
-    final maxY = _niceMax(
-      visible.map((item) => item.value).fold<double>(0, math.max),
-    );
+    final maxValue = visible.map((item) => item.value).fold<double>(0, math.max);
+    final rowHeight = visible.length <= 4 ? 42.0 : visible.length <= 6 ? 38.0 : 34.0;
+    final width = MediaQuery.sizeOf(context).width;
 
     return SizedBox(
-      height: height,
-      child: BarChart(
-        BarChartData(
-          minY: 0,
-          maxY: maxY,
-          alignment: BarChartAlignment.spaceAround,
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => const Color(0xFF152235),
-              tooltipBorderRadius: BorderRadius.circular(12),
-              fitInsideHorizontally: true,
-              fitInsideVertically: true,
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                final item = visible[groupIndex];
-                return BarTooltipItem(
-                  '${item.label}\n${_formatNumber(rod.toY)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                );
-              },
-            ),
-          ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index < 0 || index >= visible.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
+      height: math.max(height, visible.length * rowHeight).toDouble(),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var index = 0; index < visible.length; index++)
+            Padding(
+              padding: EdgeInsets.only(bottom: index == visible.length - 1 ? 0 : 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: width < 620 ? 100 : 160,
                     child: Text(
-                      '${index + 1}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppTheme.muted,
+                      visible[index].label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.w800,
+                            color: AppTheme.ink,
                           ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY <= 4 ? 1 : maxY / 4,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: AppTheme.border.withValues(alpha: .6),
-              strokeWidth: 1,
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          barGroups: [
-            for (var index = 0; index < visible.length; index++)
-              BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: visible[index].value,
-                    width: math.max(18.0, 36 - visible.length * 1.5).toDouble(),
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: LinearGradient(
-                      colors: [
-                        palette.chartColors[index % palette.chartColors.length],
-                        palette.chartColors[
-                            (index + 1) % palette.chartColors.length],
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(
+                          begin: 0,
+                          end: maxValue == 0 ? 0 : (visible[index].value / maxValue).clamp(0, 1).toDouble(),
+                        ),
+                        duration: Duration(milliseconds: 380 + index * 55),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) => Stack(
+                          children: [
+                            Container(
+                              height: rowHeight,
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .72),
+                            ),
+                            FractionallySizedBox(
+                              widthFactor: value,
+                              child: Container(
+                                height: rowHeight,
+                                decoration: BoxDecoration(
+                                  color: palette.chartColors[index % palette.chartColors.length],
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 64,
+                    child: Text(
+                      _formatNumber(visible[index].value),
+                      textAlign: TextAlign.end,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
                     ),
                   ),
                 ],
               ),
-          ],
-        ),
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.easeOutCubic,
+            ),
+        ],
       ),
-    ).animate().fadeIn(duration: 380.ms).slideY(begin: .05, end: 0);
+    );
   }
 }
-
 class AnimatedDonutChart extends StatefulWidget {
   const AnimatedDonutChart({
     required this.items,
@@ -646,6 +739,7 @@ class AnimatedTrendChart extends StatelessWidget {
   }
 }
 
+
 class AnimatedStatusRing extends StatelessWidget {
   const AnimatedStatusRing({
     required this.valid,
@@ -663,44 +757,88 @@ class AnimatedStatusRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = valid + attention + error;
-    final ratio = total == 0 ? 0.0 : valid / total;
+    final ratio = total == 0 ? 0.0 : (valid / total).clamp(0, 1).toDouble();
+    final percent = (ratio * 100).round();
 
     return SizedBox(
-      height: 190,
-      child: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: ratio),
-              duration: const Duration(milliseconds: 900),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, _) => SizedBox(
-                width: 150,
-                height: 150,
-                child: CircularProgressIndicator(
-                  value: value,
-                  strokeWidth: 16,
-                  backgroundColor: AppTheme.border.withValues(alpha: .5),
-                  valueColor: AlwaysStoppedAnimation(palette.primary),
+      height: 132,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 128,
+            height: 128,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: ratio),
+                  duration: const Duration(milliseconds: 700),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => SizedBox(
+                    width: 112,
+                    height: 112,
+                    child: CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 13,
+                      backgroundColor: AppTheme.border.withValues(alpha: .55),
+                      valueColor: AlwaysStoppedAnimation(palette.primary),
+                    ),
+                  ),
                 ),
-              ),
+                AnimatedMetric(
+                  value: percent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: palette.primary,
+                  size: 24,
+                ),
+              ],
             ),
-            AnimatedMetric(
-              value: ratio * 100,
-              suffix: '%',
-              label: 'valid',
-              color: palette.primary,
-              size: 27,
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 10,
+              children: [
+                _StatusStat(label: 'Valid', value: valid, color: palette.primary),
+                _StatusStat(label: 'Perlu dicek', value: attention, color: AppTheme.warning),
+                _StatusStat(label: 'Error', value: error, color: AppTheme.danger),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    ).animate().fadeIn(duration: 420.ms);
+    ).animate().fadeIn(duration: 320.ms);
   }
 }
 
+class _StatusStat extends StatelessWidget {
+  const _StatusStat({required this.label, required this.value, required this.color});
 
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            '${label} ${_formatNumber(value.toDouble())}',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+        ],
+      );
+}
 class AnimatedRadialMetric extends StatelessWidget {
   const AnimatedRadialMetric({
     required this.value,
@@ -1350,6 +1488,7 @@ double _niceMax(double value) {
 
 
 
+
 class VisualReportFrame extends StatelessWidget {
   const VisualReportFrame({
     required this.title,
@@ -1371,61 +1510,73 @@ class VisualReportFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = accent ?? Theme.of(context).colorScheme.primary;
+    final compact = MediaQuery.sizeOf(context).width < 650;
 
     return AppPage(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 5,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Semantics(
-                  container: true,
-                  header: true,
-                  headingLevel: 2,
-                  label: title,
-                  child: ExcludeSemantics(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -.5,
+          Container(
+            padding: EdgeInsets.fromLTRB(2, compact ? 4 : 8, 2, 12),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: color.withValues(alpha: .16))),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: compact ? 9 : 11,
+                        height: compact ? 9 : 11,
+                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Semantics(
+                          container: true,
+                          header: true,
+                          headingLevel: 2,
+                          label: title,
+                          child: ExcludeSemantics(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: color,
+                                    letterSpacing: -.8,
+                                  ),
+                            ),
                           ),
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              if (periodControl != null) periodControl!,
-            ],
+                if (periodControl != null) periodControl!,
+              ],
+            ),
           ),
           if (filters.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: filters,
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(spacing: 7, runSpacing: 7, children: filters),
             ),
           ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
+            duration: const Duration(milliseconds: 380),
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeInCubic,
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SlideTransition(
                 position: Tween<Offset>(
-                  begin: const Offset(0, .025),
+                  begin: const Offset(0, .015),
                   end: Offset.zero,
                 ).animate(animation),
                 child: child,

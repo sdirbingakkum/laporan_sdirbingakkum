@@ -6,7 +6,6 @@ import '../../application/providers/violation_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../../domain/entities/violation_entities.dart';
-import '../theme/app_theme.dart';
 import '../widgets/report_filters.dart';
 import '../widgets/visual_analytics.dart';
 
@@ -100,70 +99,34 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
   }
 }
 
+
 class _DashboardVisual extends StatelessWidget {
   const _DashboardVisual({required this.snapshot});
-
   final ViolationDashboardSnapshot snapshot;
-
   @override
   Widget build(BuildContext context) {
     final palette = AppVisualPalettes.pelanggaran;
-    final ordered = [...snapshot.metrics]
-      ..sort((a, b) => b.validTotal.compareTo(a.validTotal));
-
-    final totalReports = snapshot.validCount +
-        snapshot.notReportedCount +
-        snapshot.estimatedCount +
-        snapshot.invalidSourceCount +
-        snapshot.missingValueCount;
-    final validPercent =
-        totalReports == 0 ? 0.0 : (snapshot.validCount / totalReports * 100);
-
+    final ordered = [...snapshot.metrics]..sort((a, b) => b.validTotal.compareTo(a.validTotal));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: AnimatedMetric(
-                  value: snapshot.validTotal,
-                  label: 'TOTAL',
-                  color: palette.primary,
-                ),
-              ),
-              Expanded(
-                child: AnimatedMetric(
-                  value: validPercent,
-                  suffix: '%',
-                  label: 'VALID',
-                  color: AppTheme.success,
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 20),
+          child: AnimatedMetric(value: snapshot.validTotal, label: 'TOTAL PELANGGARAN', color: palette.primary, size: 62),
         ),
-        const SizedBox(height: 24),
         VisualPanel(
-          title: 'Peringkat Pelanggaran',
+          title: 'Peringkat pelanggaran',
           accent: palette.primary,
           child: AnimatedRankBarChart(
-            items: [
-              for (final metric in ordered)
-                VisualDatum(
-                  label: metric.canonicalName,
-                  value: metric.validTotal.toDouble(),
-                ),
-            ],
+            items: [for (final metric in ordered) VisualDatum(label: metric.canonicalName, value: metric.validTotal.toDouble())],
             palette: palette,
-            maxItems: 8,
-            height: 320,
+            maxItems: 6,
+            height: 250,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         VisualPanel(
-          title: 'Kualitas Data',
+          title: 'Status data',
           accent: palette.primary,
           child: AnimatedStatusRing(
             valid: snapshot.validCount,
@@ -176,7 +139,6 @@ class _DashboardVisual extends StatelessWidget {
     );
   }
 }
-
 class _PomdamFilter extends StatelessWidget {
   const _PomdamFilter({
     required this.state,

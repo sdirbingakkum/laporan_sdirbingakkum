@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ui/animated-visual-analytics
+      - feat/visual-command-surface
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.47.3'
-  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/'
+  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/${{ github.ref_name }}/'
 
 jobs:
   deploy-preview:
@@ -36,7 +37,7 @@ jobs:
       - name: Checkout preview branch
         uses: actions/checkout@v6
         with:
-          ref: ui/animated-visual-analytics
+          ref: ${{ github.ref_name }}
           path: preview-src
 
       - name: Set up Flutter and Dart
@@ -148,13 +149,12 @@ jobs:
 
       - name: Assemble Pages artifact
         run: |
+          PREVIEW_ROOT="build/web/preview/${GITHUB_REF_NAME}"
           rm -rf build
-          mkdir -p build/web/preview/ui-animated-visual-analytics
+          mkdir -p "$PREVIEW_ROOT"
           cp -a main-src/build/web/. build/web/
-          rm -rf build/web/preview/ui-animated-visual-analytics
-          cp -a preview-src/build/web/. build/web/preview/ui-animated-visual-analytics/
+          cp -a preview-src/build/web/. "$PREVIEW_ROOT/"
           MAIN_COMMIT="$(git -C main-src rev-parse HEAD)"
-          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
           printf '{"commit":"%s"}\n' "$MAIN_COMMIT" > build/web/deployment.json
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
@@ -162,11 +162,12 @@ jobs:
 
       - name: Verify preview Pages artifact
         run: |
-          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          PREVIEW_ROOT="build/web/preview/${GITHUB_REF_NAME}"
           test -f "$PREVIEW_ROOT/index.html"
           test -f "$PREVIEW_ROOT/visual-preview/index.html"
-          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/index.html"
-          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/visual-preview/index.html"
+          EXPECTED_BASE="/laporan_sdirbingakkum/preview/${GITHUB_REF_NAME}/"
+          grep -q "<base href=\"$EXPECTED_BASE\">" "$PREVIEW_ROOT/index.html"
+          grep -q "<base href=\"$EXPECTED_BASE\">" "$PREVIEW_ROOT/visual-preview/index.html"
           test ! -e "build/web/preview/ui-mobile-first-analytics"
           echo "Preview artifact verified:"
           find "$PREVIEW_ROOT" -maxdepth 2 -type f | sort | sed -n '1,40p'
