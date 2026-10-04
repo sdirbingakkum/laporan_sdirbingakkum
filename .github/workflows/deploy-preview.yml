@@ -151,11 +151,22 @@ jobs:
           rm -rf build
           mkdir -p build/web/preview/ui-animated-visual-analytics
           cp -a main-src/build/web/. build/web/
-          rm -rf build/web/preview/ui-mobile-first-analytics
-          cp -a preview-src/build/web/. build/web/preview/ui-mobile-first-analytics/
+          rm -rf build/web/preview/ui-animated-visual-analytics
+          cp -a preview-src/build/web/. build/web/preview/ui-animated-visual-analytics/
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
-            "$(git -C main-src rev-parse HEAD)" > build/web/preview/ui-mobile-first-analytics/deployment.json
+            "$(git -C main-src rev-parse HEAD)" > build/web/preview/ui-animated-visual-analytics/deployment.json
+
+      - name: Verify preview Pages artifact
+        run: |
+          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          test -f "$PREVIEW_ROOT/index.html"
+          test -f "$PREVIEW_ROOT/visual-preview/index.html"
+          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/index.html"
+          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/visual-preview/index.html"
+          test ! -e "build/web/preview/ui-mobile-first-analytics"
+          echo "Preview artifact verified:"
+          find "$PREVIEW_ROOT" -maxdepth 2 -type f | sort | sed -n '1,40p'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
