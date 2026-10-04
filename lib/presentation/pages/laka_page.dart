@@ -85,66 +85,34 @@ class _LakaPageState extends ConsumerState<LakaPage> {
   }
 }
 
+
 class _DashboardVisual extends StatelessWidget {
   const _DashboardVisual({required this.snapshot});
-
   final LakaDashboardSnapshot snapshot;
-
   @override
   Widget build(BuildContext context) {
     final palette = AppVisualPalettes.laka;
     final accident = _data(snapshot.accident);
-
-    final valid = _valid(snapshot);
-    final attention = _attention(snapshot);
-    final error = _error(snapshot);
-    final totalReports = valid + attention + error;
-    final validPercent = totalReports == 0 ? 0.0 : (valid / totalReports * 100);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: AnimatedMetric(
-                  value: snapshot.accident.validTotal,
-                  label: 'TOTAL',
-                  color: palette.primary,
-                ),
-              ),
-              Expanded(
-                child: AnimatedMetric(
-                  value: validPercent,
-                  suffix: '%',
-                  label: 'VALID',
-                  color: AppTheme.success,
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 20),
+          child: AnimatedMetric(value: snapshot.accident.validTotal, label: 'TOTAL LAKA', color: palette.primary, size: 62),
         ),
-        const SizedBox(height: 24),
         VisualPanel(
           title: 'Kejadian',
           accent: palette.primary,
-          child: AnimatedRankBarChart(
-            items: accident,
-            palette: palette,
-            maxItems: 7,
-            height: 320,
-          ),
+          child: AnimatedRankBarChart(items: accident, palette: palette, maxItems: 6, height: 250),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         VisualPanel(
-          title: 'Kualitas Data',
+          title: 'Status data',
           accent: palette.primary,
           child: AnimatedStatusRing(
-            valid: valid,
-            attention: attention,
-            error: error,
+            valid: _valid(snapshot),
+            attention: _attention(snapshot),
+            error: _error(snapshot),
             palette: palette,
           ),
         ),
@@ -157,7 +125,7 @@ class _DashboardVisual extends StatelessWidget {
           VisualDatum(
             label: metric.secondaryName == null
                 ? metric.primaryName
-                : '${metric.primaryName} · ${metric.secondaryName}',
+                : '\x24{metric.primaryName} · \x24{metric.secondaryName}',
             value: metric.validTotal.toDouble(),
           ),
       ];
@@ -193,7 +161,6 @@ class _DashboardVisual extends StatelessWidget {
       snapshot.victimRank.missingValueCount +
       snapshot.victimOutcome.missingValueCount;
 }
-
 class _PomdamFilter extends StatelessWidget {
   const _PomdamFilter({
     required this.state,
