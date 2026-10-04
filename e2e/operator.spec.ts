@@ -46,9 +46,15 @@ test('operator can submit a controlled GAKKUM report and read it back', async ({
     page.getByText('Input Laporan', { exact: true }).first(),
   ).toBeVisible({ timeout: 30_000 });
 
-  const pomdamButton = page.getByRole('button', {
-    name: /POMDAM\s+/,
+  const metadataGroup = page.getByRole('group', {
+    name: /^Periode /,
   }).first();
+
+  const pomdamButton = metadataGroup.getByRole('button', {
+    name: /^POMDAM$/,
+    exact: true,
+  });
+  await expect(pomdamButton).toBeVisible({ timeout: 15_000 });
   await pomdamButton.click();
 
   const pomdamOption = page.getByRole('menuitem', {
