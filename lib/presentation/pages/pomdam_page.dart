@@ -53,7 +53,7 @@ class PomdamPage extends ConsumerWidget {
                       child: Text(pomdam.reportOrder.toString()),
                     ),
                     title: Text(
-                      '\${pomdam.code} · \${pomdam.shortName}',
+                      '${pomdam.code} · ${pomdam.shortName}',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(pomdam.pomdamFullName),
