@@ -101,7 +101,7 @@ test('operator can submit a controlled GAKKUM report and read it back', async ({
     page.getByText(
       'Laporan Statistik Giat Gakkum berhasil disimpan untuk Oktober 2026.',
       { exact: true },
-    ),
+    ).first(),
   ).toBeVisible({ timeout: 15_000 });
 
   const recordResponsePromise = page.waitForResponse(
