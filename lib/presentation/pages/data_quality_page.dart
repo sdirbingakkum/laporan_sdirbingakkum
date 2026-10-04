@@ -15,11 +15,14 @@ class DataQualityPage extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(
-          'Data quality contract',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+        Semantics(
+          header: true,
+          child: Text(
+            'Kualitas data',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
         ),
         const SizedBox(height: 6),
         Text(
