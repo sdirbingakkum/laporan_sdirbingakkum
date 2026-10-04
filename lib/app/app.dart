@@ -3,28 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/providers/reference_data_providers.dart';
 import '../presentation/router/app_router.dart';
+import '../presentation/theme/app_theme.dart';
 
 class LaporanSdirbinGakkumApp extends ConsumerWidget {
   const LaporanSdirbinGakkumApp({super.key});
 
-  ThemeData _theme() {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF173B63),
-      ),
-      scaffoldBackgroundColor: const Color(0xFFF5F7FA),
-      cardTheme: const CardThemeData(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(appConfigProvider);
-    final theme = _theme();
+    final theme = AppTheme.light();
 
     if (!config.isConfigured) {
       return MaterialApp(
