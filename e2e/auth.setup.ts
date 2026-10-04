@@ -2,6 +2,7 @@ import { test as setup, expect } from '@playwright/test';
 import fs from 'node:fs';
 
 const authFile = 'playwright/.auth/user.json';
+const e2eRole = (process.env.E2E_ROLE ?? 'operator').toLowerCase();
 
 setup('authenticate staging user', async ({ page }) => {
   const email = process.env.E2E_EMAIL;
@@ -36,13 +37,12 @@ setup('authenticate staging user', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
 
-  const dashboard = page.getByRole('heading', {
-    name: 'Dashboard',
-    exact: true,
-  });
+  const landing = e2eRole === 'operator'
+      ? page.getByText('Laporan aktif', { exact: true })
+      : page.getByText('LAPORAN SDIRBIN GAKKUM', { exact: true }).first();
 
   try {
-    await expect(dashboard).toBeVisible({ timeout: 30_000 });
+    await expect(landing).toBeVisible({ timeout: 30_000 });
   } catch (firstError) {
     // Supabase auth state can arrive successfully while the Flutter
     // StreamBuilder has not rebuilt the current document yet. A reload
@@ -50,7 +50,7 @@ setup('authenticate staging user', async ({ page }) => {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
 
     try {
-      await expect(dashboard).toBeVisible({ timeout: 15_000 });
+      await expect(landing).toBeVisible({ timeout: 15_000 });
     } catch (secondError) {
       const loginButton = page.getByRole('button', {
         name: 'Masuk',
@@ -69,7 +69,7 @@ setup('authenticate staging user', async ({ page }) => {
       });
       await passwordInput.fill(password);
       await loginButton.click();
-      await expect(dashboard).toBeVisible({ timeout: 30_000 });
+      await expect(landing).toBeVisible({ timeout: 30_000 });
     }
   }
 
