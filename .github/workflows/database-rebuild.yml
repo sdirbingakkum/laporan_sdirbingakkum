@@ -45,8 +45,11 @@ jobs:
       - name: Rebuild database from migrations
         run: supabase db reset --local
 
-      - name: Verify migration state
-        run: supabase migration list
+      - name: Verify local migration state
+        run: supabase migration list --local
+
+      - name: Lint rebuilt local schema
+        run: supabase db lint --local --fail-on error
 
       - name: Stop local Supabase
         if: always()
