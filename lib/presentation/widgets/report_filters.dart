@@ -214,23 +214,27 @@ class CompactMonthlyPeriodSelector extends StatelessWidget {
       orElse: () => available.first,
     );
 
-    return PopupMenuButton<String>(
-      initialValue: current.id,
-      onSelected: onChanged,
-      itemBuilder: (context) => [
-        for (final period in available)
-          PopupMenuItem<String>(
-            value: period.id,
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_month_rounded, size: 18),
-                const SizedBox(width: 8),
-                Text(_label(period)),
-              ],
+    return Semantics(
+      container: true,
+      button: true,
+      label: _label(current),
+      child: PopupMenuButton<String>(
+        initialValue: current.id,
+        onSelected: onChanged,
+        itemBuilder: (context) => [
+          for (final period in available)
+            PopupMenuItem<String>(
+              value: period.id,
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded, size: 18),
+                  const SizedBox(width: 8),
+                  Text(_label(period)),
+                ],
+              ),
             ),
-          ),
-      ],
-      child: Container(
+        ],
+        child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -251,6 +255,7 @@ class CompactMonthlyPeriodSelector extends StatelessWidget {
             const SizedBox(width: 6),
             const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
           ],
+          ),
         ),
       ),
     );
