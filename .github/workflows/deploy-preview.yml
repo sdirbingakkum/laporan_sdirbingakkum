@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - ui/animated-visual-analytics
+      - feat/visual-command-surface
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.47.3'
-  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/'
+  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/${{ github.ref_name }}/'
 
 jobs:
   deploy-preview:
@@ -36,7 +37,7 @@ jobs:
       - name: Checkout preview branch
         uses: actions/checkout@v6
         with:
-          ref: ui/animated-visual-analytics
+          ref: ${{ github.ref_name }}
           path: preview-src
 
       - name: Set up Flutter and Dart
