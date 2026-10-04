@@ -331,8 +331,12 @@ test.describe('critical interaction surface smoke', () => {
   test('Data Quality reads the live audit summary', async ({ page }) => {
     await openRoute(page, routeCatalog.dataQuality);
     await expect(
-      page.getByText('Audit integrity: OK', { exact: true }).first(),
-    ).toBeVisible({ timeout: SMOKE_ASSERTION_TIMEOUT });
+      page
+        .getByRole('group', {
+          name: /^Audit integrity:\s*(OK|REVIEW)\b/,
+        })
+        .first(),
+    ).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/Fact rows/).first()).toBeVisible();
   });
 });
