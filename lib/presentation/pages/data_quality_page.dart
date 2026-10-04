@@ -125,82 +125,74 @@ class _StatusSummary extends StatelessWidget {
     final integrityLabel =
         clean ? 'Audit integrity: OK' : 'Audit integrity: REVIEW';
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: Colors.transparent,
-      clipBehavior: Clip.none,
-      child: VisualPanel(
-        accent: AppTheme.success,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // First visible text → becomes the Card group's accessible name (starting with Audit integrity...)
-            Text(
-              integrityLabel,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: clean ? AppTheme.success : AppTheme.danger,
-                letterSpacing: 0.2,
+    return VisualPanel(
+      accent: AppTheme.success,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            integrityLabel,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: clean ? AppTheme.success : AppTheme.danger,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: AnimatedMetric(
+                  value: validPercent,
+                  suffix: '%',
+                  label: 'VALID',
+                  color: AppTheme.success,
+                  size: 56,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: AnimatedMetric(
-                    value: validPercent,
-                    suffix: '%',
-                    label: 'VALID',
-                    color: AppTheme.success,
-                    size: 56,
-                  ),
+              Expanded(
+                child: AnimatedMetric(
+                  value: totals.factRows,
+                  label: 'TOTAL FACTS',
+                  color: AppTheme.brandDark,
+                  size: 56,
                 ),
-                Expanded(
-                  child: AnimatedMetric(
-                    value: totals.factRows,
-                    label: 'TOTAL FACTS',
-                    color: AppTheme.brandDark,
-                    size: 56,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Stat row — visible for E2E getByText(/Fact rows/) assertion
-            Wrap(
-              spacing: 20,
-              runSpacing: 4,
-              children: [
-                Text(
-                  'Fact rows: ${totals.factRows}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Valid: ${totals.validRows}  ·  Not reported: ${totals.notReportedRows}',
-                  style: TextStyle(fontSize: 12, color: AppTheme.muted),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            AnimatedStatusRing(
-              valid: totals.validRows,
-              attention: totals.notReportedRows + totals.estimatedRows,
-              error: totals.invalidSourceRows + totals.integrityIssues,
-              palette: VisualPalette(
-                primary: AppTheme.success,
-                secondary: AppTheme.warning,
-                tertiary: AppTheme.danger,
-                soft: AppTheme.border,
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 20,
+            runSpacing: 4,
+            children: [
+              Text(
+                'Fact rows: ${totals.factRows}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                'Valid: ${totals.validRows}  ·  Not reported: ${totals.notReportedRows}',
+                style: TextStyle(fontSize: 12, color: AppTheme.muted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          AnimatedStatusRing(
+            valid: totals.validRows,
+            attention: totals.notReportedRows + totals.estimatedRows,
+            error: totals.invalidSourceRows + totals.integrityIssues,
+            palette: VisualPalette(
+              primary: AppTheme.success,
+              secondary: AppTheme.warning,
+              tertiary: AppTheme.danger,
+              soft: AppTheme.border,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
