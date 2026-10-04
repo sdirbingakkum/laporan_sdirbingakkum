@@ -352,7 +352,7 @@ class VisualBarList extends StatelessWidget {
                   SizedBox(
                     width: 48,
                     child: Text(
-                      item.valueText,
+                      item.valueText ?? _formatVisualValue(item.value),
                       textAlign: TextAlign.end,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.w800,
