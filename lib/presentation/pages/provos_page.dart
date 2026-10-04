@@ -54,20 +54,10 @@ class _ProvosPageState extends ConsumerState<ProvosPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Provos',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Provos',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Kekuatan, komposisi personel, dan status pendidikan '
-              'ditampilkan sebagai bagian terpisah agar tidak mencampurkan '
-              'satuan ukur yang berbeda.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
