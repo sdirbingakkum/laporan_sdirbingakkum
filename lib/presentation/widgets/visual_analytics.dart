@@ -166,7 +166,7 @@ class AnimatedMetric extends StatelessWidget {
       duration: const Duration(milliseconds: 700),
       curve: Curves.easeOutCubic,
       builder: (context, animated, _) => Text(
-        '\${animated.round()}\${suffix ?? ''}',
+        '${animated.round()}${suffix ?? ''}',
         style: Theme.of(context).textTheme.displaySmall?.copyWith(
               fontWeight: FontWeight.w900,
               fontSize: size,
@@ -242,7 +242,7 @@ class AnimatedRankBarChart extends StatelessWidget {
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final item = visible[groupIndex];
                 return BarTooltipItem(
-                  '\${item.label}\n\${_formatNumber(rod.toY)}',
+                  '${item.label}\n${_formatNumber(rod.toY)}',
                   const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -273,7 +273,7 @@ class AnimatedRankBarChart extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      '\${index + 1}',
+                      '${index + 1}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppTheme.muted,
                             fontWeight: FontWeight.w800,
@@ -722,7 +722,7 @@ class AnimatedHeatmap extends StatelessWidget {
                             state: index < row.values.length
                                 ? row.values[index]
                                 : HeatmapState.none,
-                            tooltip: '\${row.label} · \${columns[index]}',
+                            tooltip: '${row.label} · ${columns[index]}',
                           ),
                         ),
                       ),
@@ -948,7 +948,7 @@ class VisualStatCluster extends StatelessWidget {
                 StatusDot(color: value.color, size: 8),
                 const SizedBox(width: 6),
                 Text(
-                  '\${value.value}',
+                  '${value.value}',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
