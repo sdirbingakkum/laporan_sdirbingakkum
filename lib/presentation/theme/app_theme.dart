@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 abstract final class AppTheme {
   static const brand = Color(0xFF164E8A);
   static const brandDark = Color(0xFF0B355F);
-  static const canvas = Color(0xFFF6F8FB);
+  static const canvas = Color(0xFFF1F5F9);
   static const surface = Colors.white;
   static const ink = Color(0xFF152235);
   static const muted = Color(0xFF667085);
@@ -56,8 +56,8 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          side: BorderSide(color: border),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: border.withValues(alpha: .72)),
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -81,8 +81,8 @@ abstract final class AppTheme {
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
+          horizontal: 12,
+          vertical: 11,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
