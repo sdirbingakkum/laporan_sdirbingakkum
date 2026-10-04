@@ -104,8 +104,10 @@ async function diagnostics(page: Page) {
 }
 
 function periodButton(page: Page) {
+  // PopupMenuButton contributes Flutter's localized \"Show menu\" tooltip;
+  // match the stable business label (month + year) rather than that tooltip.
   return page.getByRole('button', {
-    name: /^(?:Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des) 20\d{2}$/,
+    name: /(?:Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+20\d{2}/,
   }).first();
 }
 
