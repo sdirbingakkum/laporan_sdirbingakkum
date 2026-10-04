@@ -53,6 +53,7 @@ class _ProvosPageState extends ConsumerState<ProvosPage> {
 
         return VisualReportFrame(
           title: 'Provos',
+          contentKey: selectedPeriod.id,
           accent: AppVisualPalettes.provos.primary,
           periodControl: CompactMonthlyPeriodSelector(
             periods: periods,
@@ -158,21 +159,41 @@ class _SectionRadial extends StatelessWidget {
     return VisualPanel(
       title: title,
       accent: palette.primary,
-      child: AnimatedRadialMetric(
-        value: total,
-        max: mathMaxForRadial(total),
-        palette: palette,
-        label: 'total',
+      child: Row(
+        children: [
+          Expanded(
+            child: AnimatedStatusRing(
+              valid: metrics.fold<int>(
+                0,
+                (sum, metric) => sum + metric.validCount,
+              ),
+              attention: metrics.fold<int>(
+                0,
+                (sum, metric) =>
+                    sum + metric.notReportedCount + metric.estimatedCount,
+              ),
+              error: metrics.fold<int>(
+                0,
+                (sum, metric) =>
+                    sum + metric.invalidSourceCount + metric.missingValueCount,
+              ),
+              palette: palette,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: AnimatedMetric(
+              value: total,
+              label: 'total',
+              color: palette.primary,
+              size: 34,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-double mathMaxForRadial(int value) {
-  if (value <= 0) return 1;
-  return value.toDouble();
-}
-
 class _PomdamFilter extends StatelessWidget {
   const _PomdamFilter({
     required this.state,
