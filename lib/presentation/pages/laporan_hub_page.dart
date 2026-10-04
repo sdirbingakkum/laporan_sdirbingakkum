@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../application/providers/reference_data_providers.dart';
 import '../../domain/entities/reference_entities.dart';
-import '../theme/app_theme.dart';
-import '../widgets/analytics_ui.dart';
+import '../widgets/visual_analytics.dart';
 
 class LaporanHubPage extends ConsumerWidget {
   const LaporanHubPage({super.key});
@@ -28,171 +27,194 @@ class LaporanHubPage extends ConsumerWidget {
     'TINDAK_PIDANA': '/tindak-pidana',
   };
 
+  static const _palettes = {
+    'GAKKUM': AppVisualPalettes.gakkum,
+    'PELANGGARAN': AppVisualPalettes.pelanggaran,
+    'SIM_TNI': AppVisualPalettes.simTni,
+    'PROVOS': AppVisualPalettes.provos,
+    'LAKA_LALIN': AppVisualPalettes.laka,
+    'TINDAK_PIDANA': AppVisualPalettes.pidana,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(reportTypesProvider);
 
-    return AppPage(
-      child: state.when(
-        loading: () => const _HubLoading(),
-        error: (error, stack) => const _HubMessage(
-          title: 'Laporan belum tersedia',
-          message: 'Data jenis laporan belum dapat dibaca.',
-        ),
-        data: (types) {
-          final active = types.where((item) => item.active).toList();
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AnalyticsPageHeader(
-                title: 'Laporan',
-                subtitle: 'Pilih analisis yang ingin dilihat.',
-              ),
-              ResponsiveGrid(
-                minWidth: 270,
+    return state.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => const Center(
+        child: Text('Laporan belum tersedia.'),
+      ),
+      data: (types) => _Hub(types: types),
+    );
+  }
+}
+
+class _Hub extends StatelessWidget {
+  const _Hub({required this.types});
+
+  final List<ReportType> types;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = types.where((item) => item.active).toList();
+
+    return _Page(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            headingLevel: 2,
+            child: Text(
+              'Laporan',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1050
+                  ? 3
+                  : constraints.maxWidth >= 650
+                      ? 2
+                      : 1;
+              final gap = 12.0;
+              final width =
+                  (constraints.maxWidth - gap * (columns - 1)) / columns;
+
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
                 children: [
                   for (final type in active)
-                    _ReportCard(
-                      type: type,
-                      icon: _icons[type.code] ?? Icons.analytics_rounded,
-                      onTap: _routes[type.code] == null
-                          ? null
-                          : () => context.go(_routes[type.code]!),
+                    SizedBox(
+                      width: width,
+                      child: _ReportTile(
+                        type: type,
+                        width: width,
+                      ),
                     ),
                 ],
-              ),
-            ],
-          );
-        },
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ReportCard extends StatelessWidget {
-  const _ReportCard({
-    required this.type,
-    required this.icon,
-    required this.onTap,
-  });
+class _ReportTile extends StatelessWidget {
+  const _ReportTile({required this.type, required this.width});
 
   final ReportType type;
-  final IconData icon;
-  final VoidCallback? onTap;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    final palette = LaporanHubPage._palettes[type.code] ??
+        AppVisualPalettes.gakkum;
+    final route = LaporanHubPage._routes[type.code];
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
-        onTap: onTap,
-        child: Padding(
+        onTap: route == null ? null : () => context.go(route),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: width < 400 ? 132 : 156,
           padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                palette.primary.withValues(alpha: .15),
+                palette.secondary.withValues(alpha: .055),
+                Colors.white,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(
+              color: palette.primary.withValues(alpha: .12),
+            ),
+          ),
+          child: Stack(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer
-                      .withValues(alpha: .58),
-                  borderRadius: BorderRadius.circular(12),
+              Positioned(
+                right: -14,
+                top: -18,
+                child: Icon(
+                  LaporanHubPage._icons[type.code] ?? Icons.insights_rounded,
+                  size: 104,
+                  color: palette.primary.withValues(alpha: .07),
                 ),
-                child: Icon(icon, color: AppTheme.brandDark),
               ),
-              const SizedBox(height: 16),
-              Text(
-                type.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: palette.primary.withValues(alpha: .13),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Icon(
+                        LaporanHubPage._icons[type.code] ??
+                            Icons.insights_rounded,
+                        color: palette.primary,
+                      ),
                     ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                _description(type.code),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.muted,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        type.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
                     ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    'Buka analisis',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.brandDark,
-                        ),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
-                ],
+                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  String _description(String code) {
-    return switch (code) {
-      'GAKKUM' => 'Gambaran kegiatan penegakan hukum.',
-      'PELANGGARAN' => 'Pola pelanggaran berdasarkan kategori.',
-      'SIM_TNI' => 'Distribusi penerbitan SIM TNI.',
-      'PROVOS' => 'Kekuatan, personel, dan pendidikan.',
-      'LAKA_LALIN' => 'Kejadian, korban, dan akibat.',
-      'TINDAK_PIDANA' => 'Peringkat dan distribusi tindak pidana.',
-      _ => 'Analisis data laporan.',
-    };
+    ).animate().fadeIn(duration: 320.ms).slideY(begin: .06, end: 0);
   }
 }
 
-class _HubLoading extends StatelessWidget {
-  const _HubLoading();
+class _Page extends StatelessWidget {
+  const _Page({required this.child});
+
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final width = MediaQuery.sizeOf(context).width;
+    final horizontal = width < 600 ? 16.0 : width < 1200 ? 24.0 : 32.0;
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(horizontal, 18, horizontal, 28),
       children: [
-        const SizedBox(
-          height: 140,
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        ResponsiveGrid(
-          minWidth: 270,
-          children: [
-            for (var i = 0; i < 6; i++)
-              const Card(
-                child: SizedBox(
-                  height: 190,
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                ),
-              ),
-          ],
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1280),
+            child: child,
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _HubMessage extends StatelessWidget {
-  const _HubMessage({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnalyticsSection(
-      title: title,
-      child: Text(message),
     );
   }
 }
