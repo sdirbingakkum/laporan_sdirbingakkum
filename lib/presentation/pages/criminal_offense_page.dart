@@ -6,7 +6,6 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/criminal_offense_entities.dart';
 import '../../domain/entities/reference_entities.dart';
-import '../theme/app_theme.dart';
 import '../widgets/report_filters.dart';
 import '../widgets/visual_analytics.dart';
 
