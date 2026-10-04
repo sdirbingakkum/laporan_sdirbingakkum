@@ -52,7 +52,8 @@ test('operator can submit a controlled GAKKUM report and read it back', async ({
   });
   await pomdamButton.click();
 
-  const pomdamOption = page.getByText('IM · Iskandar Muda', {
+  const pomdamOption = page.getByRole('menuitem', {
+    name: 'IM · Iskandar Muda',
     exact: true,
   });
   await expect(pomdamOption).toBeVisible({ timeout: 15_000 });
