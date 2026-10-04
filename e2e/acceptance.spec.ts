@@ -65,12 +65,12 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
   try {
     // Verify Commander identity BEFORE any write occurs.
     const commanderPage = await commanderContext.newPage();
-    const commanderEmail = requiredEnv('E2E_COMMANDER_EMAIL');
+    const commanderEmail = 'danpuspomad@puspomad.mil.id';
     await signIn(
       commanderPage,
       commanderEmail,
       requiredEnv('E2E_COMMANDER_PASSWORD'),
-      'danpuspomad@puspomad.mil.id',
+      commanderEmail,
       'Komandan Puspomad',
       'LAPORAN SDIRBIN GAKKUM',
       '/laporan_sdirbingakkum/',
