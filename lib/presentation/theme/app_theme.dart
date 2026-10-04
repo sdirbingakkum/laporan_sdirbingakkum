@@ -119,7 +119,7 @@ abstract final class AppTheme {
           letterSpacing: -0.2,
         ),
         titleMedium: base.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w750,
+          fontWeight: FontWeight.w700,
         ),
         bodyLarge: base.textTheme.bodyLarge?.copyWith(height: 1.35),
         bodyMedium: base.textTheme.bodyMedium?.copyWith(height: 1.35),
