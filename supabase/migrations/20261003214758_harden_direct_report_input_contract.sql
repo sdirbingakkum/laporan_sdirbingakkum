@@ -2643,6 +2643,8 @@ select jsonb_build_object(
 );
 $function$;
 
+
+
 CREATE OR REPLACE FUNCTION public.get_criminal_offense_dashboard(p_period_id uuid, p_source_period text, p_pomdam_id uuid DEFAULT NULL::uuid, p_personnel_category_id uuid DEFAULT NULL::uuid)
  RETURNS TABLE(offense_version_id uuid, offense_id uuid, canonical_key text, canonical_name text, source_number integer, source_label text, source_period text, display_order integer, record_count bigint, valid_total bigint, valid_count bigint, not_reported_count bigint, invalid_source_count bigint, estimated_total bigint, estimated_count bigint, missing_value_count bigint)
  LANGUAGE sql
