@@ -79,7 +79,8 @@ class _CriminalOffensePageState extends ConsumerState<CriminalOffensePage> {
 
             return VisualReportFrame(
               title: 'Tindak Pidana',
-              accent: AppVisualPalettes.pidana.primary,
+              contentKey: selectedPeriod.id,
+          accent: AppVisualPalettes.pidana.primary,
               periodControl: CompactMonthlyPeriodSelector(
                 periods: periods,
                 selectedPeriodId: selectedPeriod.id,
