@@ -26,14 +26,28 @@ class PomdamPage extends ConsumerWidget {
           return const Center(child: Text('Belum ada data POMDAM.'));
         }
 
-        return ListView.separated(
+        return ListView(
           padding: const EdgeInsets.all(24),
-          itemCount: items.length,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(
+                'POMDAM',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final pomdam = items[index];
+              itemBuilder: (context, index) {
+                final pomdam = items[index];
 
-            return Card(
+                return Card(
               child: ListTile(
                 leading: CircleAvatar(
                   child: Text(pomdam.reportOrder.toString()),
@@ -46,9 +60,10 @@ class PomdamPage extends ConsumerWidget {
                 trailing: pomdam.active
                     ? const Chip(label: Text('ACTIVE'))
                     : const Chip(label: Text('INACTIVE')),
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ],
         );
       },
     );
