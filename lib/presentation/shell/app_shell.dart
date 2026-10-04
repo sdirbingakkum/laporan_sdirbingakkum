@@ -48,6 +48,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _reportsOpen = true;
   bool _operationsOpen = true;
   bool _adminOpen = false;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   bool _isActive(String path) {
     if (path == '/') return widget.location == '/';
@@ -65,6 +66,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final desktop = width >= 1000;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: AppTheme.canvas,
       appBar: desktop
           ? null
@@ -152,7 +154,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           : _MobileBottomBar(
               location: widget.location,
               access: access,
-              onMenu: () => Scaffold.of(context).openDrawer(),
+              onMenu: () => _scaffoldKey.currentState?.openDrawer(),
             ),
     );
   }
