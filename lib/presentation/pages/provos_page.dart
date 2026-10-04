@@ -157,7 +157,17 @@ class _DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ResponsiveGrid(
+          minWidth: 270,
+          children: [
+            _VisualSection(title: 'Kekuatan Provos', metrics: snapshot.strengthMetrics),
+            _VisualSection(title: 'Personel', metrics: snapshot.personnelMetrics),
+            _VisualSection(title: 'Pendidikan', metrics: snapshot.educationMetrics),
+          ],
+        ),
+        const SizedBox(height: 14),
         _Section(
           title: 'Kekuatan Provos',
           metrics: snapshot.strengthMetrics,
@@ -173,6 +183,39 @@ class _DashboardContent extends StatelessWidget {
           metrics: snapshot.educationMetrics,
         ),
       ],
+    );
+  }
+}
+
+class _VisualSection extends StatelessWidget {
+  const _VisualSection({
+    required this.title,
+    required this.metrics,
+  });
+
+  final String title;
+  final List<ProvosMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnalyticsSection(
+      title: title,
+      trailing: Text(
+        metrics.fold<int>(0, (sum, item) => sum + item.validTotal).toString(),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+      ),
+      child: VisualBarList(
+        items: [
+          for (final metric in metrics)
+            VisualBarItem(
+              label: metric.name,
+              value: metric.validTotal.toDouble(),
+            ),
+        ],
+        maxItems: 5,
+      ),
     );
   }
 }
