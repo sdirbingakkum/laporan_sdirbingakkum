@@ -51,6 +51,7 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
 
         return VisualReportFrame(
           title: 'Gakkum',
+          contentKey: selectedPeriod.id,
           accent: AppVisualPalettes.gakkum.primary,
           periodControl: CompactMonthlyPeriodSelector(
             periods: periods,
