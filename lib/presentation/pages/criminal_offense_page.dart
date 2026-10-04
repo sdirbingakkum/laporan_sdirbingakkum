@@ -81,19 +81,9 @@ class _CriminalOffensePageState extends ConsumerState<CriminalOffensePage> {
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Text(
-                  'Tindak Pidana',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                const AnalyticsPageHeader(
+                  title: 'Tindak Pidana',
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Agregasi mengikuti criminal_offense_version_id. '
-                  'Versi sumber tidak digabung dengan versi historis.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 20),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
