@@ -20,6 +20,8 @@ async function signIn(
   await page.goto('./', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
   const loginButton = page.getByRole('button', { name: 'Masuk', exact: true });
+  await expect(loginButton).toBeVisible({ timeout: 30_000 });
+
   const authResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' &&
@@ -35,11 +37,9 @@ async function signIn(
     { timeout: 30_000 },
   );
 
-  if (await loginButton.isVisible().catch(() => false)) {
-    await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-    await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
-    await loginButton.click();
-  }
+  await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
+  await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
+  await loginButton.click();
 
   await page.waitForURL(
     (url) => new URL(url).pathname === expectedPath,
