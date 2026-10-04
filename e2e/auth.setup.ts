@@ -35,43 +35,25 @@ setup('authenticate staging user', async ({ page }) => {
     throw new Error('E2E password input remained empty after keyboard entry.');
   }
 
-  await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+  const expectedPath =
+    e2eRole === 'operator'
+      ? '/laporan_sdirbingakkum/reports'
+      : '/laporan_sdirbingakkum/';
 
-  const landing = e2eRole === 'operator'
+  await Promise.all([
+    page.waitForURL(
+      (url) => new URL(url).pathname === expectedPath,
+      { timeout: 30_000 },
+    ),
+    passwordField.press('Enter'),
+  ]);
+
+  const landing =
+    e2eRole === 'operator'
       ? page.getByText('Laporan aktif', { exact: true })
       : page.getByText('LAPORAN SDIRBIN GAKKUM', { exact: true }).first();
 
-  try {
-    await expect(landing).toBeVisible({ timeout: 30_000 });
-  } catch (firstError) {
-    // Supabase auth state can arrive successfully while the Flutter
-    // StreamBuilder has not rebuilt the current document yet. A reload
-    // checks the persisted session before issuing another sign-in request.
-    await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
-
-    try {
-      await expect(landing).toBeVisible({ timeout: 15_000 });
-    } catch (secondError) {
-      const loginButton = page.getByRole('button', {
-        name: 'Masuk',
-        exact: true,
-      });
-      const stillLoggedOut = await loginButton.isVisible().catch(() => false);
-
-      if (!stillLoggedOut) {
-        throw firstError;
-      }
-
-      await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-      const passwordInput = page.getByRole('textbox', {
-        name: 'Password',
-        exact: true,
-      });
-      await passwordInput.fill(password);
-      await loginButton.click();
-      await expect(landing).toBeVisible({ timeout: 30_000 });
-    }
-  }
+  await expect(landing).toBeVisible({ timeout: 30_000 });
 
   await page.context().storageState({ path: authFile });
 });
