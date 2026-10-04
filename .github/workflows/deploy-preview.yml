@@ -3,7 +3,7 @@ name: Deploy UI Preview
 on:
   push:
     branches:
-      - ui/mobile-first-analytics
+      - ui/animated-visual-analytics
   workflow_dispatch:
 
 permissions:
@@ -12,12 +12,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages-ui-preview
-  cancel-in-progress: true
+  group: github-pages
+  cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: '3.47.3'
-  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/ui-mobile-first-analytics/'
+  PREVIEW_PATH: '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/'
 
 jobs:
   deploy-preview:
@@ -36,7 +36,7 @@ jobs:
       - name: Checkout preview branch
         uses: actions/checkout@v6
         with:
-          ref: ui/mobile-first-analytics
+          ref: ui/animated-visual-analytics
           path: preview-src
 
       - name: Set up Flutter and Dart
@@ -95,6 +95,7 @@ jobs:
             reports \
             input-laporan \
             data-quality \
+            visual-preview \
             laporan \
             perbandingan
           do
@@ -118,6 +119,7 @@ jobs:
           flutter build web \
             --release \
             --base-href "$PREVIEW_PATH" \
+            --dart-define=VISUAL_PREVIEW=true \
             --dart-define-from-file=/tmp/preview-supabase-defines.json
           rm -f /tmp/preview-supabase-defines.json
 
@@ -137,7 +139,8 @@ jobs:
             perbandingan \
             reports \
             input-laporan \
-            data-quality
+            data-quality \
+            visual-preview
           do
             mkdir -p "build/web/$route"
             cp build/web/index.html "build/web/$route/index.html"
@@ -146,13 +149,27 @@ jobs:
       - name: Assemble Pages artifact
         run: |
           rm -rf build
-          mkdir -p build/web/preview/ui-mobile-first-analytics
+          mkdir -p build/web/preview/ui-animated-visual-analytics
           cp -a main-src/build/web/. build/web/
-          rm -rf build/web/preview/ui-mobile-first-analytics
-          cp -a preview-src/build/web/. build/web/preview/ui-mobile-first-analytics/
+          rm -rf build/web/preview/ui-animated-visual-analytics
+          cp -a preview-src/build/web/. build/web/preview/ui-animated-visual-analytics/
+          MAIN_COMMIT="$(git -C main-src rev-parse HEAD)"
+          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          printf '{"commit":"%s"}\n' "$MAIN_COMMIT" > build/web/deployment.json
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
-            "$(git -C main-src rev-parse HEAD)" > build/web/preview/ui-mobile-first-analytics/deployment.json
+            "$MAIN_COMMIT" > "$PREVIEW_ROOT/deployment.json"
+
+      - name: Verify preview Pages artifact
+        run: |
+          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          test -f "$PREVIEW_ROOT/index.html"
+          test -f "$PREVIEW_ROOT/visual-preview/index.html"
+          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/index.html"
+          grep -q '<base href="/laporan_sdirbingakkum/preview/ui-animated-visual-analytics/">' "$PREVIEW_ROOT/visual-preview/index.html"
+          test ! -e "build/web/preview/ui-mobile-first-analytics"
+          echo "Preview artifact verified:"
+          find "$PREVIEW_ROOT" -maxdepth 2 -type f | sort | sed -n '1,40p'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

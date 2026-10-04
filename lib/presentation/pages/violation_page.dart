@@ -5,9 +5,10 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../application/providers/violation_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
-import '../widgets/report_filters.dart';
 import '../../domain/entities/violation_entities.dart';
 import '../widgets/analytics_ui.dart';
+import '../widgets/report_filters.dart';
+import '../widgets/visual_analytics.dart';
 
 class ViolationPage extends ConsumerStatefulWidget {
   const ViolationPage({super.key});
@@ -51,68 +52,148 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
           personnelCategoryId: _selectedPersonnelCategoryId,
           category: _selectedCategory,
         );
+
         final dashboard = ref.watch(violationDashboardProvider(query));
 
-        return ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const AnalyticsPageHeader(
-              title: 'Pelanggaran',
+        return VisualReportFrame(
+          title: 'Pelanggaran',
+          contentKey: selectedPeriod.id,
+          accent: AppVisualPalettes.pelanggaran.primary,
+          periodControl: CompactMonthlyPeriodSelector(
+            periods: periods,
+            selectedPeriodId: selectedPeriod.id,
+            onChanged: (value) => setState(() => _selectedPeriodId = value),
+          ),
+          filters: [
+            _PomdamFilter(
+              state: pomdamsState,
+              selectedValue: _selectedPomdamId,
+              onChanged: (value) =>
+                  setState(() => _selectedPomdamId = value),
             ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                MonthlyPeriodSelector(
-                  periods: periods,
-                  selectedPeriodId: selectedPeriod.id,
-                  onChanged: (value) {
-                    setState(() => _selectedPeriodId = value);
-                  },
-                ),
-                _PomdamFilter(
-                  state: pomdamsState,
-                  selectedValue: _selectedPomdamId,
-                  onChanged: (value) {
-                    setState(() => _selectedPomdamId = value);
-                  },
-                ),
-                _PersonnelFilter(
-                  state: personnelState,
-                  selectedValue: _selectedPersonnelCategoryId,
-                  onChanged: (value) {
-                    setState(() => _selectedPersonnelCategoryId = value);
-                  },
-                ),
-              ],
+            _PersonnelFilter(
+              state: personnelState,
+              selectedValue: _selectedPersonnelCategoryId,
+              onChanged: (value) =>
+                  setState(() => _selectedPersonnelCategoryId = value),
             ),
-            const SizedBox(height: 16),
             _CategoryFilter(
               state: categoriesState,
               selectedValue: _selectedCategory,
-              onChanged: (value) {
-                setState(() => _selectedCategory = value);
-              },
-            ),
-            const SizedBox(height: 24),
-            dashboard.when(
-              loading: () => const _LoadingCard(),
-              error: (error, stackTrace) =>
-                  _MessageState(message: _errorMessage(error)),
-              data: (snapshot) => _DashboardContent(snapshot: snapshot),
+              onChanged: (value) => setState(() => _selectedCategory = value),
             ),
           ],
+          child: dashboard.when(
+            loading: () => const _LoadingVisual(),
+            error: (error, stackTrace) =>
+                _MessageState(message: _errorMessage(error)),
+            data: (snapshot) => _DashboardVisual(snapshot: snapshot),
+          ),
         );
       },
     );
   }
 
   String _errorMessage(Object error) {
-    if (error is AppException) {
-      return error.message;
-    }
+    if (error is AppException) return error.message;
     return 'Data Pelanggaran belum dapat dibaca.';
+  }
+}
+
+class _DashboardVisual extends StatelessWidget {
+  const _DashboardVisual({required this.snapshot});
+
+  final ViolationDashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppVisualPalettes.pelanggaran;
+    final ordered = [...snapshot.metrics]
+      ..sort((a, b) => b.validTotal.compareTo(a.validTotal));
+    final top = ordered.take(5).toList();
+    final rest = ordered.skip(5).fold<double>(
+          0,
+          (sum, metric) => sum + metric.validTotal,
+        );
+
+    final donut = [
+      for (final metric in top)
+        VisualDatum(
+          label: metric.canonicalName,
+          value: metric.validTotal.toDouble(),
+        ),
+      if (rest > 0) const VisualDatum(label: 'Lainnya', value: 0)
+    ];
+
+    if (rest > 0 && donut.isNotEmpty) {
+      donut.removeLast();
+      donut.add(VisualDatum(label: 'Lainnya', value: rest));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ResponsiveGrid(
+          minWidth: 300,
+          children: [
+            VisualPanel(
+              title: 'Peringkat',
+              accent: palette.primary,
+              child: AnimatedRankBarChart(
+                items: [
+                  for (final metric in ordered)
+                    VisualDatum(
+                      label: metric.canonicalName,
+                      value: metric.validTotal.toDouble(),
+                    ),
+                ],
+                palette: palette,
+                maxItems: 8,
+                height: 270,
+              ),
+            ),
+            VisualPanel(
+              title: 'Komposisi',
+              accent: palette.secondary,
+              child: AnimatedDonutChart(
+                items: donut,
+                palette: palette,
+                centerValue: snapshot.validTotal,
+                centerLabel: 'total',
+                height: 270,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        VisualPanel(
+          title: 'Kualitas',
+          accent: palette.primary,
+          child: Row(
+            children: [
+              Expanded(
+                child: AnimatedStatusRing(
+                  valid: snapshot.validCount,
+                  attention:
+                      snapshot.notReportedCount + snapshot.estimatedCount,
+                  error: snapshot.invalidSourceCount +
+                      snapshot.missingValueCount,
+                  palette: palette,
+                ),
+              ),
+              Expanded(
+                child: AnimatedMetric(
+                  value: snapshot.validTotal,
+                  label: 'pelanggaran valid',
+                  color: palette.primary,
+                  size: 42,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -128,40 +209,33 @@ class _PomdamFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return state.when(
-      loading: () => const SizedBox(
-        width: 280,
-        child: LinearProgressIndicator(),
-      ),
-      error: (error, stackTrace) => SizedBox(
-        width: 280,
-        child: Text('POMDAM tidak tersedia: ${error.toString()}'),
-      ),
-      data: (pomdams) => SizedBox(
-        width: 280,
-        child: DropdownButtonFormField<String?>(
-          initialValue: selectedValue,
-          decoration: const InputDecoration(
-            labelText: 'POMDAM',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Semua POMDAM'),
-            ),
-            for (final pomdam in pomdams)
-              DropdownMenuItem<String?>(
-                value: pomdam.id,
-                child: Text('${pomdam.code} · ${pomdam.shortName}'),
-              ),
-          ],
-          onChanged: onChanged,
+  Widget build(BuildContext context) => state.when(
+        loading: () => const SizedBox(
+          width: 210,
+          child: LinearProgressIndicator(),
         ),
-      ),
-    );
-  }
+        error: (_, _) => const SizedBox.shrink(),
+        data: (pomdams) => SizedBox(
+          width: 210,
+          child: DropdownButtonFormField<String?>(
+            initialValue: selectedValue,
+            decoration:
+                const InputDecoration(labelText: 'POMDAM', isDense: true),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Semua POMDAM'),
+              ),
+              for (final pomdam in pomdams)
+                DropdownMenuItem<String?>(
+                  value: pomdam.id,
+                  child: Text('${pomdam.code} · ${pomdam.shortName}'),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
+        ),
+      );
 }
 
 class _PersonnelFilter extends StatelessWidget {
@@ -176,42 +250,33 @@ class _PersonnelFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return state.when(
-      loading: () => const SizedBox(
-        width: 260,
-        child: LinearProgressIndicator(),
-      ),
-      error: (error, stackTrace) => SizedBox(
-        width: 260,
-        child: Text(
-          'Kategori personel tidak tersedia: ${error.toString()}',
+  Widget build(BuildContext context) => state.when(
+        loading: () => const SizedBox(
+          width: 210,
+          child: LinearProgressIndicator(),
         ),
-      ),
-      data: (categories) => SizedBox(
-        width: 260,
-        child: DropdownButtonFormField<String?>(
-          initialValue: selectedValue,
-          decoration: const InputDecoration(
-            labelText: 'Personel',
-            border: OutlineInputBorder(),
-          ),
-          items: [
-            const DropdownMenuItem<String?>(
-              value: null,
-              child: Text('Semua Personel'),
-            ),
-            for (final category in categories)
-              DropdownMenuItem<String?>(
-                value: category.id,
-                child: Text('${category.code} · ${category.name}'),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (categories) => SizedBox(
+          width: 210,
+          child: DropdownButtonFormField<String?>(
+            initialValue: selectedValue,
+            decoration:
+                const InputDecoration(labelText: 'Personel', isDense: true),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Semua Personel'),
               ),
-          ],
-          onChanged: onChanged,
+              for (final category in categories)
+                DropdownMenuItem<String?>(
+                  value: category.id,
+                  child: Text('${category.code} · ${category.name}'),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 class _CategoryFilter extends StatelessWidget {
@@ -226,256 +291,43 @@ class _CategoryFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return state.when(
-      loading: () => const LinearProgressIndicator(),
-      error: (error, stackTrace) =>
-          Text('Kategori Pelanggaran tidak tersedia: ${error.toString()}'),
-      data: (categories) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          ChoiceChip(
-            label: const Text('Semua kategori'),
-            selected: selectedValue == null,
-            onSelected: (_) => onChanged(null),
+  Widget build(BuildContext context) => state.when(
+        loading: () => const SizedBox(
+          width: 210,
+          child: LinearProgressIndicator(),
+        ),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (categories) => DropdownButtonFormField<String?>(
+          initialValue: selectedValue,
+          decoration: const InputDecoration(
+            labelText: 'Kategori',
+            isDense: true,
           ),
-          for (final category in categories)
-            ChoiceChip(
-              label: Text(category),
-              selected: selectedValue == category,
-              onSelected: (_) => onChanged(category),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Semua kategori'),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.snapshot});
-
-  final ViolationDashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    if (snapshot.recordCount == 0) {
-      return const _MessageState(
-        message: 'Tidak ada data untuk kombinasi filter yang dipilih.',
+            for (final category in categories)
+              DropdownMenuItem<String?>(
+                value: category,
+                child: Text(category),
+              ),
+          ],
+          onChanged: onChanged,
+        ),
       );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _MetricCard(
-              title: 'Total valid',
-              value: snapshot.validTotal.toString(),
-            ),
-            _MetricCard(
-              title: 'Valid records',
-              value: snapshot.validCount.toString(),
-            ),
-            _MetricCard(
-              title: 'Tidak dilaporkan',
-              value: snapshot.notReportedCount.toString(),
-            ),
-            _MetricCard(
-              title: 'Invalid source',
-              value: snapshot.invalidSourceCount.toString(),
-            ),
-            if (snapshot.estimatedCount > 0)
-              _MetricCard(
-                title: 'Estimated',
-                value: snapshot.estimatedCount.toString(),
-              ),
-            if (snapshot.missingValueCount > 0)
-              _MetricCard(
-                title: 'Nilai kosong',
-                value: snapshot.missingValueCount.toString(),
-              ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        AnalyticsSection(
-          title: 'Pelanggaran terbanyak',
-          trailing: Text(
-            'Menampilkan 8 teratas',
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-          child: VisualBarList(
-            items: [
-              for (final metric in snapshot.metrics)
-                VisualBarItem(
-                  label: metric.canonicalName,
-                  value: metric.validTotal.toDouble(),
-                ),
-            ],
-            maxItems: 8,
-          ),
-        ),
-        const SizedBox(height: 14),
-        if (snapshot.invalidSourceCount > 0)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'Sebagian baris berstatus INVALID_SOURCE dan tidak dimasukkan '
-                'ke Total valid.',
-              ),
-            ),
-          ),
-        if (snapshot.invalidSourceCount > 0) const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Rincian violation version',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                for (final metric in snapshot.metrics)
-                  _ViolationRow(metric: metric),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-class _ViolationRow extends StatelessWidget {
-  const _ViolationRow({required this.metric});
-
-  final ViolationMetric metric;
+class _LoadingVisual extends StatelessWidget {
+  const _LoadingVisual();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 58,
-            child: Text(
-              metric.sourceCode,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-          SizedBox(
-            width: 64,
-            child: Chip(
-              label: Text(metric.category),
-              visualDensity: VisualDensity.compact,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metric.canonicalName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  metric.sourceLabel,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                Text(
-                  'Sumber versi: ${metric.sourcePeriod ?? '—'}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 96,
-            child: Text(
-              metric.validTotal.toString(),
-              textAlign: TextAlign.end,
-            ),
-          ),
-          if (metric.issueCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Chip(
-                label: Text(metric.issueCount.toString()),
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-  });
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 190,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(title),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 12),
-            Text('Membaca data Pelanggaran…'),
-          ],
-        ),
+    return const VisualPanel(
+      child: SizedBox(
+        height: 270,
+        child: Center(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -487,12 +339,10 @@ class _MessageState extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(message, textAlign: TextAlign.center),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
+      );
 }

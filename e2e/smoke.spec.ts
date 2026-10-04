@@ -103,6 +103,12 @@ async function diagnostics(page: Page) {
   return headings.filter((value) => value.trim().length > 0);
 }
 
+function periodButton(page: Page) {
+  return page.getByRole('button', {
+    name: /^(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des) 20\d{2}$/,
+  }).first();
+}
+
 function filterButton(page: Page, label: string) {
   if (label === 'POMDAM') {
     return page.getByRole('button', {
@@ -166,36 +172,21 @@ test.describe('deep-link route smoke', () => {
 test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
     await openRoute(page, routeCatalog.simTni);
-    await expect(
-      page.getByRole('button', { name: /^Tahun\s+/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /^Bulan\s+/ }),
-    ).toBeVisible();
+    await expect(periodButton(page)).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
     await openRoute(page, routeCatalog.tindakPidana);
-    for (const label of ['Sumber versi', 'POMDAM', 'Personel']) {
+    for (const label of ['Versi', 'POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
-    await expect(
-      page.getByRole('button', { name: /^Tahun\s+/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /^Bulan\s+/ }),
-    ).toBeVisible();
+    await expect(periodButton(page)).toBeVisible();
   });
 
   test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
     await openRoute(page, routeCatalog.gakkum);
-    await expect(
-      page.getByRole('button', { name: /^Tahun\s+/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /^Bulan\s+/ }),
-    ).toBeVisible();
+    await expect(periodButton(page)).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 2', exact: true })).toBeVisible();
@@ -212,7 +203,9 @@ test.describe('critical interaction surface smoke', () => {
     await expect(
       page.getByRole('button', { name: /^Bulan\s+/ }),
     ).toBeVisible();
-    await expect(page.getByRole('checkbox', { name: 'Semua kategori', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /^Kategori\s+Semua kategori$/ }),
+    ).toBeVisible();
   });
 
   test('Reports reads the live report audit and provenance surface', async ({ page }) => {

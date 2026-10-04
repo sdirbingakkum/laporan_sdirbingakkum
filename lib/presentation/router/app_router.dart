@@ -24,14 +24,19 @@ import '../pages/reports_page.dart';
 import '../pages/report_input_page.dart';
 import '../pages/sim_tni_page.dart';
 import '../pages/violation_page.dart';
+import '../pages/visual_preview_page.dart';
 import '../shell/app_shell.dart';
 
+const _visualPreviewMode = bool.fromEnvironment('VISUAL_PREVIEW', defaultValue: false);
+
 String _initialWebLocation() {
+  if (_visualPreviewMode) return '/visual-preview';
   if (!kIsWeb) return '/';
 
   final path = Uri.base.path;
   const githubPagesBases = [
-    '/laporan_sdirbingakkum/preview/ui-mobile-first-analytics',
+    '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics',
+    '/preview/ui-animated-visual-analytics',
     '/laporan_sdirbingakkum',
   ];
 
@@ -42,7 +47,10 @@ String _initialWebLocation() {
 
     if (path.startsWith('$base/')) {
       final route = path.substring(base.length);
-      return route.isEmpty ? '/' : route;
+      final normalized = route.length > 1 && route.endsWith('/')
+          ? route.substring(0, route.length - 1)
+          : route;
+      return normalized.isEmpty ? '/' : normalized;
     }
   }
 
@@ -162,6 +170,16 @@ FutureOr<String?> _authRedirect(
       Supabase.instance.client.auth.currentSession != null;
   final location = state.uri.path;
 
+  if (_visualPreviewMode) return null;
+
+  if ({
+    '/visual-preview',
+    '/preview/ui-animated-visual-analytics/visual-preview',
+    '/visual-preview/',
+  }.contains(location)) {
+    return null;
+  }
+
   if (!authenticated && location != '/login') {
     return _loginLocationFor(state.uri);
   }
@@ -218,6 +236,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: authRefresh,
     redirect: (context, state) => _authRedirect(state, ref),
     routes: [
+      GoRoute(
+        path: '/visual-preview',
+        builder: (context, state) => const VisualPreviewPage(),
+      ),
+      GoRoute(
+        path: '/preview/ui-animated-visual-analytics/visual-preview',
+        builder: (context, state) => const VisualPreviewPage(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
