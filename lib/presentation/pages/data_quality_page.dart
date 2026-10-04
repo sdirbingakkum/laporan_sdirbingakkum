@@ -132,8 +132,6 @@ class _StatusSummary extends StatelessWidget {
         accent: AppTheme.success,
         child: Column(
           children: [
-            // Hidden text for E2E smoke test accessibility check
-            Offstage(child: Text('Fact rows: ${totals.factRows}')),
             Row(
               children: [
                 Expanded(
@@ -155,7 +153,31 @@ class _StatusSummary extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // Stat row — visible for Playwright E2E and audit context
+            Wrap(
+              spacing: 20,
+              runSpacing: 6,
+              children: [
+                Text(
+                  'Fact rows: ${totals.factRows}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  integrityLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: clean ? AppTheme.success : AppTheme.danger,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             AnimatedStatusRing(
               valid: totals.validRows,
               attention: totals.notReportedRows + totals.estimatedRows,
