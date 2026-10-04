@@ -595,7 +595,7 @@ class _GroupTile extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w650,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
               ),
