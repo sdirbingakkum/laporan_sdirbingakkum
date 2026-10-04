@@ -62,7 +62,8 @@ class MonthlyPeriodSelector extends StatelessWidget {
         .toList()
       ..sort();
 
-    ReportPeriod selected = monthPeriods.first;
+    // Default to the latest available month when no period has been chosen yet.
+    ReportPeriod selected = monthPeriods.last;
     for (final period in monthPeriods) {
       if (period.id == selectedPeriodId) {
         selected = period;
@@ -71,16 +72,20 @@ class MonthlyPeriodSelector extends StatelessWidget {
     }
 
     final selectedYear = selected.reportYear!;
-    final periodsInYear =
-        monthPeriods.where((period) => period.reportYear == selectedYear).toList();
+    final periodsInYear = monthPeriods
+        .where((period) => period.reportYear == selectedYear)
+        .toList();
 
     final selectedMonth = selected.periodStart?.month ??
         _monthFromLabel(selected.periodLabel) ??
         (periodsInYear.first.periodStart?.month ?? 1);
 
-    return SizedBox(
-      width: MediaQuery.sizeOf(context).width < 380 ? double.infinity : 312,
-      child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth < 312 ? constraints.maxWidth : 312.0;
+        return SizedBox(
+          width: width,
+          child: Row(
         children: [
           Expanded(
             child: DropdownButtonFormField<int>(
@@ -137,8 +142,10 @@ class MonthlyPeriodSelector extends StatelessWidget {
               },
             ),
           ),
-        ],
-      ),
+          ],
+        ),
+      );
+    },
     );
   }
 
