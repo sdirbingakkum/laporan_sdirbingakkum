@@ -36,7 +36,7 @@ jobs:
       - name: Checkout preview branch
         uses: actions/checkout@v6
         with:
-          ref: ui/mobile-first-analytics
+          ref: ui/animated-visual-analytics
           path: preview-src
 
       - name: Set up Flutter and Dart
@@ -139,7 +139,8 @@ jobs:
             perbandingan \
             reports \
             input-laporan \
-            data-quality             visual-preview
+            data-quality \
+            visual-preview
           do
             mkdir -p "build/web/$route"
             cp build/web/index.html "build/web/$route/index.html"
@@ -148,7 +149,7 @@ jobs:
       - name: Assemble Pages artifact
         run: |
           rm -rf build
-          mkdir -p build/web/preview/ui-mobile-first-analytics
+          mkdir -p build/web/preview/ui-animated-visual-analytics
           cp -a main-src/build/web/. build/web/
           rm -rf build/web/preview/ui-mobile-first-analytics
           cp -a preview-src/build/web/. build/web/preview/ui-mobile-first-analytics/
