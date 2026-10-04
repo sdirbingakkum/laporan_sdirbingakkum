@@ -61,9 +61,12 @@ class AnalyticsPageHeader extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 5),
