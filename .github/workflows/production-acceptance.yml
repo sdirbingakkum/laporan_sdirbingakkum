@@ -20,7 +20,6 @@ jobs:
       E2E_ACCEPTANCE_TEST: true
       E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
       E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-      E2E_COMMANDER_EMAIL: ${{ secrets.E2E_COMMANDER_EMAIL }}
       E2E_COMMANDER_PASSWORD: ${{ secrets.E2E_COMMANDER_PASSWORD }}
       PLAYWRIGHT_TEST_BASE_URL: https://sdirbingakkum.github.io/laporan_sdirbingakkum/
     steps:
@@ -37,7 +36,7 @@ jobs:
         run: |
           test -n "$E2E_EMAIL" || (echo "::error::Missing E2E_EMAIL" && exit 1)
           test -n "$E2E_PASSWORD" || (echo "::error::Missing E2E_PASSWORD" && exit 1)
-          test -n "$E2E_COMMANDER_EMAIL" || (echo "::error::Missing E2E_COMMANDER_EMAIL" && exit 1)
+          test "$E2E_EMAIL" = "operator@puspomad.mil.id" || (echo "::error::E2E_EMAIL must be operator@puspomad.mil.id" && exit 1)
           test -n "$E2E_COMMANDER_PASSWORD" || (echo "::error::Missing E2E_COMMANDER_PASSWORD" && exit 1)
 
       - name: Install E2E dependencies
