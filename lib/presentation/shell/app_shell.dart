@@ -200,7 +200,6 @@ class _NavigationPanel extends StatelessWidget {
   final VoidCallback onAdminToggle;
   final ValueChanged<String> onNavigate;
 
-  static const _reportItems = _reportItems;
 
   bool _active(String path) {
     if (path == '/') return location == '/';
