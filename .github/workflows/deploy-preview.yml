@@ -12,8 +12,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages-ui-preview
-  cancel-in-progress: true
+  group: github-pages
+  cancel-in-progress: false
 
 env:
   FLUTTER_VERSION: '3.47.3'
@@ -153,9 +153,12 @@ jobs:
           cp -a main-src/build/web/. build/web/
           rm -rf build/web/preview/ui-animated-visual-analytics
           cp -a preview-src/build/web/. build/web/preview/ui-animated-visual-analytics/
+          MAIN_COMMIT="$(git -C main-src rev-parse HEAD)"
+          PREVIEW_ROOT="build/web/preview/ui-animated-visual-analytics"
+          printf '{"commit":"%s"}\n' "$MAIN_COMMIT" > build/web/deployment.json
           printf '{"previewCommit":"%s","mainCommit":"%s"}\n' \
             "${{ github.sha }}" \
-            "$(git -C main-src rev-parse HEAD)" > build/web/preview/ui-animated-visual-analytics/deployment.json
+            "$MAIN_COMMIT" > "$PREVIEW_ROOT/deployment.json"
 
       - name: Verify preview Pages artifact
         run: |
