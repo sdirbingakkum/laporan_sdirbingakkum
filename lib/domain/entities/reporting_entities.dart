@@ -46,11 +46,15 @@ final class ReportSummary {
   int get statusIssueRows =>
       notReportedRows + invalidSourceRows + estimatedRows;
 
-  int get integrityIssueCount =>
-      validNullValue +
-      nonvalidWithValue +
-      nullSourceCell +
-      danglingSourceCell;
+  int get integrityIssueCount {
+    final importedFactRows = factRows - nullSourceCell;
+    final sourceCoverageMismatch =
+        sourceCellCount == importedFactRows ? 0 : 1;
+    return validNullValue +
+        nonvalidWithValue +
+        danglingSourceCell +
+        sourceCoverageMismatch;
+  }
 
   bool get hasUsableSource => importedSourceReports > 0;
 
