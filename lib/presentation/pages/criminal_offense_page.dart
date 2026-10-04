@@ -6,6 +6,7 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/criminal_offense_entities.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../theme/app_theme.dart';
 import '../widgets/analytics_ui.dart';
 import '../widgets/report_filters.dart';
 import '../widgets/visual_analytics.dart';
@@ -80,7 +81,7 @@ class _CriminalOffensePageState extends ConsumerState<CriminalOffensePage> {
             return VisualReportFrame(
               title: 'Tindak Pidana',
               contentKey: selectedPeriod.id,
-          accent: AppVisualPalettes.pidana.primary,
+              accent: AppVisualPalettes.pidana.primary,
               periodControl: CompactMonthlyPeriodSelector(
                 periods: periods,
                 selectedPeriodId: selectedPeriod.id,

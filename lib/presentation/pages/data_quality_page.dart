@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/providers/reporting_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reporting_entities.dart';
+import '../theme/app_theme.dart';
+import '../widgets/visual_analytics.dart';
 
 class DataQualityPage extends ConsumerWidget {
   const DataQualityPage({super.key});
@@ -151,7 +153,7 @@ class _StatusSummary extends StatelessWidget {
             valid: totals.validRows,
             attention: totals.notReportedRows + totals.estimatedRows,
             error: totals.invalidSourceRows + totals.integrityIssues,
-            palette: const VisualPalette(
+            palette: VisualPalette(
               primary: AppTheme.success,
               secondary: AppTheme.warning,
               tertiary: AppTheme.danger,
@@ -206,7 +208,7 @@ class _ReportQualityCard extends StatelessWidget {
                   ),
                   Text(
                     summary.periodLabel,
-                    style: const TextStyle(color: AppTheme.muted),
+                    style: TextStyle(color: AppTheme.muted),
                   ),
                 ],
               ),
@@ -221,7 +223,7 @@ class _ReportQualityCard extends StatelessWidget {
                 if (hasIssues)
                   Text(
                     '${summary.integrityIssueCount} issues',
-                    style: const TextStyle(color: AppTheme.danger),
+                    style: TextStyle(color: AppTheme.danger),
                   ),
               ],
             ),

@@ -285,7 +285,7 @@ class _RailItem extends StatelessWidget {
     '/pelanggaran': Color(0xFFFF9800),
     '/sim-tni': Color(0xFF2196F3),
     '/provos': Color(0xFF4CAF50),
-    '/laka': Color(0xFF9C27B0),
+    '/laka-lalin': Color(0xFF9C27B0),
     '/tindak-pidana': Color(0xFFE91E63),
     '/pomdam': Color(0xFF009688),
   };

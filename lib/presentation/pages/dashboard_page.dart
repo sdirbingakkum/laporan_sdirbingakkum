@@ -128,7 +128,7 @@ class _CommanderView extends StatelessWidget {
                         icon: _iconFor(domain.code),
                         label: domain.name,
                         color: _paletteFor(domain.code).primary,
-                        kpiValue: domain.primaryMetric.value.toInt(),
+                        kpiValue: domain.primaryMetric.value?.toInt(),
                         kpiLabel: domain.primaryMetric.unit.isEmpty
                             ? 'TOTAL'
                             : domain.primaryMetric.unit.toUpperCase(),
