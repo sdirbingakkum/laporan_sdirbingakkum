@@ -31,6 +31,8 @@ create table if not exists "private"."app_user_pomdam_scopes" (
   "active" boolean not null default true,
   "created_at" timestamp with time zone not null default now()
 );
+do $ begin if not exists (select 1 from pg_constraint where conname='app_roles_pkey' and conrelid='private.app_roles'::regclass) then alter table "private"."app_roles" add constraint "app_roles_pkey" PRIMARY KEY (role_code); end if; end $;
+do $ begin if not exists (select 1 from pg_constraint where conname='app_capabilities_pkey' and conrelid='private.app_capabilities'::regclass) then alter table "private"."app_capabilities" add constraint "app_capabilities_pkey" PRIMARY KEY (capability_code); end if; end $;
 create table if not exists "private"."app_user_roles" (
   "user_id" uuid not null,
   "role_code" text not null,
