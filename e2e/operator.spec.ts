@@ -10,12 +10,16 @@ test('operator can open report input without writing production data', async ({ 
     page.getByText('Input Laporan', { exact: true }).first(),
   ).toBeVisible({ timeout: 30_000 });
 
-  await expect(
-    page.getByText('GAKKUM', { exact: true }),
-  ).toBeVisible({ timeout: 15_000 });
+  const gakkumSection = page.getByRole('group', {
+    name: /^GAKKUM\s+14 kegiatan leaf\./,
+  });
+  await expect(gakkumSection).toBeVisible({ timeout: 15_000 });
 
   await expect(
-    page.getByText('14 kegiatan leaf. Parent tidak dimasukkan agar tidak double count.'),
+    gakkumSection.getByText(
+      '14 kegiatan leaf. Parent tidak dimasukkan agar tidak double count.',
+      { exact: true },
+    ),
   ).toBeVisible({ timeout: 15_000 });
 
   await expect(
