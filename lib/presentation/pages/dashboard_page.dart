@@ -290,9 +290,12 @@ class _Header extends StatelessWidget {
             final identity = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Ringkasan laporan',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Ringkasan laporan',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
