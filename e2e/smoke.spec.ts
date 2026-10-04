@@ -217,7 +217,7 @@ test.describe('critical interaction surface smoke', () => {
 
   test('Reports reads the live report audit and provenance surface', async ({ page }) => {
     await openRoute(page, routeCatalog.reports);
-    await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Laporan', exact: true })).toBeVisible();
     await expect(page.getByText(/Fact rows/).first()).toBeVisible();
     await expect(page.getByText(/Source & provenance/).first()).toBeVisible();
     await expect(page.getByText(/\.xlsx/).first()).toBeVisible();
@@ -231,7 +231,7 @@ test.describe('critical interaction surface smoke', () => {
       timeout: 30_000,
     });
     await expect(
-      page.getByRole('heading', { name: 'Dashboard', exact: true }),
+      page.getByRole('heading', { name: 'Ringkasan laporan', exact: true }),
     ).toBeVisible({ timeout: 30_000 });
     expect(new URL(page.url()).pathname).toBe('/laporan_sdirbingakkum/');
   });
