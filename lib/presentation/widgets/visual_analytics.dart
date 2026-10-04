@@ -800,6 +800,7 @@ class DomainVisualCard extends StatelessWidget {
     this.icon,
     this.trend,
     this.status,
+    required this.trend,
     this.onTap,
   });
 
