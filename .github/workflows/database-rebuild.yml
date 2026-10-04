@@ -1,0 +1,53 @@
+name: Database Rebuild
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - '.github/workflows/database-rebuild.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - '.github/workflows/database-rebuild.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Prepare isolated local Supabase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/supabase-migrations
+          cp -R supabase/migrations /tmp/supabase-migrations
+          rm -rf supabase
+          supabase init
+          rm -rf supabase/migrations
+          mv /tmp/supabase-migrations supabase/migrations
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Rebuild database from migrations
+        run: supabase db reset --local
+
+      - name: Verify migration state
+        run: supabase migration list
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
