@@ -5,7 +5,9 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../application/providers/sim_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/report_filters.dart';
 import '../../domain/entities/sim_entities.dart';
+import '../widgets/analytics_ui.dart';
 
 class SimTniPage extends ConsumerStatefulWidget {
   const SimTniPage({super.key});
@@ -48,43 +50,20 @@ class _SimTniPageState extends ConsumerState<SimTniPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'SIM TNI',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'SIM TNI',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Agregasi mengikuti jenis SIM dan POMDAM. Status fakta '
-              'dipertahankan dan nilai source tidak diubah menjadi nol.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 _PomdamFilter(
                   state: pomdamsState,
@@ -212,7 +191,21 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Distribusi jenis SIM',
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.simDisplayName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 5,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (snapshot.invalidSourceCount > 0)
           const Card(
             child: Padding(

@@ -5,7 +5,9 @@ import '../../application/providers/criminal_offense_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/criminal_offense_entities.dart';
+import '../widgets/analytics_ui.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/report_filters.dart';
 
 class CriminalOffensePage extends ConsumerStatefulWidget {
   const CriminalOffensePage({super.key});
@@ -79,46 +81,22 @@ class _CriminalOffensePageState extends ConsumerState<CriminalOffensePage> {
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Text(
-                  'Tindak Pidana',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                const AnalyticsPageHeader(
+                  title: 'Tindak Pidana',
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Agregasi mengikuti criminal_offense_version_id. '
-                  'Versi sumber tidak digabung dengan versi historis.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 20),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    SizedBox(
-                      width: 240,
-                      child: DropdownButtonFormField<String>(
-                        initialValue: selectedPeriod.id,
-                        decoration: const InputDecoration(
-                          labelText: 'Periode',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          for (final period in periods)
-                            DropdownMenuItem(
-                              value: period.id,
-                              child: Text(period.periodLabel),
-                            ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _selectedPeriodId = value;
-                            _selectedSourcePeriod = null;
-                          });
-                        },
-                      ),
+                    MonthlyPeriodSelector(
+                      periods: periods,
+                      selectedPeriodId: selectedPeriod.id,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedPeriodId = value;
+                          _selectedSourcePeriod = null;
+                        });
+                      },
                     ),
                     SizedBox(
                       width: 240,
@@ -328,7 +306,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Tindak pidana terbanyak',
+          trailing: Text(
+            'Menampilkan 10 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 10,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (allValuesZero)
           const Card(
             child: Padding(

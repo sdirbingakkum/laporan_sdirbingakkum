@@ -5,7 +5,9 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../application/providers/violation_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/report_filters.dart';
 import '../../domain/entities/violation_entities.dart';
+import '../widgets/analytics_ui.dart';
 
 class ViolationPage extends ConsumerStatefulWidget {
   const ViolationPage({super.key});
@@ -54,43 +56,20 @@ class _ViolationPageState extends ConsumerState<ViolationPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Pelanggaran',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Pelanggaran',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Agregasi mengikuti violation_version_id. Versi historis '
-              'tidak digabung dengan versi lain secara otomatis.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 _PomdamFilter(
                   state: pomdamsState,
@@ -321,7 +300,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Pelanggaran terbanyak',
+          trailing: Text(
+            'Menampilkan 8 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.canonicalName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 8,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (snapshot.invalidSourceCount > 0)
           const Card(
             child: Padding(

@@ -7,6 +7,8 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/provos_entities.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/analytics_ui.dart';
+import '../widgets/report_filters.dart';
 
 class ProvosPage extends ConsumerStatefulWidget {
   const ProvosPage({super.key});
@@ -52,44 +54,20 @@ class _ProvosPageState extends ConsumerState<ProvosPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Provos',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Provos',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Kekuatan, komposisi personel, dan status pendidikan '
-              'ditampilkan sebagai bagian terpisah agar tidak mencampurkan '
-              'satuan ukur yang berbeda.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 _PomdamFilter(
                   state: pomdamsState,
@@ -179,7 +157,17 @@ class _DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ResponsiveGrid(
+          minWidth: 270,
+          children: [
+            _VisualSection(title: 'Kekuatan Provos', metrics: snapshot.strengthMetrics),
+            _VisualSection(title: 'Personel', metrics: snapshot.personnelMetrics),
+            _VisualSection(title: 'Pendidikan', metrics: snapshot.educationMetrics),
+          ],
+        ),
+        const SizedBox(height: 14),
         _Section(
           title: 'Kekuatan Provos',
           metrics: snapshot.strengthMetrics,
@@ -195,6 +183,39 @@ class _DashboardContent extends StatelessWidget {
           metrics: snapshot.educationMetrics,
         ),
       ],
+    );
+  }
+}
+
+class _VisualSection extends StatelessWidget {
+  const _VisualSection({
+    required this.title,
+    required this.metrics,
+  });
+
+  final String title;
+  final List<ProvosMetric> metrics;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnalyticsSection(
+      title: title,
+      trailing: Text(
+        metrics.fold<int>(0, (sum, item) => sum + item.validTotal).toString(),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+      ),
+      child: VisualBarList(
+        items: [
+          for (final metric in metrics)
+            VisualBarItem(
+              label: metric.name,
+              value: metric.validTotal.toDouble(),
+            ),
+        ],
+        maxItems: 5,
+      ),
     );
   }
 }
@@ -266,7 +287,21 @@ class _Section extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+            AnalyticsSection(
+              title: 'Distribusi $title',
+              child: VisualBarList(
+                items: [
+                  for (final metric in metrics)
+                    VisualBarItem(
+                      label: metric.name,
+                      value: metric.validTotal.toDouble(),
+                    ),
+                ],
+                maxItems: 8,
+              ),
+            ),
+            const SizedBox(height: 14),
             if (summary.invalidSourceCount > 0)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),

@@ -5,6 +5,8 @@ import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/gakkum_entities.dart';
+import '../widgets/report_filters.dart';
+import '../widgets/analytics_ui.dart';
 
 class GakkumPage extends ConsumerStatefulWidget {
   const GakkumPage({super.key});
@@ -47,43 +49,20 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Giat Gakkum',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            const AnalyticsPageHeader(
+              title: 'Gakkum',
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Periode, POMDAM, dan level taxonomy dipilih secara eksplisit. '
-              'Parent dan child tidak dijumlahkan menjadi satu angka.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(
-                  width: 240,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedPeriod.id,
-                    decoration: const InputDecoration(
-                      labelText: 'Periode',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final period in periods)
-                        DropdownMenuItem(
-                          value: period.id,
-                          child: Text(period.periodLabel),
-                        ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _selectedPeriodId = value);
-                    },
-                  ),
+                MonthlyPeriodSelector(
+                  periods: periods,
+                  selectedPeriodId: selectedPeriod.id,
+                  onChanged: (value) {
+                    setState(() => _selectedPeriodId = value);
+                  },
                 ),
                 pomdamsState.when(
                   loading: () => const SizedBox(
@@ -193,7 +172,25 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Distribusi kegiatan',
+          trailing: Text(
+            'Menampilkan 6 teratas',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+          child: VisualBarList(
+            items: [
+              for (final activity in snapshot.activities)
+                VisualBarItem(
+                  label: activity.activityName,
+                  value: activity.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 6,
+          ),
+        ),
+        const SizedBox(height: 14),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(20),
