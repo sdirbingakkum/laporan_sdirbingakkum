@@ -30,15 +30,20 @@ String _initialWebLocation() {
   if (!kIsWeb) return '/';
 
   final path = Uri.base.path;
-  const githubPagesBase = '/laporan_sdirbingakkum';
+  const githubPagesBases = [
+    '/laporan_sdirbingakkum/preview/ui-mobile-first-analytics',
+    '/laporan_sdirbingakkum',
+  ];
 
-  if (path == githubPagesBase || path == '$githubPagesBase/') {
-    return '/';
-  }
+  for (final base in githubPagesBases) {
+    if (path == base || path == '$base/') {
+      return '/';
+    }
 
-  if (path.startsWith('$githubPagesBase/')) {
-    final route = path.substring(githubPagesBase.length);
-    return route.isEmpty ? '/' : route;
+    if (path.startsWith('$base/')) {
+      final route = path.substring(base.length);
+      return route.isEmpty ? '/' : route;
+    }
   }
 
   const knownRoutes = {
@@ -209,6 +214,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: _initialWebLocation(),
+    overridePlatformDefaultLocation: true,
     refreshListenable: authRefresh,
     redirect: (context, state) => _authRedirect(state, ref),
     routes: [
