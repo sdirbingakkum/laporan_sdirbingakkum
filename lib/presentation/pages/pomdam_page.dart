@@ -43,23 +43,24 @@ class PomdamPage extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final pomdam = items[index];
 
                 return Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  child: Text(pomdam.reportOrder.toString()),
-                ),
-                title: Text(
-                  '${pomdam.code} · ${pomdam.shortName}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(pomdam.pomdamFullName),
-                trailing: pomdam.active
-                    ? const Chip(label: Text('ACTIVE'))
-                    : const Chip(label: Text('INACTIVE')),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      child: Text(pomdam.reportOrder.toString()),
+                    ),
+                    title: Text(
+                      '\${pomdam.code} · \${pomdam.shortName}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(pomdam.pomdamFullName),
+                    trailing: pomdam.active
+                        ? const Chip(label: Text('Aktif'))
+                        : const Chip(label: Text('Tidak aktif')),
+                  ),
                 );
               },
             ),
