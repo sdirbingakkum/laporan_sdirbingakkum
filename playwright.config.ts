@@ -42,13 +42,26 @@ export default defineConfig({
       testMatch: /acceptance\.spec\.ts/,
     },
     {
+      name: 'authorization',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: undefined,
+      },
+      testMatch: /authorization\.spec\.ts/,
+    },
+    {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
-      testIgnore: [/auth\.setup\.ts/, /auth\.spec\.ts/, /acceptance\.spec\.ts/],
+      testIgnore: [
+        /auth\.setup\.ts/,
+        /auth\.spec\.ts/,
+        /acceptance\.spec\.ts/,
+        /authorization\.spec\.ts/,
+      ],
     },
   ],
 });
