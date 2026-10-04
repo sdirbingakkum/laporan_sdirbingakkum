@@ -27,7 +27,10 @@ import '../pages/violation_page.dart';
 import '../pages/visual_preview_page.dart';
 import '../shell/app_shell.dart';
 
+const _visualPreviewMode = bool.fromEnvironment('VISUAL_PREVIEW', defaultValue: false);
+
 String _initialWebLocation() {
+  if (_visualPreviewMode) return '/visual-preview';
   if (!kIsWeb) return '/';
 
   final path = Uri.base.path;
@@ -166,6 +169,8 @@ FutureOr<String?> _authRedirect(
   final authenticated =
       Supabase.instance.client.auth.currentSession != null;
   final location = state.uri.path;
+
+  if (_visualPreviewMode) return null;
 
   if ({
     '/visual-preview',
