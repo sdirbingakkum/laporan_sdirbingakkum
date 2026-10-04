@@ -1695,126 +1695,6 @@ exception
 end;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.get_commander_cop_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE sql
- STABLE
- SET search_path TO 'public'
-AS $function$
-select private.assert_commander_access(p_pomdam_id);
-with
-d as (
-  select * from (
-    values
-      ('GAKKUM', public.get_commander_gakkum_snapshot(p_pomdam_id)),
-      ('PELANGGARAN', public.get_commander_pelanggaran_snapshot(p_pomdam_id)),
-      ('SIM_TNI', public.get_commander_sim_tni_snapshot(p_pomdam_id)),
-      ('PROVOS', public.get_commander_provos_snapshot(p_pomdam_id)),
-      ('LAKA_LALIN', public.get_commander_laka_snapshot(p_pomdam_id)),
-      ('TINDAK_PIDANA', public.get_commander_tindak_pidana_snapshot(p_pomdam_id))
-  ) v(code, payload)
-),
-domain_array as (
-  select jsonb_agg(payload order by case code
-    when 'GAKKUM' then 1 when 'PELANGGARAN' then 2 when 'SIM_TNI' then 3
-    when 'PROVOS' then 4 when 'LAKA_LALIN' then 5 when 'TINDAK_PIDANA' then 6 end) domains
-  from d
-),
-att as (
- select coalesce(jsonb_agg(
-   jsonb_build_object(
-     'domain',code,
-     'severity',case when kind='INVALID_SOURCE' then 'ERROR' else 'ATTENTION' end,
-     'kind',kind,
-     'count',cnt,
-     'message',msg
-   ) order by priority,code,kind
- ),'[]'::jsonb) items
- from (
-   select 1 priority,'GAKKUM' code,'INVALID_SOURCE' kind,
-          (payload->'data_trust'->>'invalid_source_rows')::bigint cnt,
-          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)' msg
-   from d where code='GAKKUM' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
-   union all
-   select 2,'GAKKUM','NOT_REPORTED',
-          (payload->'data_trust'->>'not_reported_rows')::bigint,
-          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
-   from d where code='GAKKUM' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
-   union all
-   select 2,'PELANGGARAN','NOT_REPORTED',
-          (payload->'data_trust'->>'not_reported_rows')::bigint,
-          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
-   from d where code='PELANGGARAN' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
-   union all
-   select 1,'SIM_TNI','INVALID_SOURCE',
-          (payload->'data_trust'->>'invalid_source_rows')::bigint,
-          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)'
-   from d where code='SIM_TNI' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
-   union all
-   select 1,'LAKA_LALIN','INVALID_SOURCE',
-          (payload->'data_trust'->>'invalid_source_rows')::bigint,
-          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)'
-   from d where code='LAKA_LALIN' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
-   union all
-   select 2,'LAKA_LALIN','NOT_REPORTED',
-          (payload->'data_trust'->>'not_reported_rows')::bigint,
-          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
-   from d where code='LAKA_LALIN' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
-   union all
-   select 1,'TINDAK_PIDANA','NOT_REPORTED',
-          (payload->'data_trust'->>'not_reported_rows')::bigint,
-          coalesce((payload->'data_trust'->>'not_reported_pct'),'0')||'% NOT_REPORTED'
-   from d where code='TINDAK_PIDANA' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
-   union all
-   select 1,'TINDAK_PIDANA','SOURCE_PERIOD_AMBIGUOUS',
-          (payload->'supporting_metrics'->>'source_period_count')::bigint,
-          'Multiple source_period values detected'
-   from d where code='TINDAK_PIDANA' and (payload->'supporting_metrics'->>'source_period_count')::bigint>1
- ) x
-),
-matrix as (
- select coalesce(jsonb_agg(
-   jsonb_build_object(
-     'pomdam_id',p.id,'code',p.code,'short_name',p.short_name,
-     'states',jsonb_build_object(
-       'GAKKUM',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from gakkum_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='GAKKUM') and r.pomdam_id=p.id),
-       'PELANGGARAN',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from violation_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PELANGGARAN') and r.pomdam_id=p.id),
-       'SIM_TNI',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from sim_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='SIM_TNI') and r.pomdam_id=p.id),
-       'PROVOS',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from (
-         select r.data_status from provos_strength_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
-         union all
-         select r.data_status from provos_personnel_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
-         union all
-         select r.data_status from provos_education_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
-       ) r),
-       'LAKA_LALIN',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from laka_accident_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='LAKA_LALIN') and r.pomdam_id=p.id),
-       'TINDAK_PIDANA',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from criminal_offense_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='TINDAK_PIDANA') and r.pomdam_id=p.id)
-     )
-   ) order by p.report_order
- ),'[]'::jsonb) items
- from pomdams p
- where p.active=true and (p_pomdam_id is null or p.id=p_pomdam_id)
-)
-select jsonb_build_object(
- 'schema_version','1.0',
- 'generated_at',now(),
- 'scope',jsonb_build_object(
-   'type',case when p_pomdam_id is null then 'ALL_POMDAM' else 'POMDAM' end,
-   'pomdam_id',p_pomdam_id,
-   'pomdam',(select jsonb_build_object('id',p.id,'code',p.code,'short_name',p.short_name,'full_name',p.pomdam_full_name) from pomdams p where p.id=p_pomdam_id)
- ),
- 'domains',(select domains from domain_array),
- 'attention',(select items from att),
- 'pomdam_matrix',(select items from matrix),
- 'rules',jsonb_build_object(
-   'not_reported_is_zero',false,
-   'invalid_source_is_valid',false,
-   'fact_rows_are_operational_counts',false,
-   'operational_risk_thresholds_defined',false
- )
-);
-$function$;
-
 CREATE OR REPLACE FUNCTION public.get_commander_domain_drilldown(p_domain_code text, p_pomdam_id uuid DEFAULT NULL::uuid, p_dimension_code text DEFAULT NULL::text, p_limit integer DEFAULT 50)
  RETURNS jsonb
  LANGUAGE sql
@@ -2641,6 +2521,126 @@ select jsonb_build_object(
  'aggregation_rule','SUM VALID values only when exactly one source_period exists; multiple source periods make primary value ambiguous'
 )
 from current c cross join source_current sc cross join top_items t;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.get_commander_cop_snapshot(p_pomdam_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+select private.assert_commander_access(p_pomdam_id);
+with
+d as (
+  select * from (
+    values
+      ('GAKKUM', public.get_commander_gakkum_snapshot(p_pomdam_id)),
+      ('PELANGGARAN', public.get_commander_pelanggaran_snapshot(p_pomdam_id)),
+      ('SIM_TNI', public.get_commander_sim_tni_snapshot(p_pomdam_id)),
+      ('PROVOS', public.get_commander_provos_snapshot(p_pomdam_id)),
+      ('LAKA_LALIN', public.get_commander_laka_snapshot(p_pomdam_id)),
+      ('TINDAK_PIDANA', public.get_commander_tindak_pidana_snapshot(p_pomdam_id))
+  ) v(code, payload)
+),
+domain_array as (
+  select jsonb_agg(payload order by case code
+    when 'GAKKUM' then 1 when 'PELANGGARAN' then 2 when 'SIM_TNI' then 3
+    when 'PROVOS' then 4 when 'LAKA_LALIN' then 5 when 'TINDAK_PIDANA' then 6 end) domains
+  from d
+),
+att as (
+ select coalesce(jsonb_agg(
+   jsonb_build_object(
+     'domain',code,
+     'severity',case when kind='INVALID_SOURCE' then 'ERROR' else 'ATTENTION' end,
+     'kind',kind,
+     'count',cnt,
+     'message',msg
+   ) order by priority,code,kind
+ ),'[]'::jsonb) items
+ from (
+   select 1 priority,'GAKKUM' code,'INVALID_SOURCE' kind,
+          (payload->'data_trust'->>'invalid_source_rows')::bigint cnt,
+          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)' msg
+   from d where code='GAKKUM' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
+   union all
+   select 2,'GAKKUM','NOT_REPORTED',
+          (payload->'data_trust'->>'not_reported_rows')::bigint,
+          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
+   from d where code='GAKKUM' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
+   union all
+   select 2,'PELANGGARAN','NOT_REPORTED',
+          (payload->'data_trust'->>'not_reported_rows')::bigint,
+          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
+   from d where code='PELANGGARAN' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
+   union all
+   select 1,'SIM_TNI','INVALID_SOURCE',
+          (payload->'data_trust'->>'invalid_source_rows')::bigint,
+          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)'
+   from d where code='SIM_TNI' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
+   union all
+   select 1,'LAKA_LALIN','INVALID_SOURCE',
+          (payload->'data_trust'->>'invalid_source_rows')::bigint,
+          (payload->'data_trust'->>'invalid_source_rows')||' invalid source row(s)'
+   from d where code='LAKA_LALIN' and (payload->'data_trust'->>'invalid_source_rows')::bigint>0
+   union all
+   select 2,'LAKA_LALIN','NOT_REPORTED',
+          (payload->'data_trust'->>'not_reported_rows')::bigint,
+          (payload->'data_trust'->>'not_reported_rows')||' row(s) not reported'
+   from d where code='LAKA_LALIN' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
+   union all
+   select 1,'TINDAK_PIDANA','NOT_REPORTED',
+          (payload->'data_trust'->>'not_reported_rows')::bigint,
+          coalesce((payload->'data_trust'->>'not_reported_pct'),'0')||'% NOT_REPORTED'
+   from d where code='TINDAK_PIDANA' and (payload->'data_trust'->>'not_reported_rows')::bigint>0
+   union all
+   select 1,'TINDAK_PIDANA','SOURCE_PERIOD_AMBIGUOUS',
+          (payload->'supporting_metrics'->>'source_period_count')::bigint,
+          'Multiple source_period values detected'
+   from d where code='TINDAK_PIDANA' and (payload->'supporting_metrics'->>'source_period_count')::bigint>1
+ ) x
+),
+matrix as (
+ select coalesce(jsonb_agg(
+   jsonb_build_object(
+     'pomdam_id',p.id,'code',p.code,'short_name',p.short_name,
+     'states',jsonb_build_object(
+       'GAKKUM',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from gakkum_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='GAKKUM') and r.pomdam_id=p.id),
+       'PELANGGARAN',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from violation_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PELANGGARAN') and r.pomdam_id=p.id),
+       'SIM_TNI',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from sim_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='SIM_TNI') and r.pomdam_id=p.id),
+       'PROVOS',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from (
+         select r.data_status from provos_strength_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
+         union all
+         select r.data_status from provos_personnel_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
+         union all
+         select r.data_status from provos_education_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='PROVOS') and r.pomdam_id=p.id
+       ) r),
+       'LAKA_LALIN',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from laka_accident_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='LAKA_LALIN') and r.pomdam_id=p.id),
+       'TINDAK_PIDANA',(select case when count(*)=0 then 'NO_DATA' when count(*) filter(where r.data_status='INVALID_SOURCE')>0 then 'ERROR' when count(*) filter(where r.data_status='NOT_REPORTED')>0 then 'GAP' when count(*) filter(where r.data_status='ESTIMATED')>0 then 'ESTIMATED' else 'COMPLETE' end from criminal_offense_records r where r.period_id=(select (payload->'as_of'->>'id')::uuid from d where code='TINDAK_PIDANA') and r.pomdam_id=p.id)
+     )
+   ) order by p.report_order
+ ),'[]'::jsonb) items
+ from pomdams p
+ where p.active=true and (p_pomdam_id is null or p.id=p_pomdam_id)
+)
+select jsonb_build_object(
+ 'schema_version','1.0',
+ 'generated_at',now(),
+ 'scope',jsonb_build_object(
+   'type',case when p_pomdam_id is null then 'ALL_POMDAM' else 'POMDAM' end,
+   'pomdam_id',p_pomdam_id,
+   'pomdam',(select jsonb_build_object('id',p.id,'code',p.code,'short_name',p.short_name,'full_name',p.pomdam_full_name) from pomdams p where p.id=p_pomdam_id)
+ ),
+ 'domains',(select domains from domain_array),
+ 'attention',(select items from att),
+ 'pomdam_matrix',(select items from matrix),
+ 'rules',jsonb_build_object(
+   'not_reported_is_zero',false,
+   'invalid_source_is_valid',false,
+   'fact_rows_are_operational_counts',false,
+   'operational_risk_thresholds_defined',false
+ )
+);
 $function$;
 
 CREATE OR REPLACE FUNCTION public.get_criminal_offense_dashboard(p_period_id uuid, p_source_period text, p_pomdam_id uuid DEFAULT NULL::uuid, p_personnel_category_id uuid DEFAULT NULL::uuid)
