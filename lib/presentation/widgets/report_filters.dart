@@ -164,3 +164,102 @@ class MonthlyPeriodSelector extends StatelessWidget {
     return null;
   }
 }
+
+
+
+class CompactMonthlyPeriodSelector extends StatelessWidget {
+  const CompactMonthlyPeriodSelector({
+    required this.periods,
+    required this.selectedPeriodId,
+    required this.onChanged,
+    super.key,
+  });
+
+  final List<ReportPeriod> periods;
+  final String selectedPeriodId;
+  final ValueChanged<String> onChanged;
+
+  static const _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final available = periods
+        .where(
+          (period) =>
+              period.periodType == 'MONTH' &&
+              period.reportYear != null &&
+              period.periodStart != null,
+        )
+        .toList()
+      ..sort((a, b) => b.periodStart!.compareTo(a.periodStart!));
+
+    if (available.isEmpty) return const SizedBox.shrink();
+
+    final current = available.firstWhere(
+      (period) => period.id == selectedPeriodId,
+      orElse: () => available.first,
+    );
+
+    return PopupMenuButton<String>(
+      initialValue: current.id,
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final period in available)
+          PopupMenuItem<String>(
+            value: period.id,
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(_label(period)),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.calendar_month_rounded, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              _label(current),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _label(ReportPeriod period) {
+    final start = period.periodStart;
+    if (start == null) return period.periodLabel;
+
+    final month = _months[start.month - 1];
+    return '\$month \${start.year}';
+  }
+}
