@@ -291,7 +291,9 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Semantics(
+                  container: true,
                   header: true,
+                  headingLevel: 2,
                   child: Text(
                     'Ringkasan laporan',
                     style: Theme.of(context).textTheme.headlineSmall,
