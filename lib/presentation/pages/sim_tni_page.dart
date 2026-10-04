@@ -7,6 +7,7 @@ import '../../core/errors/app_exception.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../widgets/report_filters.dart';
 import '../../domain/entities/sim_entities.dart';
+import '../widgets/analytics_ui.dart';
 
 class SimTniPage extends ConsumerStatefulWidget {
   const SimTniPage({super.key});
@@ -199,7 +200,21 @@ class _DashboardContent extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
+        AnalyticsSection(
+          title: 'Distribusi jenis SIM',
+          child: VisualBarList(
+            items: [
+              for (final metric in snapshot.metrics)
+                VisualBarItem(
+                  label: metric.simDisplayName,
+                  value: metric.validTotal.toDouble(),
+                ),
+            ],
+            maxItems: 5,
+          ),
+        ),
+        const SizedBox(height: 14),
         if (snapshot.invalidSourceCount > 0)
           const Card(
             child: Padding(
