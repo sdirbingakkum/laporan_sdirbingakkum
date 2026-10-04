@@ -54,7 +54,7 @@ final class ReportSummary {
 
   bool get hasUsableSource => importedSourceReports > 0;
 
-  bool get isClean => hasUsableSource && integrityIssueCount == 0;
+  bool get isClean => integrityIssueCount == 0;
 }
 
 final class ReportSelection {
