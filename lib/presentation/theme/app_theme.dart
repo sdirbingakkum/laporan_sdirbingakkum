@@ -57,7 +57,7 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
-          side: BorderSide(color: border.withValues(alpha: .72)),
+          side: BorderSide(color: border),
         ),
       ),
       dividerTheme: const DividerThemeData(
