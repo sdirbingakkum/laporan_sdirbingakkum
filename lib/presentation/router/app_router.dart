@@ -24,6 +24,7 @@ import '../pages/reports_page.dart';
 import '../pages/report_input_page.dart';
 import '../pages/sim_tni_page.dart';
 import '../pages/violation_page.dart';
+import '../pages/visual_preview_page.dart';
 import '../shell/app_shell.dart';
 
 String _initialWebLocation() {
@@ -31,7 +32,7 @@ String _initialWebLocation() {
 
   final path = Uri.base.path;
   const githubPagesBases = [
-    '/laporan_sdirbingakkum/preview/ui-mobile-first-analytics',
+    '/laporan_sdirbingakkum/preview/ui-animated-visual-analytics',
     '/laporan_sdirbingakkum',
   ];
 
@@ -162,6 +163,8 @@ FutureOr<String?> _authRedirect(
       Supabase.instance.client.auth.currentSession != null;
   final location = state.uri.path;
 
+  if (location == '/visual-preview') return null;
+
   if (!authenticated && location != '/login') {
     return _loginLocationFor(state.uri);
   }
@@ -218,6 +221,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: authRefresh,
     redirect: (context, state) => _authRedirect(state, ref),
     routes: [
+      GoRoute(
+        path: '/visual-preview',
+        builder: (context, state) => const VisualPreviewPage(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),
