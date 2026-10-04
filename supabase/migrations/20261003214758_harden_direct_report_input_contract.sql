@@ -38,3 +38,5 @@ create table if not exists "private"."app_user_roles" (
   "role_code" text not null,
   "active" boolean not null default true,
   "created_at" timestamp with time zone not null default now(),
+  "updated_at" timestamp with time zone not null default now()
+);
