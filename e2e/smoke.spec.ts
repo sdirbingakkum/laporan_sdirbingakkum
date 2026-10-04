@@ -4,32 +4,91 @@ const EXPECTED_SHA = process.env.E2E_EXPECTED_SHA;
 const E2E_ROLE = (process.env.E2E_ROLE ?? 'operator').toLowerCase();
 const SMOKE_ASSERTION_TIMEOUT = 15_000;
 
-const commanderRoutes = [
-  { url: './', pathname: '/laporan_sdirbingakkum/', heading: 'Dashboard' },
-  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Gakkum' },
-  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
-  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
-  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
-  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
-  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
-  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
-  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Laporan' },
-  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data Quality' },
-];
+type Route = {
+  url: string;
+  pathname: string;
+  heading: string;
+};
 
-const operatorRoutes = [
-  { url: './gakkum', pathname: '/laporan_sdirbingakkum/gakkum', heading: 'Gakkum' },
-  { url: './pelanggaran', pathname: '/laporan_sdirbingakkum/pelanggaran', heading: 'Pelanggaran' },
-  { url: './sim-tni', pathname: '/laporan_sdirbingakkum/sim-tni', heading: 'SIM TNI' },
-  { url: './provos', pathname: '/laporan_sdirbingakkum/provos', heading: 'Provos' },
-  { url: './laka-lalin', pathname: '/laporan_sdirbingakkum/laka-lalin', heading: 'Laka Lalin' },
-  { url: './tindak-pidana', pathname: '/laporan_sdirbingakkum/tindak-pidana', heading: 'Tindak Pidana' },
-  { url: './pomdam', pathname: '/laporan_sdirbingakkum/pomdam', heading: 'POMDAM' },
-  { url: './reports', pathname: '/laporan_sdirbingakkum/reports', heading: 'Laporan' },
-  { url: './data-quality', pathname: '/laporan_sdirbingakkum/data-quality', heading: 'Data Quality' },
-];
+const routeCatalog: Record<string, Route> = {
+  dashboard: {
+    url: './',
+    pathname: '/laporan_sdirbingakkum/',
+    heading: 'Dashboard',
+  },
+  gakkum: {
+    url: './gakkum',
+    pathname: '/laporan_sdirbingakkum/gakkum',
+    heading: 'Gakkum',
+  },
+  pelanggaran: {
+    url: './pelanggaran',
+    pathname: '/laporan_sdirbingakkum/pelanggaran',
+    heading: 'Pelanggaran',
+  },
+  simTni: {
+    url: './sim-tni',
+    pathname: '/laporan_sdirbingakkum/sim-tni',
+    heading: 'SIM TNI',
+  },
+  provos: {
+    url: './provos',
+    pathname: '/laporan_sdirbingakkum/provos',
+    heading: 'Provos',
+  },
+  lakaLalin: {
+    url: './laka-lalin',
+    pathname: '/laporan_sdirbingakkum/laka-lalin',
+    heading: 'Laka Lalin',
+  },
+  tindakPidana: {
+    url: './tindak-pidana',
+    pathname: '/laporan_sdirbingakkum/tindak-pidana',
+    heading: 'Tindak Pidana',
+  },
+  pomdam: {
+    url: './pomdam',
+    pathname: '/laporan_sdirbingakkum/pomdam',
+    heading: 'POMDAM',
+  },
+  reports: {
+    url: './reports',
+    pathname: '/laporan_sdirbingakkum/reports',
+    heading: 'Laporan',
+  },
+  dataQuality: {
+    url: './data-quality',
+    pathname: '/laporan_sdirbingakkum/data-quality',
+    heading: 'Data Quality',
+  },
+};
 
-const routes = E2E_ROLE === 'operator' ? operatorRoutes : commanderRoutes;
+const activeRouteKeys =
+  E2E_ROLE === 'operator'
+    ? [
+        'gakkum',
+        'pelanggaran',
+        'simTni',
+        'provos',
+        'lakaLalin',
+        'tindakPidana',
+        'pomdam',
+        'reports',
+        'dataQuality',
+      ]
+    : [
+        'dashboard',
+        'gakkum',
+        'pelanggaran',
+        'simTni',
+        'provos',
+        'lakaLalin',
+        'tindakPidana',
+        'pomdam',
+        'reports',
+        'dataQuality',
+      ];
+
 
 test.beforeEach(async ({ request }) => {
   if (!EXPECTED_SHA) return;
@@ -56,7 +115,7 @@ function filterButton(page: Page, label: string) {
   });
 }
 
-async function openRoute(page: Page, route: (typeof routes)[number]) {
+async function openRoute(page: Page, route: Route) {
   const response = await page.goto(route.url, {
     waitUntil: 'domcontentloaded',
     timeout: 30_000,
@@ -96,7 +155,8 @@ async function openRoute(page: Page, route: (typeof routes)[number]) {
 }
 
 test.describe('deep-link route smoke', () => {
-  for (const route of routes) {
+  for (const routeKey of activeRouteKeys) {
+    const route = routeCatalog[routeKey];
     test('opens ' + route.heading, async ({ page }) => {
       await openRoute(page, route);
     });
@@ -105,20 +165,20 @@ test.describe('deep-link route smoke', () => {
 
 test.describe('critical interaction surface smoke', () => {
   test('SIM TNI exposes period and POMDAM filters', async ({ page }) => {
-    await openRoute(page, routes[3]);
+    await openRoute(page, routeCatalog.simTni);
     await expect(filterButton(page, 'Periode')).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
   });
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
-    await openRoute(page, routes[6]);
+    await openRoute(page, routeCatalog.tindakPidana);
     for (const label of ['Periode', 'Sumber versi', 'POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
   });
 
   test('Gakkum exposes period, POMDAM, and taxonomy level controls', async ({ page }) => {
-    await openRoute(page, routes[1]);
+    await openRoute(page, routeCatalog.gakkum);
     await expect(filterButton(page, 'Periode')).toBeVisible();
     await expect(filterButton(page, 'POMDAM')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Level 1', exact: true })).toBeVisible();
@@ -126,7 +186,7 @@ test.describe('critical interaction surface smoke', () => {
   });
 
   test('Pelanggaran exposes period, POMDAM, personel, and category controls', async ({ page }) => {
-    await openRoute(page, routes[2]);
+    await openRoute(page, routeCatalog.pelanggaran);
     for (const label of ['Periode', 'POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
@@ -134,7 +194,7 @@ test.describe('critical interaction surface smoke', () => {
   });
 
   test('Reports reads the live report audit and provenance surface', async ({ page }) => {
-    await openRoute(page, routes[8]);
+    await openRoute(page, routeCatalog.reports);
     await expect(page.getByText('Laporan aktif', { exact: true })).toBeVisible();
     await expect(page.getByText(/Fact rows/).first()).toBeVisible();
     await expect(page.getByText(/Source & provenance/).first()).toBeVisible();
@@ -269,7 +329,7 @@ test.describe('critical interaction surface smoke', () => {
   });
 
   test('Data Quality reads the live audit summary', async ({ page }) => {
-    await openRoute(page, routes[9]);
+    await openRoute(page, routeCatalog.dataQuality);
     await expect(
       page.getByRole('group', { name: /Audit integrity: OK/ }),
     ).toBeVisible();
