@@ -243,125 +243,140 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scope = snapshot.scope.isAllPomdam
-        ? 'SEMUA POMDAM'
+        ? 'Semua POMDAM'
         : (snapshot.scope.pomdamShortName ??
             snapshot.scope.pomdamCode ??
             'POMDAM');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'LAPORAN SDIRBIN GAKKUM',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: .4,
-                            ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Ringkasan kondisi laporan',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                    ],
-                  ),
+    final selector = access.isAllPomdam && snapshot.pomdamMatrix.length > 1
+        ? ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: DropdownButtonFormField<String?>(
+              initialValue: selectedPomdamId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Pilih POMDAM',
+                isDense: true,
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Semua POMDAM'),
                 ),
-                if (access.isAllPomdam && snapshot.pomdamMatrix.length > 1)
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 320),
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: selectedPomdamId,
-                      decoration: const InputDecoration(
-                        labelText: 'Pilih POMDAM',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('Semua POMDAM'),
-                        ),
-                        for (final row in snapshot.pomdamMatrix)
-                          DropdownMenuItem<String?>(
-                            value: row.pomdamId,
-                            child: Text(row.code + ' · ' + row.shortName),
-                          ),
-                      ],
-                      onChanged: onPomdamChanged,
-                    ),
-                  )
-                else if (access.isAllPomdam && selectedPomdamId != null)
-                  OutlinedButton.icon(
-                    onPressed: () => onPomdamChanged(null),
-                    icon: const Icon(Icons.clear),
-                    label: const Text('Kembali ke Semua POMDAM'),
+                for (final row in snapshot.pomdamMatrix)
+                  DropdownMenuItem<String?>(
+                    value: row.pomdamId,
+                    child: Text(row.code + ' · ' + row.shortName),
                   ),
               ],
+              onChanged: onPomdamChanged,
             ),
-            const SizedBox(height: 12),
-            Wrap(
+          )
+        : selectedPomdamId != null
+            ? OutlinedButton.icon(
+                onPressed: () => onPomdamChanged(null),
+                icon: const Icon(Icons.clear_rounded),
+                label: const Text('Semua POMDAM'),
+              )
+            : null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 720;
+
+            final identity = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ringkasan laporan',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kondisi data lintas bidang untuk periode terbaru yang tersedia.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            );
+
+            final meta = Wrap(
               spacing: 8,
-              runSpacing: 7,
+              runSpacing: 8,
               children: [
                 _Badge(
                   icon: Icons.account_balance_outlined,
                   label: scope,
                 ),
                 _Badge(
-                  icon: Icons.person_outline,
+                  icon: Icons.person_outline_rounded,
                   label: access.role!.displayName,
                 ),
                 const _Badge(
                   icon: Icons.schedule_outlined,
                   label: 'Data terbaru',
                 ),
-                _Badge(
-                  icon: Icons.layers_outlined,
-                  label: snapshot.domains.length.toString() + ' laporan',
-                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 9),
-            Text(
-              'Periode data',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-            const SizedBox(height: 7),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final domain in snapshot.domains)
-                  if (domain.asOf != null)
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      avatar: const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 14,
+                if (compact) ...[
+                  identity,
+                  if (selector != null) ...[
+                    const SizedBox(height: 14),
+                    selector,
+                  ],
+                  const SizedBox(height: 12),
+                  meta,
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: identity),
+                      if (selector != null) selector,
+                    ],
+                  ),
+                const SizedBox(height: 13),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                Text(
+                  'Periode data',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
                       ),
-                      label: Text(
-                        domain.displayCode + ' · ' + domain.asOf!.label,
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 7),
+                if (!compact) meta,
+                if (snapshot.domains.any((domain) => domain.asOf != null)) ...[
+                  const SizedBox(height: 9),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final domain in snapshot.domains)
+                        if (domain.asOf != null)
+                          Chip(
+                            visualDensity: VisualDensity.compact,
+                            avatar: const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 14,
+                            ),
+                            label: Text(
+                              domain.displayCode + ' · ' + domain.asOf!.label,
+                            ),
+                          ),
+                    ],
+                  ),
+                ],
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
