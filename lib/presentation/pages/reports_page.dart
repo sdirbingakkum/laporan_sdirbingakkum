@@ -24,7 +24,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       padding: const EdgeInsets.all(24),
       children: [
         Semantics(
+          container: true,
           header: true,
+          headingLevel: 2,
           child: Text(
             'Laporan',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
