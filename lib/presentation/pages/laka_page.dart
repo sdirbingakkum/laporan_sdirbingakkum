@@ -172,7 +172,7 @@ class _DashboardVisual extends StatelessWidget {
           VisualDatum(
             label: metric.secondaryName == null
                 ? metric.primaryName
-                : '\${metric.primaryName} · \${metric.secondaryName}',
+                : '${metric.primaryName} · ${metric.secondaryName}',
             value: metric.validTotal.toDouble(),
           ),
       ];
@@ -241,7 +241,7 @@ class _PomdamFilter extends StatelessWidget {
               for (final pomdam in pomdams)
                 DropdownMenuItem<String?>(
                   value: pomdam.id,
-                  child: Text('\${pomdam.code} · \${pomdam.shortName}'),
+                  child: Text('${pomdam.code} · ${pomdam.shortName}'),
                 ),
             ],
             onChanged: onChanged,
