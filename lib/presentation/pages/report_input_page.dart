@@ -935,7 +935,7 @@ class _SubmissionMetaCard extends StatelessWidget {
                       for (final pomdam in pomdams)
                         DropdownMenuItem(
                           value: pomdam.id,
-                          child: Text('${pomdam.code} · ${pomdam.shortName}'),
+                          child: Text('${pomdam.code} - ${pomdam.shortName}'),
                         ),
                     ],
                     onChanged: onPomdamChanged,

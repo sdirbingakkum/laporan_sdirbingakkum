@@ -118,13 +118,17 @@ class DomainOverviewCard extends StatelessWidget {
               const Spacer(),
               if (kpiValue != null) ...
                 [
-                  Text(
-                    kpiValue.toString(),
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      color: color,
-                      height: 1,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      kpiValue.toString(),
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        color: color,
+                        height: 1,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -232,14 +236,18 @@ class AnimatedMetric extends StatelessWidget {
       tween: Tween(begin: 0, end: value.toDouble()),
       duration: const Duration(milliseconds: 700),
       curve: Curves.easeOutCubic,
-      builder: (context, animated, _) => Text(
-        '${animated.round()}${suffix ?? ''}',
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: size,
-              letterSpacing: -1.4,
-              color: resolvedColor,
-            ),
+      builder: (context, animated, _) => FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '${animated.round()}${suffix ?? ''}',
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                fontSize: size,
+                letterSpacing: -1.4,
+                color: resolvedColor,
+              ),
+        ),
       ),
     );
 
@@ -901,7 +909,7 @@ class AnimatedHeatmap extends StatelessWidget {
                             state: index < row.values.length
                                 ? row.values[index]
                                 : HeatmapState.none,
-                            tooltip: '${row.label} · ${columns[index]}',
+                            tooltip: '${row.label} - ${columns[index]}',
                           ),
                         ),
                       ),
