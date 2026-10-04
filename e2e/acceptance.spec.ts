@@ -83,5 +83,4 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
   } finally {
     await operatorContext.close();
     await commanderContext.close();
-  }
-}
+  }});
