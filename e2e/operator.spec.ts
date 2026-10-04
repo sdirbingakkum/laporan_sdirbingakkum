@@ -16,11 +16,11 @@ test('operator can open report input without writing production data', async ({ 
   await expect(gakkumSection).toBeVisible({ timeout: 15_000 });
 
   await expect(
-    gakkumSection.getByText(
-      '14 kegiatan leaf. Parent tidak dimasukkan agar tidak double count.',
-      { exact: true },
-    ),
-  ).toBeVisible({ timeout: 15_000 });
+    gakkumSection.getByRole('textbox', {
+      name: 'Nilai',
+      exact: true,
+    }),
+  ).toHaveCount(14);
 
   await expect(
     page.getByRole('button', {
