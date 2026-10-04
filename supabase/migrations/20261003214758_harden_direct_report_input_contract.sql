@@ -503,10 +503,6 @@ create table if not exists "public"."violations" (
   "created_at" timestamp with time zone not null default now()
 );
 
-alter table "private"."app_roles" add constraint "app_roles_pkey" PRIMARY KEY (role_code);
-alter table "private"."app_role_capabilities" add constraint "app_role_capabilities_capability_code_fkey" FOREIGN KEY (capability_code) REFERENCES private.app_capabilities(capability_code) ON DELETE CASCADE;
-alter table "private"."app_role_capabilities" add constraint "app_role_capabilities_pkey" PRIMARY KEY (role_code, capability_code);
-alter table "private"."app_role_capabilities" add constraint "app_role_capabilities_role_code_fkey" FOREIGN KEY (role_code) REFERENCES private.app_roles(role_code) ON DELETE CASCADE;
 
 
 
