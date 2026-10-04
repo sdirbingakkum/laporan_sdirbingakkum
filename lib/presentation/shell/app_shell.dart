@@ -28,6 +28,10 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   static const _reports = <_NavEntry>[
     _NavEntry(
+      path: '/laporan',
+      label: 'Ringkasan',
+    ),
+    _NavEntry(
       path: '/gakkum',
       label: 'Gakkum',
       icon: Icons.gavel_outlined,
@@ -240,16 +244,7 @@ class _NavigationPanel extends StatelessWidget {
           label: 'Laporan',
           selected: _active('/laporan') || _reportItems.any((e) => _active(e.path)),
           expanded: reportsOpen,
-          onTap: () {
-            if (_active('/laporan') && reportsOpen) {
-              _go('/laporan');
-            } else {
-              onReportsToggle();
-              if (!_active('/laporan') && !_reportItems.any((e) => _active(e.path))) {
-                _go('/laporan');
-              }
-            }
-          },
+          onTap: onReportsToggle,
         ),
         if (reportsOpen)
           _ChildNavList(
