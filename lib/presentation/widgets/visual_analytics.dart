@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/app_theme.dart';
+import 'analytics_ui.dart';
 
 final class VisualDatum {
   const VisualDatum({
@@ -300,7 +301,7 @@ class AnimatedRankBarChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: visible[index].value,
-                    width: math.max(18, 36 - visible.length * 1.5),
+                    width: math.max(18.0, 36 - visible.length * 1.5).toDouble(),
                     borderRadius: BorderRadius.circular(10),
                     gradient: LinearGradient(
                       colors: [
@@ -368,7 +369,7 @@ class _AnimatedDonutChartState extends State<AnimatedDonutChart> {
                       value: items[i].value,
                       color: widget.palette.chartColors[
                           i % widget.palette.chartColors.length],
-                      radius: i == _touchedIndex ? 76 : 66,
+                      radius: i == _touchedIndex ? 76.0 : 66.0,
                       title: '',
                     ),
                 ],
@@ -676,7 +677,7 @@ class AnimatedHeatmap extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SizedBox(
-        width: math.max(480, 94 + columns.length * 78),
+        width: math.max(480.0, (94 + columns.length * 78).toDouble()),
         child: Column(
           children: [
             Row(
@@ -1170,6 +1171,7 @@ class VisualReportFrame extends StatelessWidget {
     this.periodControl,
     this.filters = const [],
     this.accent,
+    this.contentKey,
   });
 
   final String title;
@@ -1177,6 +1179,7 @@ class VisualReportFrame extends StatelessWidget {
   final Widget? periodControl;
   final List<Widget> filters;
   final Color? accent;
+  final Object? contentKey;
 
   @override
   Widget build(BuildContext context) {
@@ -1229,7 +1232,7 @@ class VisualReportFrame extends StatelessWidget {
               ),
             ),
             child: KeyedSubtree(
-              key: ValueKey(child.key),
+              key: ValueKey(contentKey ?? child.key),
               child: child,
             ),
           ),
