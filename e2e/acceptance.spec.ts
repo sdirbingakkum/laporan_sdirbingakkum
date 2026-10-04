@@ -13,12 +13,28 @@ async function signIn(
   email: string,
   password: string,
   expectedEmail: string,
+  expectedRoleCode: string,
   expectedRole: string,
   expectedPath: string,
 ) {
   await page.goto('./', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
   const loginButton = page.getByRole('button', { name: 'Masuk', exact: true });
+  const authResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      response.url().includes('/auth/v1/token') &&
+      response.status() === 200,
+    { timeout: 30_000 },
+  );
+  const accessContextPromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      response.url().includes('/rest/v1/rpc/get_my_access_context') &&
+      response.status() === 200,
+    { timeout: 30_000 },
+  );
+
   if (await loginButton.isVisible().catch(() => false)) {
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
     await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
@@ -42,12 +58,23 @@ async function signIn(
     );
   });
 
-  const accountButton = page.getByRole('button', { name: 'Akun', exact: true });
-  await expect(accountButton).toBeVisible({ timeout: 30_000 });
-  await accountButton.click();
-  await expect(page.getByText(expectedEmail, { exact: true })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(expectedRole, { exact: true })).toBeVisible({ timeout: 15_000 });
-  await page.keyboard.press('Escape');
+  const authResponse = await authResponsePromise;
+  const authPayload = (await authResponse.json()) as {
+    user?: { email?: string | null };
+  };
+  expect(authPayload.user?.email).toBe(expectedEmail);
+
+  const accessResponse = await accessContextPromise;
+  const accessPayload = (await accessResponse.json()) as {
+    authenticated?: boolean;
+    configured?: boolean;
+    role?: { code?: string; display_name?: string };
+    scope?: { type?: string };
+  };
+  expect(accessPayload.authenticated).toBe(true);
+  expect(accessPayload.configured).toBe(true);
+  expect(accessPayload.role?.code).toBe(expectedRoleCode);
+  expect(accessPayload.role?.display_name).toBe(expectedRole);
 }
 
 test('operator write reaches Commander Dashboard read model', async ({ browser }) => {
@@ -68,6 +95,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       commanderEmail,
       requiredEnv('E2E_COMMANDER_PASSWORD'),
       commanderEmail,
+      'PUSPOMAD_COMMANDER',
       'Komandan Puspomad',
       '/laporan_sdirbingakkum/',
     );
@@ -80,6 +108,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       requiredEnv('E2E_EMAIL'),
       requiredEnv('E2E_PASSWORD'),
       'operator@puspomad.mil.id',
+      'PUSPOMAD_OPERATOR',
       'Operator Puspomad',
       '/laporan_sdirbingakkum/reports',
     );
