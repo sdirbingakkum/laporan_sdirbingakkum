@@ -1,0 +1,2 @@
+-- Historical production migration ledger entry.
+-- Reconciled schema state is captured by 20261003214758_harden_direct_report_input_contract.sql.
