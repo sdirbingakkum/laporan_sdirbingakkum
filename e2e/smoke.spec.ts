@@ -178,7 +178,7 @@ test.describe('critical interaction surface smoke', () => {
 
   test('Tindak Pidana exposes all four report filters', async ({ page }) => {
     await openRoute(page, routeCatalog.tindakPidana);
-    for (const label of ['Sumber versi', 'POMDAM', 'Personel']) {
+    for (const label of ['Versi', 'POMDAM', 'Personel']) {
       await expect(filterButton(page, label)).toBeVisible();
     }
     await expect(periodButton(page)).toBeVisible();
