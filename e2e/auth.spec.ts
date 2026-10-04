@@ -45,7 +45,14 @@ test('preserves a protected deep link after authentication', async ({ page }) =>
 
   await expect(passwordField).toHaveValue(password);
 
-  await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+  await Promise.all([
+    page.waitForURL(
+      (url) =>
+        new URL(url).pathname === '/laporan_sdirbingakkum/gakkum',
+      { timeout: 30_000 },
+    ),
+    passwordField.press('Enter'),
+  ]);
 
   await expect(
     page.getByRole('heading', { name: 'Gakkum', exact: true }),
