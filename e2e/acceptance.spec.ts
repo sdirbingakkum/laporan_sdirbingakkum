@@ -15,6 +15,7 @@ async function signIn(
   expectedEmail: string,
   expectedRole: string,
   landingText: string,
+  expectedPath: string,
 ) {
   await page.goto('./', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
@@ -24,6 +25,23 @@ async function signIn(
     await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
     await loginButton.click();
   }
+
+  await page.waitForURL(
+    (url) => new URL(url).pathname === expectedPath,
+    { timeout: 30_000 },
+  ).catch(async (error) => {
+    const bodyText = await page.locator('body').innerText().catch(() => '');
+    throw new Error(
+      'Login did not reach expected path "' +
+        expectedPath +
+        '". Current URL: ' +
+        page.url() +
+        '. Page text: ' +
+        bodyText.slice(0, 800) +
+        '. Cause: ' +
+        String(error),
+    );
+  });
 
   await expect(page.getByText(landingText, { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 
@@ -55,6 +73,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       'danpuspomad@puspomad.mil.id',
       'Komandan Puspomad',
       'LAPORAN SDIRBIN GAKKUM',
+      '/laporan_sdirbingakkum/',
     );
     expect(new URL(commanderPage.url()).pathname).toBe('/laporan_sdirbingakkum/');
 
@@ -67,6 +86,7 @@ test('operator write reaches Commander Dashboard read model', async ({ browser }
       'operator@puspomad.mil.id',
       'Operator Puspomad',
       'Laporan aktif',
+      '/laporan_sdirbingakkum/reports',
     );
 
     await operatorPage.goto('./input-laporan', { waitUntil: 'domcontentloaded', timeout: 30_000 });
