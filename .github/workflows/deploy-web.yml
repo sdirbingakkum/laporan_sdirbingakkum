@@ -90,6 +90,7 @@ jobs:
             tindak-pidana \
             pomdam \
             reports \
+            input-laporan \
             data-quality
           do
             mkdir -p "build/web/$route"
