@@ -625,6 +625,118 @@ class AnimatedStatusRing extends StatelessWidget {
   }
 }
 
+
+class AnimatedRadialMetric extends StatelessWidget {
+  const AnimatedRadialMetric({
+    required this.value,
+    required this.max,
+    required this.palette,
+    super.key,
+    this.label = 'nilai',
+    this.unit,
+    this.height = 210,
+  });
+
+  final num value;
+  final num max;
+  final VisualPalette palette;
+  final String label;
+  final String? unit;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = max <= 0 ? 0.0 : (value / max).clamp(0, 1).toDouble();
+
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: ratio),
+          duration: const Duration(milliseconds: 900),
+          curve: Curves.easeOutCubic,
+          builder: (context, progress, _) {
+            return SizedBox(
+              width: 166,
+              height: 166,
+              child: CustomPaint(
+                painter: _RadialMetricPainter(
+                  progress: progress,
+                  color: palette.primary,
+                  track: AppTheme.border,
+                ),
+                child: Center(
+                  child: AnimatedMetric(
+                    value: value,
+                    suffix: unit,
+                    label: label,
+                    color: palette.primary,
+                    size: 27,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ).animate().fadeIn(duration: 420.ms);
+  }
+}
+
+class _RadialMetricPainter extends CustomPainter {
+  _RadialMetricPainter({
+    required this.progress,
+    required this.color,
+    required this.track,
+  });
+
+  final double progress;
+  final Color color;
+  final Color track;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = math.min(size.width, size.height) / 2 - 10;
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 15
+      ..strokeCap = StrokeCap.round
+      ..color = track.withValues(alpha: .4);
+
+    final valuePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 15
+      ..strokeCap = StrokeCap.round
+      ..shader = SweepGradient(
+        colors: [color.withValues(alpha: .3), color],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      math.pi * 2,
+      false,
+      trackPaint,
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      math.pi * 2 * progress,
+      false,
+      valuePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadialMetricPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.track != track;
+}
+
 class AnimatedSparkline extends StatelessWidget {
   const AnimatedSparkline({
     required this.points,
