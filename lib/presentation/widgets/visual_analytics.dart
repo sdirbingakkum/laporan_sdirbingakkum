@@ -798,7 +798,6 @@ class DomainVisualCard extends StatelessWidget {
     super.key,
     this.unit,
     this.icon,
-    this.trend,
     required this.trend,
     this.status,
     this.onTap,
