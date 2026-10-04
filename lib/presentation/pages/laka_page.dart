@@ -6,6 +6,7 @@ import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/laka_entities.dart';
 import '../../domain/entities/reference_entities.dart';
+import '../widgets/analytics_ui.dart';
 import '../widgets/report_filters.dart';
 
 class LakaPage extends ConsumerStatefulWidget {
@@ -124,6 +125,17 @@ class _DashboardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        ResponsiveGrid(
+          minWidth: 270,
+          children: [
+            _VisualSection(title: 'Kejadian', section: snapshot.accident),
+            _VisualSection(title: 'Personel', section: snapshot.personnel),
+            _VisualSection(title: 'Materiil', section: snapshot.material),
+            _VisualSection(title: 'Pangkat korban', section: snapshot.victimRank),
+            _VisualSection(title: 'Akibat korban', section: snapshot.victimOutcome),
+          ],
+        ),
+        const SizedBox(height: 14),
         _SectionCard(title: 'Kejadian', section: snapshot.accident),
         const SizedBox(height: 16),
         _SectionCard(title: 'Personel', section: snapshot.personnel),
@@ -134,6 +146,41 @@ class _DashboardContent extends StatelessWidget {
         const SizedBox(height: 16),
         _SectionCard(title: 'Akibat korban', section: snapshot.victimOutcome),
       ],
+    );
+  }
+}
+
+class _VisualSection extends StatelessWidget {
+  const _VisualSection({
+    required this.title,
+    required this.section,
+  });
+
+  final String title;
+  final LakaSectionSnapshot section;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnalyticsSection(
+      title: title,
+      trailing: Text(
+        section.validTotal.toString(),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+      ),
+      child: VisualBarList(
+        items: [
+          for (final metric in section.metrics)
+            VisualBarItem(
+              label: metric.secondaryName == null
+                  ? metric.primaryName
+                  : '${metric.primaryName} · ${metric.secondaryName}',
+              value: metric.validTotal.toDouble(),
+            ),
+        ],
+        maxItems: 5,
+      ),
     );
   }
 }
