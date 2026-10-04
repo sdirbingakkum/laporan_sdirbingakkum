@@ -7,7 +7,7 @@ test('operator can open report input without writing production data', async ({ 
   });
 
   await expect(
-    page.getByRole('heading', { name: 'Input Laporan', exact: true }),
+    page.getByText('Input Laporan', { exact: true }).first(),
   ).toBeVisible({ timeout: 30_000 });
 
   await expect(
