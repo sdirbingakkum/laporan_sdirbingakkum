@@ -68,7 +68,8 @@ async function signIn(
     { timeout: 30_000 },
   );
 
-  const accessPayload = (await accessContextPromise.json()) as {
+  const accessResponse = await accessContextPromise;
+  const accessPayload = (await accessResponse.json()) as {
     authenticated?: boolean;
     configured?: boolean;
     role?: { code?: string; display_name?: string };
