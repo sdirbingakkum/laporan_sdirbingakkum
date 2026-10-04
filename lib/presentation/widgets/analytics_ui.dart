@@ -251,7 +251,8 @@ class ResponsiveGrid extends StatelessWidget {
       builder: (context, constraints) {
         final count = (constraints.maxWidth / (minWidth + gap))
             .floor()
-            .clamp(1, children.length);
+            .clamp(1, children.length)
+            .toInt();
 
         final width =
             (constraints.maxWidth - gap * (count - 1)) / count;
