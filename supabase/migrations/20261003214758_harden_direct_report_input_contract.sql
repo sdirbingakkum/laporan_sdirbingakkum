@@ -842,7 +842,6 @@ AS $function$
   )
 $function$;
 
-
 CREATE OR REPLACE FUNCTION private.can_read_pomdam(p_pomdam_id uuid)
  RETURNS boolean
  LANGUAGE sql
@@ -877,7 +876,6 @@ AS $function$
   end
 $function$;
 
-
 CREATE OR REPLACE FUNCTION private.current_user_role()
  RETURNS text
  LANGUAGE sql
@@ -893,7 +891,6 @@ AS $function$
     and ur.active = true
   limit 1
 $function$;
-
 
 CREATE OR REPLACE FUNCTION private.assert_can_read_pomdam(p_pomdam_id uuid)
  RETURNS boolean
@@ -1018,40 +1015,6 @@ begin
 end;
 $function$;
 
-CREATE OR REPLACE FUNCTION private.can_read_pomdam(p_pomdam_id uuid)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  select case
-    when (select auth.uid()) is null then false
-    when exists (
-      select 1
-      from private.app_user_roles ur
-      join private.app_roles r
-        on r.role_code = ur.role_code
-       and r.active = true
-      where ur.user_id = (select auth.uid())
-        and ur.active = true
-        and r.scope_type = 'ALL_POMDAM'
-    ) then true
-    when p_pomdam_id is null then exists (
-      select 1
-      from private.app_user_pomdam_scopes s
-      where s.user_id = (select auth.uid())
-        and s.active = true
-    )
-    else exists (
-      select 1
-      from private.app_user_pomdam_scopes s
-      where s.user_id = (select auth.uid())
-        and s.pomdam_id = p_pomdam_id
-        and s.active = true
-    )
-  end
-$function$;
-
 CREATE OR REPLACE FUNCTION private.can_read_source_file_object(p_object_path text)
  RETURNS boolean
  LANGUAGE sql
@@ -1113,22 +1076,6 @@ AS $function$
         and not private.can_read_pomdam(x.pomdam_id)
     )
   end
-$function$;
-
-CREATE OR REPLACE FUNCTION private.current_user_role()
- RETURNS text
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  select ur.role_code
-  from private.app_user_roles ur
-  join private.app_roles r
-    on r.role_code = ur.role_code
-   and r.active = true
-  where ur.user_id = (select auth.uid())
-    and ur.active = true
-  limit 1
 $function$;
 
 CREATE OR REPLACE FUNCTION private.get_commander_fact_provenance_impl(p_domain_code text, p_record_id uuid)
@@ -1604,27 +1551,6 @@ AS $function$
         'capabilities', (select capabilities from role_capabilities)
       )
   end
-$function$;
-
-CREATE OR REPLACE FUNCTION private.has_current_capability(p_capability_code text)
- RETURNS boolean
- LANGUAGE sql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-  select exists (
-    select 1
-    from private.app_user_roles ur
-    join private.app_role_capabilities rc
-      on rc.role_code = ur.role_code
-     and rc.active = true
-    join private.app_capabilities c
-      on c.capability_code = rc.capability_code
-     and c.active = true
-    where ur.user_id = (select auth.uid())
-      and ur.active = true
-      and rc.capability_code = p_capability_code
-  )
 $function$;
 
 CREATE OR REPLACE FUNCTION private.sync_report_provenance()
@@ -4684,7 +4610,6 @@ exception
 end;
 $function$;
 
-
 CREATE OR REPLACE FUNCTION public.get_or_create_monthly_report_period(p_year integer, p_month integer)
  RETURNS report_periods
  LANGUAGE plpgsql
@@ -4782,7 +4707,6 @@ exception
 end;
 $function$;
 
-
 revoke execute on function public.get_or_create_monthly_report_period(integer, integer) from public;
 grant execute on function public.get_or_create_monthly_report_period(integer, integer) to authenticated;
 
@@ -4839,7 +4763,6 @@ begin
   end loop;
 end;
 $function$;
-
 
 revoke execute on function private.assert_report_input_values(jsonb) from public;
 grant execute on function private.assert_report_input_values(jsonb) to authenticated;
