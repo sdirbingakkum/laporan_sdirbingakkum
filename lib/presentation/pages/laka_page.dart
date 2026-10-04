@@ -8,6 +8,7 @@ import '../../domain/entities/laka_entities.dart';
 import '../../domain/entities/reference_entities.dart';
 import '../widgets/analytics_ui.dart';
 import '../widgets/report_filters.dart';
+import '../widgets/visual_analytics.dart';
 
 class LakaPage extends ConsumerStatefulWidget {
   const LakaPage({super.key});
@@ -27,51 +28,51 @@ class _LakaPageState extends ConsumerState<LakaPage> {
 
     return periodsState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => _MessageState(message: _errorMessage(error)),
+      error: (error, stackTrace) =>
+          _MessageState(message: _errorMessage(error)),
       data: (periods) {
         if (periods.isEmpty) {
-          return const _MessageState(message: 'Belum ada periode dengan data Laka Lalin.');
+          return const _MessageState(
+            message: 'Belum ada periode dengan data Laka Lalin.',
+          );
         }
+
         final selectedPeriod = periods.firstWhere(
           (period) => period.id == _selectedPeriodId,
           orElse: () => periods.first,
         );
-        final dashboard = ref.watch(lakaDashboardProvider(LakaDashboardQuery(
-          periodId: selectedPeriod.id,
-          pomdamId: _selectedPomdamId,
-        )));
-        return ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const AnalyticsPageHeader(
-              title: 'Laka Lalu Lintas',
+
+        final dashboard = ref.watch(
+          lakaDashboardProvider(
+            LakaDashboardQuery(
+              periodId: selectedPeriod.id,
+              pomdamId: _selectedPomdamId,
             ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                MonthlyPeriodSelector(
-                  periods: periods,
-                  selectedPeriodId: selectedPeriod.id,
-                  onChanged: (value) {
-                    setState(() => _selectedPeriodId = value);
-                  },
-                ),
-                _PomdamFilter(
-                  state: pomdamsState,
-                  selectedValue: _selectedPomdamId,
-                  onChanged: (value) => setState(() => _selectedPomdamId = value),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            dashboard.when(
-              loading: () => const _LoadingCard(),
-              error: (error, stackTrace) => _MessageState(message: _errorMessage(error)),
-              data: (snapshot) => _DashboardContent(snapshot: snapshot),
+          ),
+        );
+
+        return VisualReportFrame(
+          title: 'Laka Lalu Lintas',
+          accent: AppVisualPalettes.laka.primary,
+          periodControl: CompactMonthlyPeriodSelector(
+            periods: periods,
+            selectedPeriodId: selectedPeriod.id,
+            onChanged: (value) => setState(() => _selectedPeriodId = value),
+          ),
+          filters: [
+            _PomdamFilter(
+              state: pomdamsState,
+              selectedValue: _selectedPomdamId,
+              onChanged: (value) =>
+                  setState(() => _selectedPomdamId = value),
             ),
           ],
+          child: dashboard.when(
+            loading: () => const _LoadingVisual(),
+            error: (error, stackTrace) =>
+                _MessageState(message: _errorMessage(error)),
+            data: (snapshot) => _DashboardVisual(snapshot: snapshot),
+          ),
         );
       },
     );
@@ -83,223 +84,193 @@ class _LakaPageState extends ConsumerState<LakaPage> {
   }
 }
 
+class _DashboardVisual extends StatelessWidget {
+  const _DashboardVisual({required this.snapshot});
+
+  final LakaDashboardSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppVisualPalettes.laka;
+
+    final accident = _data(snapshot.accident);
+    final personnel = _data(snapshot.personnel);
+    final material = _data(snapshot.material);
+    final outcome = _data(snapshot.victimOutcome);
+
+    return Column(
+      children: [
+        ResponsiveGrid(
+          minWidth: 300,
+          children: [
+            VisualPanel(
+              title: 'Kejadian',
+              accent: palette.primary,
+              child: AnimatedRankBarChart(
+                items: accident,
+                palette: palette,
+                maxItems: 7,
+                height: 270,
+              ),
+            ),
+            VisualPanel(
+              title: 'Akibat korban',
+              accent: palette.secondary,
+              child: AnimatedDonutChart(
+                items: outcome,
+                palette: palette,
+                centerValue: snapshot.victimOutcome.validTotal,
+                centerLabel: 'korban',
+                height: 270,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ResponsiveGrid(
+          minWidth: 260,
+          children: [
+            VisualPanel(
+              title: 'Personel',
+              accent: palette.secondary,
+              child: AnimatedRankBarChart(
+                items: personnel,
+                palette: palette,
+                maxItems: 5,
+                height: 210,
+              ),
+            ),
+            VisualPanel(
+              title: 'Materiil',
+              accent: palette.tertiary,
+              child: AnimatedRankBarChart(
+                items: material,
+                palette: palette,
+                maxItems: 5,
+                height: 210,
+              ),
+            ),
+            VisualPanel(
+              title: 'Kualitas',
+              accent: palette.primary,
+              child: AnimatedStatusRing(
+                valid: _valid(snapshot),
+                attention: _attention(snapshot),
+                error: _error(snapshot),
+                palette: palette,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<VisualDatum> _data(LakaSectionSnapshot section) => [
+        for (final metric in section.metrics)
+          VisualDatum(
+            label: metric.secondaryName == null
+                ? metric.primaryName
+                : '\${metric.primaryName} · \${metric.secondaryName}',
+            value: metric.validTotal.toDouble(),
+          ),
+      ];
+
+  int _valid(LakaDashboardSnapshot snapshot) =>
+      snapshot.accident.validCount +
+      snapshot.personnel.validCount +
+      snapshot.material.validCount +
+      snapshot.victimRank.validCount +
+      snapshot.victimOutcome.validCount;
+
+  int _attention(LakaDashboardSnapshot snapshot) =>
+      snapshot.accident.notReportedCount +
+      snapshot.personnel.notReportedCount +
+      snapshot.material.notReportedCount +
+      snapshot.victimRank.notReportedCount +
+      snapshot.victimOutcome.notReportedCount +
+      snapshot.accident.estimatedCount +
+      snapshot.personnel.estimatedCount +
+      snapshot.material.estimatedCount +
+      snapshot.victimRank.estimatedCount +
+      snapshot.victimOutcome.estimatedCount;
+
+  int _error(LakaDashboardSnapshot snapshot) =>
+      snapshot.accident.invalidSourceCount +
+      snapshot.personnel.invalidSourceCount +
+      snapshot.material.invalidSourceCount +
+      snapshot.victimRank.invalidSourceCount +
+      snapshot.victimOutcome.invalidSourceCount +
+      snapshot.accident.missingValueCount +
+      snapshot.personnel.missingValueCount +
+      snapshot.material.missingValueCount +
+      snapshot.victimRank.missingValueCount +
+      snapshot.victimOutcome.missingValueCount;
+}
+
 class _PomdamFilter extends StatelessWidget {
-  const _PomdamFilter({required this.state, required this.selectedValue, required this.onChanged});
+  const _PomdamFilter({
+    required this.state,
+    required this.selectedValue,
+    required this.onChanged,
+  });
+
   final AsyncValue<List<Pomdam>> state;
   final String? selectedValue;
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return state.when(
-      loading: () => const SizedBox(width: 280, child: LinearProgressIndicator()),
-      error: (error, stackTrace) => SizedBox(width: 280, child: Text('POMDAM tidak tersedia: $error')),
-      data: (pomdams) => SizedBox(
-        width: 280,
-        child: DropdownButtonFormField<String?>(
-          initialValue: selectedValue,
-          decoration: const InputDecoration(labelText: 'POMDAM', border: OutlineInputBorder()),
-          items: [
-            const DropdownMenuItem<String?>(value: null, child: Text('Semua POMDAM')),
-            for (final pomdam in pomdams)
-              DropdownMenuItem<String?>(value: pomdam.id, child: Text('${pomdam.code} · ${pomdam.shortName}')),
-          ],
-          onChanged: onChanged,
+  Widget build(BuildContext context) => state.when(
+        loading: () => const SizedBox(
+          width: 210,
+          child: LinearProgressIndicator(),
         ),
-      ),
-    );
-  }
-}
-
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.snapshot});
-  final LakaDashboardSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ResponsiveGrid(
-          minWidth: 270,
-          children: [
-            _VisualSection(title: 'Kejadian', section: snapshot.accident),
-            _VisualSection(title: 'Personel', section: snapshot.personnel),
-            _VisualSection(title: 'Materiil', section: snapshot.material),
-            _VisualSection(title: 'Pangkat korban', section: snapshot.victimRank),
-            _VisualSection(title: 'Akibat korban', section: snapshot.victimOutcome),
-          ],
-        ),
-        const SizedBox(height: 14),
-        _SectionCard(title: 'Kejadian', section: snapshot.accident),
-        const SizedBox(height: 16),
-        _SectionCard(title: 'Personel', section: snapshot.personnel),
-        const SizedBox(height: 16),
-        _SectionCard(title: 'Materiil', section: snapshot.material, material: true),
-        const SizedBox(height: 16),
-        _SectionCard(title: 'Pangkat korban', section: snapshot.victimRank),
-        const SizedBox(height: 16),
-        _SectionCard(title: 'Akibat korban', section: snapshot.victimOutcome),
-      ],
-    );
-  }
-}
-
-class _VisualSection extends StatelessWidget {
-  const _VisualSection({
-    required this.title,
-    required this.section,
-  });
-
-  final String title;
-  final LakaSectionSnapshot section;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnalyticsSection(
-      title: title,
-      trailing: Text(
-        section.validTotal.toString(),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-      ),
-      child: VisualBarList(
-        items: [
-          for (final metric in section.metrics)
-            VisualBarItem(
-              label: metric.secondaryName == null
-                  ? metric.primaryName
-                  : '${metric.primaryName} · ${metric.secondaryName}',
-              value: metric.validTotal.toDouble(),
-            ),
-        ],
-        maxItems: 5,
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.section, this.material = false});
-  final String title;
-  final LakaSectionSnapshot section;
-  final bool material;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-            if (material)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text('Kombinasi kendaraan × jenis kerusakan ditampilkan per baris.', style: Theme.of(context).textTheme.bodySmall),
+        error: (_, _) => const SizedBox.shrink(),
+        data: (pomdams) => SizedBox(
+          width: 210,
+          child: DropdownButtonFormField<String?>(
+            initialValue: selectedValue,
+            decoration:
+                const InputDecoration(labelText: 'POMDAM', isDense: true),
+            items: [
+              const DropdownMenuItem<String?>(
+                value: null,
+                child: Text('Semua POMDAM'),
               ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _MetricCard(title: 'Total valid', value: section.validTotal.toString()),
-                _MetricCard(title: 'Valid records', value: section.validCount.toString()),
-                _MetricCard(title: 'Tidak dilaporkan', value: section.notReportedCount.toString()),
-                _MetricCard(title: 'Invalid source', value: section.invalidSourceCount.toString()),
-                if (section.estimatedCount > 0) _MetricCard(title: 'Estimated', value: section.estimatedCount.toString()),
-                if (section.missingValueCount > 0) _MetricCard(title: 'Nilai kosong', value: section.missingValueCount.toString()),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (section.invalidSourceCount > 0)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Text('Sebagian baris berstatus INVALID_SOURCE dan tidak dimasukkan ke Total valid.'),
-              ),
-            for (final metric in section.metrics) _MetricRow(metric: metric),
-          ],
+              for (final pomdam in pomdams)
+                DropdownMenuItem<String?>(
+                  value: pomdam.id,
+                  child: Text('\${pomdam.code} · \${pomdam.shortName}'),
+                ),
+            ],
+            onChanged: onChanged,
+          ),
         ),
-      ),
-    );
-  }
+      );
 }
 
-class _MetricRow extends StatelessWidget {
-  const _MetricRow({required this.metric});
-  final LakaMetric metric;
+class _LoadingVisual extends StatelessWidget {
+  const _LoadingVisual();
 
   @override
-  Widget build(BuildContext context) {
-    final code = metric.secondaryCode == null
-        ? metric.primaryCode
-        : '${metric.primaryCode} · ${metric.secondaryCode}';
-    final label = metric.secondaryName == null
-        ? metric.primaryName
-        : '${metric.primaryName} · ${metric.secondaryName}';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 130, child: Text(code, style: const TextStyle(fontWeight: FontWeight.w700))),
-          Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
-          SizedBox(width: 100, child: Text(metric.validTotal.toString(), textAlign: TextAlign.end)),
-          if (metric.issueCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Chip(label: Text(metric.issueCount.toString()), visualDensity: VisualDensity.compact),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({required this.title, required this.value});
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 170,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 4),
-            Text(title),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-  @override
-  Widget build(BuildContext context) => const Card(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Row(children: [
-            SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-            SizedBox(width: 12),
-            Text('Membaca data Laka Lalin…'),
-          ]),
+  Widget build(BuildContext context) => const VisualPanel(
+        child: SizedBox(
+          height: 280,
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
 }
 
 class _MessageState extends StatelessWidget {
   const _MessageState({required this.message});
+
   final String message;
+
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(padding: const EdgeInsets.all(24), child: Text(message, textAlign: TextAlign.center)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
+        ),
       );
 }
