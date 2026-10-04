@@ -52,6 +52,7 @@ class _SimTniPageState extends ConsumerState<SimTniPage> {
 
         return VisualReportFrame(
           title: 'SIM TNI',
+          contentKey: selectedPeriod.id,
           accent: AppVisualPalettes.simTni.primary,
           periodControl: CompactMonthlyPeriodSelector(
             periods: periods,
