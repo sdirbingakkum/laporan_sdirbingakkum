@@ -5,8 +5,10 @@ import '../../application/providers/gakkum_providers.dart';
 import '../../application/providers/reference_data_providers.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/gakkum_entities.dart';
-import '../widgets/report_filters.dart';
+import '../../domain/entities/reference_entities.dart';
 import '../widgets/analytics_ui.dart';
+import '../widgets/report_filters.dart';
+import '../widgets/visual_analytics.dart';
 
 class GakkumPage extends ConsumerStatefulWidget {
   const GakkumPage({super.key});
@@ -44,296 +46,173 @@ class _GakkumPageState extends ConsumerState<GakkumPage> {
           pomdamId: _selectedPomdamId,
           level: _level,
         );
+
         final dashboard = ref.watch(gakkumDashboardProvider(query));
 
-        return ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const AnalyticsPageHeader(
-              title: 'Gakkum',
+        return VisualReportFrame(
+          title: 'Gakkum',
+          accent: AppVisualPalettes.gakkum.primary,
+          periodControl: CompactMonthlyPeriodSelector(
+            periods: periods,
+            selectedPeriodId: selectedPeriod.id,
+            onChanged: (value) => setState(() => _selectedPeriodId = value),
+          ),
+          filters: [
+            _PomdamFilter(
+              state: pomdamsState,
+              selectedValue: _selectedPomdamId,
+              onChanged: (value) => setState(() => _selectedPomdamId = value),
             ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                MonthlyPeriodSelector(
-                  periods: periods,
-                  selectedPeriodId: selectedPeriod.id,
-                  onChanged: (value) {
-                    setState(() => _selectedPeriodId = value);
-                  },
-                ),
-                pomdamsState.when(
-                  loading: () => const SizedBox(
-                    width: 280,
-                    child: LinearProgressIndicator(),
-                  ),
-                  error: (error, stackTrace) => SizedBox(
-                    width: 280,
-                    child: Text(
-                      'POMDAM tidak tersedia: ${error.toString()}',
-                    ),
-                  ),
-                  data: (pomdams) => SizedBox(
-                    width: 280,
-                    child: DropdownButtonFormField<String?>(
-                      initialValue: _selectedPomdamId,
-                      decoration: const InputDecoration(
-                        labelText: 'POMDAM',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('Semua POMDAM'),
-                        ),
-                        for (final pomdam in pomdams)
-                          DropdownMenuItem<String?>(
-                            value: pomdam.id,
-                            child: Text(
-                              '${pomdam.code} · ${pomdam.shortName}',
-                            ),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        setState(() => _selectedPomdamId = value);
-                      },
-                    ),
-                  ),
-                ),
-                SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 1, label: Text('Level 1')),
-                    ButtonSegment(value: 2, label: Text('Level 2')),
-                  ],
-                  selected: {_level},
-                  onSelectionChanged: (value) {
-                    setState(() => _level = value.first);
-                  },
-                ),
+            SegmentedButton<int>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: 1, label: Text('Level 1')),
+                ButtonSegment(value: 2, label: Text('Level 2')),
               ],
-            ),
-            const SizedBox(height: 24),
-            dashboard.when(
-              loading: () => const _LoadingCard(),
-              error: (error, stackTrace) =>
-                  _MessageState(message: _errorMessage(error)),
-              data: (snapshot) => _DashboardContent(snapshot: snapshot),
+              selected: {_level},
+              onSelectionChanged: (value) =>
+                  setState(() => _level = value.first),
             ),
           ],
+          child: dashboard.when(
+            loading: () => const _LoadingVisual(),
+            error: (error, stackTrace) =>
+                _MessageState(message: _errorMessage(error)),
+            data: (snapshot) => _DashboardVisual(snapshot: snapshot),
+          ),
         );
       },
     );
   }
 
   String _errorMessage(Object error) {
-    if (error is AppException) {
-      return error.message;
-    }
+    if (error is AppException) return error.message;
     return 'Data Gakkum belum dapat dibaca.';
   }
 }
 
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.snapshot});
+class _DashboardVisual extends StatelessWidget {
+  const _DashboardVisual({required this.snapshot});
 
   final GakkumDashboardSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppVisualPalettes.gakkum;
+    final ranked = [
+      for (final activity in snapshot.activities)
+        VisualDatum(
+          label: activity.activityName,
+          value: activity.validTotal.toDouble(),
+        ),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _MetricCard(
-              title: 'Total valid',
-              value: snapshot.validTotal.toString(),
-            ),
-            _MetricCard(
-              title: 'Valid records',
-              value: snapshot.validCount.toString(),
-            ),
-            _MetricCard(
-              title: 'Tidak dilaporkan',
-              value: snapshot.notReportedCount.toString(),
-            ),
-            _MetricCard(
-              title: 'Invalid source',
-              value: snapshot.invalidSourceCount.toString(),
-            ),
-            if (snapshot.missingValueCount > 0)
-              _MetricCard(
-                title: 'Nilai kosong',
-                value: snapshot.missingValueCount.toString(),
-              ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        AnalyticsSection(
+        VisualPanel(
           title: 'Distribusi kegiatan',
-          trailing: Text(
-            'Menampilkan 6 teratas',
-            style: Theme.of(context).textTheme.labelSmall,
+          trailing: AnimatedMetric(
+            value: snapshot.validTotal,
+            label: 'total',
+            color: palette.primary,
+            size: 24,
           ),
-          child: VisualBarList(
-            items: [
-              for (final activity in snapshot.activities)
-                VisualBarItem(
-                  label: activity.activityName,
-                  value: activity.validTotal.toDouble(),
-                ),
-            ],
-            maxItems: 6,
+          accent: palette.primary,
+          child: AnimatedRankBarChart(
+            items: ranked,
+            palette: palette,
+            height: 280,
+            maxItems: 7,
           ),
         ),
-        const SizedBox(height: 14),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Rincian aktivitas',
-                        style:
-                            Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
-                    ),
-                    Text(
-                      snapshot.taxonomyVersion,
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                for (final activity in snapshot.activities)
-                  _ActivityRow(activity: activity),
-              ],
+        const SizedBox(height: 12),
+        ResponsiveGrid(
+          minWidth: 230,
+          children: [
+            VisualPanel(
+              accent: palette.primary,
+              child: AnimatedMetric(
+                value: snapshot.validTotal,
+                label: 'kegiatan valid',
+                color: palette.primary,
+                size: 40,
+              ),
             ),
-          ),
+            VisualPanel(
+              title: 'Kualitas',
+              accent: palette.primary,
+              child: AnimatedStatusRing(
+                valid: snapshot.validCount,
+                attention:
+                    snapshot.notReportedCount + snapshot.estimatedCount,
+                error:
+                    snapshot.invalidSourceCount + snapshot.missingValueCount,
+                palette: palette,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({required this.activity});
-
-  final GakkumActivityMetric activity;
-
-  @override
-  Widget build(BuildContext context) {
-    final issueCount = activity.notReportedCount +
-        activity.invalidSourceCount +
-        activity.estimatedCount +
-        activity.missingValueCount;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 42,
-            child: Text(activity.displayOrder.toString()),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.activityName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  activity.sourceLabel,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: 100,
-            child: Text(
-              activity.validTotal.toString(),
-              textAlign: TextAlign.end,
-            ),
-          ),
-          if (issueCount > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Chip(
-                label: Text(issueCount.toString()),
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
+class _PomdamFilter extends StatelessWidget {
+  const _PomdamFilter({
+    required this.state,
+    required this.selectedValue,
+    required this.onChanged,
   });
 
-  final String title;
-  final String value;
+  final AsyncValue<List<Pomdam>> state;
+  final String? selectedValue;
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(title),
-            ],
+    return state.when(
+      loading: () => const SizedBox(
+        width: 230,
+        child: LinearProgressIndicator(),
+      ),
+      error: (error, stackTrace) => const SizedBox.shrink(),
+      data: (pomdams) => SizedBox(
+        width: 230,
+        child: DropdownButtonFormField<String?>(
+          initialValue: selectedValue,
+          decoration: const InputDecoration(
+            labelText: 'POMDAM',
+            isDense: true,
           ),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Semua POMDAM'),
+            ),
+            for (final pomdam in pomdams)
+              DropdownMenuItem<String?>(
+                value: pomdam.id,
+                child: Text('\${pomdam.code} · \${pomdam.shortName}'),
+              ),
+          ],
+          onChanged: onChanged,
         ),
       ),
     );
   }
 }
 
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
+class _LoadingVisual extends StatelessWidget {
+  const _LoadingVisual();
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 12),
-            Text('Membaca data Gakkum…'),
-          ],
+    return const VisualPanel(
+      child: SizedBox(
+        height: 280,
+        child: Center(
+          child: CircularProgressIndicator(),
         ),
       ),
     );
